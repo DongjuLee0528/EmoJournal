@@ -1,4 +1,4 @@
-package com.example.emojournal.auth;
+package com.example.emojournal.auth.token;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

@@ -1,4 +1,4 @@
-package com.example.emojournal.auth;
+package com.example.emojournal.auth.dto;
 
 import com.example.emojournal.domain.item.OAuthProvider;
 import org.springframework.util.MultiValueMap;
