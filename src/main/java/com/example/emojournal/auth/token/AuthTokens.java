@@ -1,4 +1,4 @@
-package com.example.emojournal.auth;
+package com.example.emojournal.auth.token;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

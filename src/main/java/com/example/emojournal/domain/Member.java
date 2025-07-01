@@ -23,6 +23,8 @@ public class Member {
     @Enumerated(EnumType.STRING)
     private OAuthProvider oAuthProvider;
 
+    private String refreshToken;
+
     @Builder
     public Member(Long id, String email, String nickname, OAuthProvider oAuthProvider) {
         this.id = id;

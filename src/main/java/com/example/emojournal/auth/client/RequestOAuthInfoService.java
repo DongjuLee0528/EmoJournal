@@ -1,5 +1,7 @@
-package com.example.emojournal.auth;
+package com.example.emojournal.auth.client;
 
+import com.example.emojournal.auth.dto.OAuthInfoResponse;
+import com.example.emojournal.auth.dto.OAuthLoginParams;
 import com.example.emojournal.domain.item.OAuthProvider;
 import org.springframework.stereotype.Component;
 

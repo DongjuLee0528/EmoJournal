@@ -1,6 +1,10 @@
 package com.example.emojournal.service;
 
-import com.example.emojournal.auth.*;
+import com.example.emojournal.auth.client.RequestOAuthInfoService;
+import com.example.emojournal.auth.dto.OAuthInfoResponse;
+import com.example.emojournal.auth.dto.OAuthLoginParams;
+import com.example.emojournal.auth.token.AuthTokenGenerator;
+import com.example.emojournal.auth.token.AuthTokens;
 import com.example.emojournal.domain.Member;
 import com.example.emojournal.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;

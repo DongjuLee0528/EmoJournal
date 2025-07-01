@@ -1,10 +1,9 @@
 package com.example.emojournal.controller;
 
-import com.example.emojournal.auth.AuthTokens;
-import com.example.emojournal.auth.GoogleLoginParams;
+import com.example.emojournal.auth.token.AuthTokens;
+import com.example.emojournal.auth.dto.GoogleLoginParams;
 import com.example.emojournal.dto.AuthorizationCodeRequest;
 import com.example.emojournal.service.OAuthLoginService;
-import com.example.emojournal.service.oAuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/login/oauth2/code")
-public class oAuthController {
+public class OAuthController {
 
     private final OAuthLoginService oAuthLoginService;
 

@@ -1,5 +1,8 @@
-package com.example.emojournal.auth;
+package com.example.emojournal.auth.client;
 
+import com.example.emojournal.auth.dto.GoogleInfoResponse;
+import com.example.emojournal.auth.dto.OAuthInfoResponse;
+import com.example.emojournal.auth.dto.OAuthLoginParams;
 import com.example.emojournal.domain.item.OAuthProvider;
 import com.example.emojournal.domain.token.GoogleTokens;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +40,7 @@ public class GoogleApiClient implements OAuthApiClient{
 
     private final RestTemplate restTemplate;
 
+    // 현재 구글의 Enum 타입을 반환해줌
     @Override
     public OAuthProvider oAuthProvider() {
         return OAuthProvider.GOOGLE;
@@ -53,7 +57,7 @@ public class GoogleApiClient implements OAuthApiClient{
         httpHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
         MultiValueMap<String, String> body = params.makeBody();
-        body.add("grant_type", "authorization_code");
+        body.add("grant_type", GRANT_TYPE);
         body.add("client_id", GOOGLE_CLIENT_ID);
         body.add("client_secret", GOOGLE_CLIENT_SECRET);
         body.add("redirect_uri", LOGIN_REDIRECT_URL); // 여기서 이 redirect_uri는 꼭 필요함
