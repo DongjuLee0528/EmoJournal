@@ -1,0 +1,14 @@
+@import url('https://fonts.googleapis.com/css2?family=Cherry+Bomb+One&display=swap');
+.Footer{
+    background-color: black;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+}
+.Footer p {
+    font-family: 'Cherry Bomb One';
+    color: #fff;
+    font-size: 20px;
+}

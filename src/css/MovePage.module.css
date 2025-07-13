@@ -1,0 +1,32 @@
+.container {
+    text-align: center;
+    height: 90vh;
+  }
+  
+  .title {
+    font-size: 2rem;
+    margin-bottom: 2rem;
+  }
+  
+  .buttonGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 300px;
+    margin: 0 auto;
+  }
+  
+  .buttonGroup button {
+    padding: 1rem;
+    font-size: 1rem;
+    background-color: #4a90e2;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  
+  .buttonGroup button:hover {
+    background-color: #357ab7;
+  }
+  

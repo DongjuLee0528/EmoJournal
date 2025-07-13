@@ -1,0 +1,50 @@
+@import url('https://fonts.googleapis.com/css2?family=Cherry+Bomb+One&display=swap');
+
+.header{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+    margin: 0 0 0 0;
+    padding: 0 0 0 0;
+    background-color: #fff;
+
+}
+.logo{
+    display: flex;
+    flex-direction: column; /* 세로 정렬 */
+    align-items: center;     /* 가운데 정렬 */
+    flex-shrink: 0;
+}
+.subText {
+    padding-bottom: 5px;
+}
+.mainText p{
+    font-family: 'Cherry Bomb One', cursive;
+    color: rgba(255, 86, 139, 0.67);
+    text-shadow: 0px 2px 4px rgba(0, 0, 0, 0.25);
+    -webkit-text-stroke-width: 1px;
+    -webkit-text-stroke-color: #060606;
+    font-size: 40px;
+    margin: 0 0 0 0;
+    padding: 0 0 0 0;
+}
+.subText p{
+    font-family: 'Cherry Bomb One', cursive;
+    color: rgba(0, 0, 0, 0.83);
+    font-size: 15px;
+    font-style: normal;
+    line-height: 1;
+    margin: 0 0 0 0;    
+    padding: 0 0 0 0;
+}
+
+.menuBar, .logo, .profileBar {
+    cursor: pointer;
+}
+.menuBar {
+    margin-left: 13px;
+}
+.profileBar {
+    margin-right: 13px;
+}
