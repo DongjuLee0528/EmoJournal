@@ -1,3 +1,130 @@
-.DiaryListPage{
-    height: 90vh;
+/* DiaryListPage.module.css */
+
+.container {
+  font-family: '온글잎 의연체', sans-serif;
+  width: 97%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  max-width: 1920px;
+  max-height: 1010px;
+}
+
+.headerWrapper {
+  width: 100%;
+  max-width: 64rem;
+  margin-bottom: 2rem;
+}
+
+.headerContent {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(4px);
+  border-radius: 1rem;
+  padding: 1rem 2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.headerInner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.navButton {
+  color: #6b7280;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  transition: color 0.2s ease;
+}
+
+.navButton:hover {
+  color: #374151;
+}
+
+.navIcon {
+  font-size: 1.2rem;
+  display: inline-block;
+}
+
+.headerInfo {
+  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.dateDisplay {
+  font-size: 40px;
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.countText {
+  font-size: 32px;
+  color: #374151;
+}
+
+.titleText {
+  font-size: 32px;
+  color: #374151;
+}
+
+
+.listWrapper {
+  width: 100%;
+  max-width: 64rem;
+}
+
+.listContent {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(4px);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.listContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.diaryItem {
+  background: linear-gradient(to right, #fce7f3, #f3e8ff);
+  background-color: rgba(244, 221, 244, 0.6);
+  border-radius: 1rem;
+  padding: 1rem 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.diaryItem:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.diaryItemInner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.diaryDate {
+  color: #1f2937;
+  font-weight: 500;
+  font-size: 32px;
+}
+
+.diaryMood {
+  color: #374151;
+  font-size: 32px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
