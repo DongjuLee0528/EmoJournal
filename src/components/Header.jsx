@@ -14,7 +14,7 @@ const Header =()=>{
             </div>
             <div className={styles.logo} onClick={() => navigate('/')}>
                 <div className={styles.mainText}>
-                    <p >EMOJOUTNAL</p>
+                    <p >EMOJOURNAL</p>
                 </div>
                 <div className={styles.subText}>
                     <p >My Mood Diary</p>

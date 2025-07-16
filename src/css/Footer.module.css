@@ -1,14 +1,82 @@
 @import url('https://fonts.googleapis.com/css2?family=Cherry+Bomb+One&display=swap');
-.Footer{
-    background-color: black;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 
+/* Footer.module.css */
+.Footer {
+  width: 100%;
+  background-color: #000000;
+  padding: 4px 20px;
+  text-align: center;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
 }
+
 .Footer p {
-    font-family: 'Cherry Bomb One';
-    color: #fff;
-    font-size: 20px;
+  color: #ffffff;
+  font-size: 10px;
+  margin: 0;
+  padding: 0;
+  line-height: 1.4;
+  font-weight: normal;
+  letter-spacing: 0.3px;
+}
+
+/* 태블릿 반응형 */
+@media (max-width: 768px) {
+  .Footer {
+    padding: 4px 15px;
+  }
+  
+  .Footer p {
+    font-size: 9px;
+  }
+}
+
+/* 모바일 반응형 */
+@media (max-width: 480px) {
+  .Footer {
+    padding: 3px 12px;
+  }
+  
+  .Footer p {
+    font-size: 8px;
+    line-height: 1.5;
+  }
+}
+
+/* 초소형 모바일 */
+@media (max-width: 320px) {
+  .Footer {
+    padding: 3px 10px;
+  }
+  
+  .Footer p {
+    font-size: 7px;
+    line-height: 1.6;
+  }
+}
+
+
+/* 모바일에서 헤더/푸터 높이 조정 */
+@media (max-width: 768px) {
+  main {
+    padding-top: 60px;
+    padding-bottom: 25px;
+  }
+}
+
+@media (max-width: 480px) {
+  main {
+    padding-top: 55px;
+    padding-bottom: 20px;
+  }
+}
+
+@media (max-width: 320px) {
+  main {
+    padding-top: 50px;
+    padding-bottom: 18px;
+  }
 }
