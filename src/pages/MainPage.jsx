@@ -5,7 +5,7 @@ const Mainpage =()=>{
     return(
         <>   
 
-            <div >
+            <div>
                 <p>Mainpage</p>
             </div>
         </>
