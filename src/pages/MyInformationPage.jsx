@@ -1,5 +1,5 @@
 // src/pages/MyInformationPage.jsx
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import Header from '../components/Header';
@@ -20,7 +20,7 @@ const Container = styled.div`
 
 const ProfileCard = styled.div`
   width: 900px;
-  height: 681px;
+  min-height: 681px;
   background: linear-gradient(135deg, #f8e8f0 0%, #e8d5e8 100%);
   border-radius: 24px;
   padding: 45px;
@@ -62,11 +62,18 @@ const AvatarCircle = styled.div`
   justify-content: center;
   margin: 0 auto;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
 
   @media (max-width: 768px) {
     width: 100px;
     height: 100px;
   }
+`;
+
+const AvatarImage = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 `;
 
 const AvatarEmoji = styled.span`
@@ -147,41 +154,73 @@ const EditButton = styled.button`
 
 const MyInformationPage = () => {
   const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    // 로컬스토리지에서 user 정보 가져오기
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
 
   const handleEditClick = () => {
     console.log('수정 버튼 클릭됨');
+    // 예) 수정 페이지로 이동
     // navigate('/edit-profile');
   };
 
+  if (!user) {
+    return (
+      <Container>
+        <p>사용자 정보를 불러오는 중입니다... 또는 로그인이 필요합니다.</p>
+      </Container>
+    );
+  }
+
   return (
     <>
+      {/* 필요하면 Header, Footer 포함 */}
+      {/* <Header /> */}
+
       <Container>
         <ProfileCard>
           <ProfileHeader>
             <ProfileAvatar>
               <AvatarCircle>
-                <AvatarEmoji>🙂</AvatarEmoji>
+                {user.picture ? (
+                  <AvatarImage src={user.picture} alt="프로필 사진" />
+                ) : (
+                  <AvatarEmoji>🙂</AvatarEmoji>
+                )}
               </AvatarCircle>
             </ProfileAvatar>
-            <Greeting>안녕하세요 양하진님</Greeting>
+            <Greeting>안녕하세요 {user.name}님</Greeting>
           </ProfileHeader>
 
           <ProfileInfo>
             <InfoItem>
-              <InfoText>양하진 [ 닉네임 : 양상보 ]</InfoText>
-            </InfoItem>
-            <InfoItem>
-              <InfoText>생년월일 : 2002.03.12</InfoText>
-            </InfoItem>
-            <InfoItem>
               <InfoText>
-                성별 : 여
-                <span style={{ marginLeft: '80px' }}>MBTI : ISTP</span>
+                이름 : {user.name} {user.nickname ? `[닉네임 : ${user.nickname}]` : ''}
               </InfoText>
             </InfoItem>
             <InfoItem>
-              <InfoText>가입한 날 : 2025.06.25 (일기 쓴지 7일 째)</InfoText>
+              <InfoText>
+                이메일 : {user.email}
+              </InfoText>
             </InfoItem>
+            <InfoItem>
+              <InfoText>
+                성별 : {user.gneder} MBTI : {user.mbti}
+              </InfoText>
+            </InfoItem>
+            <InfoItem>
+              <InfoText>
+                가입한 날 : {user.joinDate}
+              </InfoText>
+            </InfoItem>
+            {/* 필요하면 다른 정보도 추가 */}
+            {/* 예: 생년월일, 성별 등은 구글 JWT 토큰에 없으면 백엔드에서 추가 제공 필요 */}
           </ProfileInfo>
 
           <ProfileFooter>
@@ -189,6 +228,8 @@ const MyInformationPage = () => {
           </ProfileFooter>
         </ProfileCard>
       </Container>
+
+      {/* <Footer /> */}
     </>
   );
 };

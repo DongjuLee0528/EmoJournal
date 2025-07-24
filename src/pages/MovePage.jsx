@@ -48,7 +48,9 @@ const MovePage = () => {
           <NavButton onClick={() => navigate('/DiaryListPage')}>일기 목록 페이지</NavButton>
           <NavButton onClick={() => navigate('/DiaryWritingPage')}>일기 작성 페이지</NavButton>
           <NavButton onClick={() => navigate('/LoginPage')}>로그인 페이지</NavButton>
+          <NavButton onClick={() => navigate('/LoginPageTest')}>로그인 페이지 테스트용</NavButton>
           <NavButton onClick={() => navigate('/MyInformationPage')}>내 정보 페이지</NavButton>
+          <NavButton onClick={() => navigate('/MyInformationPageTest')}>내 정보 페이지 테스트용</NavButton>
         </ButtonGroup>
       </Container>
     </>
