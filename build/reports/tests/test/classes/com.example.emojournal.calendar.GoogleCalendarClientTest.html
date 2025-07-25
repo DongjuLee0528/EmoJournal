@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta http-equiv="x-ua-compatible" content="IE=edge"/>
+<title>Test results - GoogleCalendarClientTest</title>
+<link href="../css/base-style.css" rel="stylesheet" type="text/css"/>
+<link href="../css/style.css" rel="stylesheet" type="text/css"/>
+<script src="../js/report.js" type="text/javascript"></script>
+</head>
+<body>
+<div id="content">
+<h1>GoogleCalendarClientTest</h1>
+<div class="breadcrumbs">
+<a href="../index.html">all</a> &gt; 
+<a href="../packages/com.example.emojournal.calendar.html">com.example.emojournal.calendar</a> &gt; GoogleCalendarClientTest</div>
+<div id="summary">
+<table>
+<tr>
+<td>
+<div class="summaryGroup">
+<table>
+<tr>
+<td>
+<div class="infoBox" id="tests">
+<div class="counter">1</div>
+<p>tests</p>
+</div>
+</td>
+<td>
+<div class="infoBox" id="failures">
+<div class="counter">1</div>
+<p>failures</p>
+</div>
+</td>
+<td>
+<div class="infoBox" id="ignored">
+<div class="counter">0</div>
+<p>ignored</p>
+</div>
+</td>
+<td>
+<div class="infoBox" id="duration">
+<div class="counter">4.686s</div>
+<p>duration</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</td>
+<td>
+<div class="infoBox failures" id="successRate">
+<div class="percent">0%</div>
+<p>successful</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div class="tab-container">
+<ul class="tabLinks">
+<li>
+<a href="#">Failed tests</a>
+</li>
+<li>
+<a href="#">Tests</a>
+</li>
+<li>
+<a href="#">Standard output</a>
+</li>
+</ul>
+<div class="tab">
+<h2>Failed tests</h2>
+<div class="test">
+<a name="구글캘린더_가져오기()"></a>
+<h3 class="failures">구글캘린더_가져오기()</h3>
+<span class="code">
+<pre>org.springframework.web.client.HttpClientErrorException$Forbidden: 403 Forbidden: &quot;{&lt;EOL&gt;  &quot;error&quot;: {&lt;EOL&gt;    &quot;code&quot;: 403,&lt;EOL&gt;    &quot;message&quot;: &quot;Method doesn't allow unregistered callers (callers without established identity). Please use API Key or other form of API consumer identity to call this API.&quot;,&lt;EOL&gt;    &quot;errors&quot;: [&lt;EOL&gt;      {&lt;EOL&gt;        &quot;message&quot;: &quot;Method doesn't allow unregistered callers (callers without established identity). Please use API Key or other form of API consumer identity to call this API.&quot;,&lt;EOL&gt;        &quot;domain&quot;: &quot;global&quot;,&lt;EOL&gt;        &quot;reason&quot;: &quot;forbidden&quot;&lt;EOL&gt;      }&lt;EOL&gt;    ],&lt;EOL&gt;    &quot;status&quot;: &quot;PERMISSION_DENIED&quot;&lt;EOL&gt;  }&lt;EOL&gt;}&lt;EOL&gt;&quot;
+	at app//org.springframework.web.client.HttpClientErrorException.create(HttpClientErrorException.java:109)
+	at app//org.springframework.web.client.DefaultResponseErrorHandler.handleError(DefaultResponseErrorHandler.java:183)
+	at app//org.springframework.web.client.DefaultResponseErrorHandler.handleError(DefaultResponseErrorHandler.java:137)
+	at app//org.springframework.web.client.ResponseErrorHandler.handleError(ResponseErrorHandler.java:63)
+	at app//org.springframework.web.client.RestTemplate.handleResponse(RestTemplate.java:942)
+	at app//org.springframework.web.client.RestTemplate.doExecute(RestTemplate.java:891)
+	at app//org.springframework.web.client.RestTemplate.execute(RestTemplate.java:790)
+	at app//org.springframework.web.client.RestTemplate.exchange(RestTemplate.java:672)
+	at app//com.example.emojournal.calendar.GoogleCalendarClient.getCalendarEvents(GoogleCalendarClient.java:42)
+	at app//com.example.emojournal.calendar.GoogleCalendarClientTest.구글캘린더_가져오기(GoogleCalendarClientTest.java:38)
+	at java.base@17.0.11/java.lang.reflect.Method.invoke(Method.java:568)
+	at java.base@17.0.11/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base@17.0.11/java.util.ArrayList.forEach(ArrayList.java:1511)
+</pre>
+</span>
+</div>
+</div>
+<div class="tab">
+<h2>Tests</h2>
+<table>
+<thead>
+<tr>
+<th>Test</th>
+<th>Duration</th>
+<th>Result</th>
+</tr>
+</thead>
+<tr>
+<td class="failures">구글캘린더_가져오기()</td>
+<td class="failures">4.686s</td>
+<td class="failures">failed</td>
+</tr>
+</table>
+</div>
+<div class="tab">
+<h2>Standard output</h2>
+<span class="code">
+<pre>22:06:16.988 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.example.emojournal.calendar.GoogleCalendarClientTest]: GoogleCalendarClientTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+22:06:17.708 [Test worker] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.example.emojournal.EmoJournalApplication for test class com.example.emojournal.calendar.GoogleCalendarClientTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::               (v3.3.13)
+
+2025-07-17T22:06:19.811+09:00  INFO 23128 --- [    Test worker] c.e.e.calendar.GoogleCalendarClientTest  : Starting GoogleCalendarClientTest using Java 17.0.11 with PID 23128 (started by user in C:\team_project_backup)
+2025-07-17T22:06:19.819+09:00  INFO 23128 --- [    Test worker] c.e.e.calendar.GoogleCalendarClientTest  : No active profile set, falling back to 1 default profile: &quot;default&quot;
+2025-07-17T22:06:23.941+09:00  INFO 23128 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-07-17T22:06:24.374+09:00  INFO 23128 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 397 ms. Found 3 JPA repository interfaces.
+2025-07-17T22:06:24.883+09:00  WARN 23128 --- [    Test worker] o.m.s.mapper.ClassPathMapperScanner      : No MyBatis mapper was found in '[com.example.emojournal]' package. Please check your configuration.
+2025-07-17T22:06:26.713+09:00  INFO 23128 --- [    Test worker] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-07-17T22:06:27.154+09:00  INFO 23128 --- [    Test worker] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.3.Final
+2025-07-17T22:06:27.361+09:00  INFO 23128 --- [    Test worker] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2025-07-17T22:06:29.117+09:00  INFO 23128 --- [    Test worker] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-07-17T22:06:29.337+09:00  INFO 23128 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-07-17T22:06:29.819+09:00  INFO 23128 --- [    Test worker] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.mariadb.jdbc.Connection@318e3942
+2025-07-17T22:06:29.829+09:00  INFO 23128 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-07-17T22:06:29.948+09:00  WARN 23128 --- [    Test worker] org.hibernate.orm.deprecation            : HHH90000025: MariaDBDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-07-17T22:06:34.272+09:00  INFO 23128 --- [    Test worker] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-07-17T22:06:34.690+09:00  INFO 23128 --- [    Test worker] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-07-17T22:06:39.314+09:00  INFO 23128 --- [    Test worker] c.e.e.calendar.GoogleCalendarClientTest  : Started GoogleCalendarClientTest in 20.757 seconds (process running for 27.585)
+timeMax = 2025-07-25T10:19:00Z
+timeMin = 2025-07-01T09:18:00Z
+2025-07-17T22:06:41.540+09:00  INFO 23128 --- [    Test worker] c.e.e.calendar.GoogleCalendarClient      : access token : 
+2025-07-17T22:06:41.540+09:00  INFO 23128 --- [    Test worker] c.e.e.calendar.GoogleCalendarClient      : timeMin : 2025-07-01T09:18:00Z
+2025-07-17T22:06:41.540+09:00  INFO 23128 --- [    Test worker] c.e.e.calendar.GoogleCalendarClient      : timeMax : 2025-07-25T10:19:00Z
+</pre>
+</span>
+</div>
+</div>
+<div id="footer">
+<p>
+<div>
+<label class="hidden" id="label-for-line-wrapping-toggle" for="line-wrapping-toggle">Wrap lines
+<input id="line-wrapping-toggle" type="checkbox" autocomplete="off"/>
+</label>
+</div>Generated by 
+<a href="https://www.gradle.org">Gradle 8.14.2</a> at 2025. 7. 17. 오후 10:06:45</p>
+</div>
+</div>
+</body>
+</html>
