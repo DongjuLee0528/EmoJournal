@@ -7,4 +7,9 @@
 /dataSources/
 /dataSources.local.xml
 
+# Environment files
 /src/main/resources/env.properties
+env.properties
+
+# Build files
+/build/
