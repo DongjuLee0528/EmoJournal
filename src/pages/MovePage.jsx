@@ -47,9 +47,7 @@ const MovePage = () => {
           <NavButton onClick={() => navigate('/MainPage')}>메인 페이지</NavButton>
           <NavButton onClick={() => navigate('/DiaryListPage')}>일기 목록 페이지</NavButton>
           <NavButton onClick={() => navigate('/DiaryWritingPage')}>일기 작성 페이지</NavButton>
-          <NavButton onClick={() => navigate('/LoginPageGsi')}>로그인 페이지Gsi</NavButton>
           <NavButton onClick={() => navigate('/LoginPageOauth')}>로그인 페이지Oauth</NavButton>
-          <NavButton onClick={() => navigate('/LoginPageTest')}>로그인 페이지 테스트용</NavButton>
           <NavButton onClick={() => navigate('/MyInformationPage')}>내 정보 페이지</NavButton>
           <NavButton onClick={() => navigate('/MyInformationPageTest')}>내 정보 페이지 테스트용</NavButton>
         </ButtonGroup>
