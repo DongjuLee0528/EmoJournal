@@ -17,19 +17,23 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GoogleCalendarClient {
 
+    // Google Calendar API의 기본 URL (기본 캘린더 사용)
     private static final String GOOGLE_CALENDAR_EVENTS_URL =
             "https://www.googleapis.com/calendar/v3/calendars/primary/events";
 
+    // HTTP 요청을 위한 RestTemplate
     private final RestTemplate restTemplate = new RestTemplate();
 
-
-    public GoogleCalendarEventListResponse getCalendarEvents(String accessToken,String timeMin,String timeMax) {
+    // 캘린더 이벤트 목록 조회 (기간: timeMin ~ timeMax)
+    public GoogleCalendarEventListResponse getCalendarEvents(String accessToken, String timeMin, String timeMax) {
+        // 요청 URL 구성
         String url = UriComponentsBuilder.fromHttpUrl(GOOGLE_CALENDAR_EVENTS_URL)
                 .queryParam("timeMin", timeMin)
                 .queryParam("timeMax", timeMax)
-                .queryParam("singleEvents", true)
+                .queryParam("singleEvents", true) // 반복 일정 개별 항목으로 처리
                 .toUriString();
 
+        // Authorization 헤더 설정 (Bearer 토큰)
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(accessToken);
         headers.setAccept(List.of(MediaType.APPLICATION_JSON));
@@ -40,6 +44,7 @@ public class GoogleCalendarClient {
         log.info("timeMin : " + timeMin);
         log.info("timeMax : " + timeMax);
 
+        // GET 요청 전송
         ResponseEntity<GoogleCalendarEventListResponse> response = restTemplate.exchange(
                 url,
                 HttpMethod.GET,
@@ -47,22 +52,23 @@ public class GoogleCalendarClient {
                 GoogleCalendarEventListResponse.class
         );
 
-        if(response.getStatusCode() == HttpStatus.OK) {
+        // 응답 성공 시 데이터 반환
+        if (response.getStatusCode() == HttpStatus.OK) {
             return response.getBody();
         }
 
+        // 실패 시 예외 처리
         throw new RuntimeException("Failed to fetch events from Google Calendar.");
     }
 
-
-
-    // 일정 추가
+    // 일정 생성
     public GoogleCalendarEventDto createEvent(String accessToken, GoogleCalendarEventCreateRequest request) {
         HttpHeaders headers = createHeaders(accessToken);
         HttpEntity<GoogleCalendarEventCreateRequest> entity = new HttpEntity<>(request, headers);
 
         log.info("Creating event: {}", request);
 
+        // POST 요청으로 일정 생성
         ResponseEntity<GoogleCalendarEventDto> response = restTemplate.exchange(
                 GOOGLE_CALENDAR_EVENTS_URL,
                 HttpMethod.POST,
@@ -87,6 +93,7 @@ public class GoogleCalendarClient {
 
         log.info("Updating event {}: {}", eventId, request);
 
+        // PUT 요청으로 일정 수정
         ResponseEntity<GoogleCalendarEventDto> response = restTemplate.exchange(
                 url,
                 HttpMethod.PUT,
@@ -111,6 +118,7 @@ public class GoogleCalendarClient {
 
         log.info("Deleting event: {}", eventId);
 
+        // DELETE 요청으로 일정 삭제
         ResponseEntity<Void> response = restTemplate.exchange(
                 url,
                 HttpMethod.DELETE,
@@ -135,6 +143,7 @@ public class GoogleCalendarClient {
 
         log.info("Fetching event: {}", eventId);
 
+        // GET 요청으로 단일 일정 조회
         ResponseEntity<GoogleCalendarEventDto> response = restTemplate.exchange(
                 url,
                 HttpMethod.GET,
@@ -149,12 +158,12 @@ public class GoogleCalendarClient {
         throw new RuntimeException("Failed to fetch event from Google Calendar.");
     }
 
-    // 헤더 생성 공통 메서드
+    // 공통적으로 사용되는 HTTP 헤더 생성 메서드
     private HttpHeaders createHeaders(String accessToken) {
         HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(accessToken);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+        headers.setBearerAuth(accessToken); // 인증 토큰
+        headers.setContentType(MediaType.APPLICATION_JSON); // 요청 Content-Type
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON)); // 응답 Accept
         return headers;
     }
 }
