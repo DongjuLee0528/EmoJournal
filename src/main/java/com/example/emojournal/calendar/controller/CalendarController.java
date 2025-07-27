@@ -15,18 +15,22 @@ import java.util.Map;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/calendar")
+@RequestMapping("/api/calendar") // 공통 URL Prefix
 public class CalendarController {
 
     private final GoogleCalendarService googleCalendarService;
 
+    // 일정 목록 조회 (기간 필터 포함)
     @GetMapping
     public ResponseEntity<GoogleCalendarEventListResponse> getCalendar(
             HttpServletRequest request,
             @RequestParam String timeMin,
             @RequestParam String timeMax) {
         try {
+            // 인증 필터에서 설정된 사용자 ID 추출
             Long memberId = (Long) request.getAttribute("memberId");
+
+            // Google Calendar에서 일정 조회
             GoogleCalendarEventListResponse response = googleCalendarService.fetchCalendar(memberId, timeMin, timeMax);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -35,6 +39,7 @@ public class CalendarController {
         }
     }
 
+    // 일정 생성
     @PostMapping("/events")
     public ResponseEntity<?> createEvent(
             HttpServletRequest request,
@@ -43,6 +48,7 @@ public class CalendarController {
             Long memberId = (Long) request.getAttribute("memberId");
             CalendarEventResponse response = googleCalendarService.createEvent(memberId, createRequest);
 
+            // 생성 성공 시 JSON 응답
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(Map.of(
                             "success", true,
@@ -60,6 +66,7 @@ public class CalendarController {
         }
     }
 
+    // 일정 수정
     @PutMapping("/events/{eventId}")
     public ResponseEntity<?> updateEvent(
             HttpServletRequest request,
@@ -85,6 +92,7 @@ public class CalendarController {
         }
     }
 
+    // 일정 삭제
     @DeleteMapping("/events/{eventId}")
     public ResponseEntity<?> deleteEvent(
             HttpServletRequest request,
@@ -108,6 +116,7 @@ public class CalendarController {
         }
     }
 
+    // 단일 일정 상세 조회
     @GetMapping("/events/{eventId}")
     public ResponseEntity<?> getEvent(
             HttpServletRequest request,

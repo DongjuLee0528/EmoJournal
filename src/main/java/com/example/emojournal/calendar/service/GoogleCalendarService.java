@@ -210,7 +210,6 @@ public class GoogleCalendarService {
                 .build();
     }
 
-    // ✅ 기존 메서드 - 그대로 유지
     private String toUtcString(String time) {
         LocalDateTime localDateTime = LocalDateTime.parse(time);
         ZonedDateTime zonedDateTime = localDateTime.atZone(ZoneId.of("Asia/Seoul"));
