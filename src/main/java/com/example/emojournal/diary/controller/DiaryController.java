@@ -5,6 +5,7 @@ import com.example.emojournal.diary.dto.DiaryResponse;
 import com.example.emojournal.diary.dto.DiaryUpdateRequest;
 import com.example.emojournal.diary.service.DiaryService;
 import com.example.emojournal.diary.service.FileUploadService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,25 +33,78 @@ public class DiaryController {
     private final FileUploadService fileUploadService;
 
     /**
+     * JWT 토큰에서 사용자 ID 추출
+     */
+    private String getUserIdFromAuth(Authentication auth, HttpServletRequest request) {
+        if (auth != null && auth.getPrincipal() != null) {
+            // JWT 필터에서 설정한 memberId 사용
+            Long memberId = (Long) request.getAttribute("memberId");
+            return "member_" + memberId; // 일기 시스템용 userId 형식
+        }
+        throw new RuntimeException("인증되지 않은 사용자입니다.");
+    }
+
+    /**
      * 일기 생성 (텍스트 + 이미지 파일)
      * POST /api/diary
      */
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<DiaryResponse> createDiary(
             @Valid @ModelAttribute DiaryCreateRequest request,
-            @RequestParam(value = "image", required = false) MultipartFile imageFile) {
+            @RequestParam(value = "image", required = false) MultipartFile imageFile,
+            Authentication auth,
+            HttpServletRequest httpRequest) {
 
         try {
+            String userId = getUserIdFromAuth(auth, httpRequest);
+            request.setUserId(userId); // 토큰에서 추출한 userId 설정
+
             log.info("일기 생성 API 호출 - 사용자: {}, 이미지 포함: {}",
-                    request.getUserId(), imageFile != null && !imageFile.isEmpty());
+                    userId, imageFile != null && !imageFile.isEmpty());
 
             DiaryResponse response = diaryService.createDiary(request, imageFile);
 
             log.info("일기 생성 성공 - ID: {}, 감정: {}", response.getId(), response.getAnalyzedEmotion());
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
 
+        } catch (RuntimeException e) {
+            // 인증 관련 오류
+            if (e.getMessage().contains("인증되지 않은")) {
+                log.error("일기 생성 API 인증 오류: {}", e.getMessage());
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            // 기타 런타임 에러
+            log.error("일기 생성 API 런타임 오류: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
         } catch (Exception e) {
             log.error("일기 생성 API 오류", e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * 테스트용 간단한 일기 생성 (JSON)
+     * POST /api/diary/simple
+     */
+    @PostMapping("/simple")
+    public ResponseEntity<DiaryResponse> createSimpleDiary(
+            @Valid @RequestBody DiaryCreateRequest request,
+            Authentication auth,
+            HttpServletRequest httpRequest) {
+        try {
+            String userId = getUserIdFromAuth(auth, httpRequest);
+            request.setUserId(userId);
+
+            log.info("간단한 일기 생성 API 호출 - 사용자: {}", userId);
+
+            DiaryResponse response = diaryService.createDiary(request, null);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+
+        } catch (RuntimeException e) {
+            log.error("간단한 일기 생성 API 인증 오류: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        } catch (Exception e) {
+            log.error("간단한 일기 생성 API 오류", e);
             return ResponseEntity.internalServerError().build();
         }
     }
@@ -61,11 +116,14 @@ public class DiaryController {
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<DiaryResponse> updateDiary(
             @PathVariable Long id,
-            @RequestParam String userId, // 추후 인증에서 자동으로 가져올 예정
             @Valid @ModelAttribute DiaryUpdateRequest request,
-            @RequestParam(value = "image", required = false) MultipartFile imageFile) {
+            @RequestParam(value = "image", required = false) MultipartFile imageFile,
+            Authentication auth,
+            HttpServletRequest httpRequest) {
 
         try {
+            String userId = getUserIdFromAuth(auth, httpRequest);
+
             log.info("일기 수정 API 호출 - ID: {}, 사용자: {}", id, userId);
 
             DiaryResponse response = diaryService.updateDiary(id, userId, request, imageFile);
@@ -76,6 +134,15 @@ public class DiaryController {
         } catch (IllegalArgumentException e) {
             log.warn("일기 수정 실패 - ID: {}, 오류: {}", id, e.getMessage());
             return ResponseEntity.notFound().build();
+        } catch (RuntimeException e) {
+            // 인증 관련 오류
+            if (e.getMessage().contains("인증되지 않은")) {
+                log.error("일기 수정 API 인증 오류: {}", e.getMessage());
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            // 기타 런타임 에러
+            log.error("일기 수정 API 런타임 오류: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
         } catch (Exception e) {
             log.error("일기 수정 API 오류 - ID: {}", id, e);
             return ResponseEntity.internalServerError().build();
@@ -89,9 +156,12 @@ public class DiaryController {
     @GetMapping("/{id}")
     public ResponseEntity<DiaryResponse> getDiary(
             @PathVariable Long id,
-            @RequestParam String userId) {
+            Authentication auth,
+            HttpServletRequest httpRequest) {
 
         try {
+            String userId = getUserIdFromAuth(auth, httpRequest);
+
             log.info("일기 조회 API 호출 - ID: {}, 사용자: {}", id, userId);
 
             DiaryResponse response = diaryService.getDiary(id, userId);
@@ -100,6 +170,15 @@ public class DiaryController {
         } catch (IllegalArgumentException e) {
             log.warn("일기 조회 실패 - ID: {}, 오류: {}", id, e.getMessage());
             return ResponseEntity.notFound().build();
+        } catch (RuntimeException e) {
+            // 인증 관련 오류
+            if (e.getMessage().contains("인증되지 않은")) {
+                log.error("일기 조회 API 인증 오류: {}", e.getMessage());
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            // 기타 런타임 에러
+            log.error("일기 조회 API 런타임 오류: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
         } catch (Exception e) {
             log.error("일기 조회 API 오류 - ID: {}", id, e);
             return ResponseEntity.internalServerError().build();
@@ -112,11 +191,14 @@ public class DiaryController {
      */
     @GetMapping
     public ResponseEntity<Page<DiaryResponse>> getDiaries(
-            @RequestParam String userId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            Authentication auth,
+            HttpServletRequest httpRequest) {
 
         try {
+            String userId = getUserIdFromAuth(auth, httpRequest);
+
             log.info("일기 목록 조회 API 호출 - 사용자: {}, 페이지: {}, 크기: {}", userId, page, size);
 
             Pageable pageable = PageRequest.of(page, size);
@@ -124,8 +206,17 @@ public class DiaryController {
 
             return ResponseEntity.ok(response);
 
+        } catch (RuntimeException e) {
+            // 인증 관련 오류
+            if (e.getMessage().contains("인증되지 않은")) {
+                log.error("일기 목록 조회 API 인증 오류: {}", e.getMessage());
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            // 기타 런타임 에러
+            log.error("일기 목록 조회 API 런타임 오류: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
         } catch (Exception e) {
-            log.error("일기 목록 조회 API 오류 - 사용자: {}", userId, e);
+            log.error("일기 목록 조회 API 오류", e);
             return ResponseEntity.internalServerError().build();
         }
     }
@@ -137,9 +228,12 @@ public class DiaryController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteDiary(
             @PathVariable Long id,
-            @RequestParam String userId) {
+            Authentication auth,
+            HttpServletRequest httpRequest) {
 
         try {
+            String userId = getUserIdFromAuth(auth, httpRequest);
+
             log.info("일기 삭제 API 호출 - ID: {}, 사용자: {}", id, userId);
 
             diaryService.deleteDiary(id, userId);
@@ -150,6 +244,15 @@ public class DiaryController {
         } catch (IllegalArgumentException e) {
             log.warn("일기 삭제 실패 - ID: {}, 오류: {}", id, e.getMessage());
             return ResponseEntity.notFound().build();
+        } catch (RuntimeException e) {
+            // 인증 관련 오류
+            if (e.getMessage().contains("인증되지 않은")) {
+                log.error("일기 삭제 API 인증 오류: {}", e.getMessage());
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            // 기타 런타임 에러
+            log.error("일기 삭제 API 런타임 오류: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
         } catch (Exception e) {
             log.error("일기 삭제 API 오류 - ID: {}", id, e);
             return ResponseEntity.internalServerError().build();
@@ -162,17 +265,23 @@ public class DiaryController {
      */
     @GetMapping("/search")
     public ResponseEntity<List<DiaryResponse>> searchDiaries(
-            @RequestParam String userId,
-            @RequestParam String keyword) {
+            @RequestParam String keyword,
+            Authentication auth,
+            HttpServletRequest httpRequest) {
 
         try {
+            String userId = getUserIdFromAuth(auth, httpRequest);
+
             log.info("일기 검색 API 호출 - 사용자: {}, 키워드: {}", userId, keyword);
 
             List<DiaryResponse> response = diaryService.searchDiaries(userId, keyword);
             return ResponseEntity.ok(response);
 
+        } catch (RuntimeException e) {
+            log.error("일기 검색 API 인증 오류: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         } catch (Exception e) {
-            log.error("일기 검색 API 오류 - 사용자: {}, 키워드: {}", userId, keyword, e);
+            log.error("일기 검색 API 오류 - 키워드: {}", keyword, e);
             return ResponseEntity.internalServerError().build();
         }
     }
@@ -183,17 +292,23 @@ public class DiaryController {
      */
     @GetMapping("/emotion/{emotion}")
     public ResponseEntity<List<DiaryResponse>> getDiariesByEmotion(
-            @RequestParam String userId,
-            @PathVariable String emotion) {
+            @PathVariable String emotion,
+            Authentication auth,
+            HttpServletRequest httpRequest) {
 
         try {
+            String userId = getUserIdFromAuth(auth, httpRequest);
+
             log.info("감정별 일기 조회 API 호출 - 사용자: {}, 감정: {}", userId, emotion);
 
             List<DiaryResponse> response = diaryService.getDiariesByEmotion(userId, emotion);
             return ResponseEntity.ok(response);
 
+        } catch (RuntimeException e) {
+            log.error("감정별 일기 조회 API 인증 오류: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         } catch (Exception e) {
-            log.error("감정별 일기 조회 API 오류 - 사용자: {}, 감정: {}", userId, emotion, e);
+            log.error("감정별 일기 조회 API 오류 - 감정: {}", emotion, e);
             return ResponseEntity.internalServerError().build();
         }
     }
@@ -203,8 +318,12 @@ public class DiaryController {
      * GET /api/diary/statistics/emotion
      */
     @GetMapping("/statistics/emotion")
-    public ResponseEntity<Map<String, Object>> getEmotionStatistics(@RequestParam String userId) {
+    public ResponseEntity<Map<String, Object>> getEmotionStatistics(
+            Authentication auth,
+            HttpServletRequest httpRequest) {
         try {
+            String userId = getUserIdFromAuth(auth, httpRequest);
+
             log.info("감정 통계 조회 API 호출 - 사용자: {}", userId);
 
             Map<String, Long> statistics = diaryService.getEmotionStatistics(userId);
@@ -218,8 +337,11 @@ public class DiaryController {
 
             return ResponseEntity.ok(response);
 
+        } catch (RuntimeException e) {
+            log.error("감정 통계 조회 API 인증 오류: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         } catch (Exception e) {
-            log.error("감정 통계 조회 API 오류 - 사용자: {}", userId, e);
+            log.error("감정 통계 조회 API 오류", e);
             return ResponseEntity.internalServerError().build();
         }
     }
@@ -248,7 +370,7 @@ public class DiaryController {
     public ResponseEntity<Map<String, Object>> healthCheck() {
         Map<String, Object> response = Map.of(
                 "status", "UP",
-                "message", "Diary API is running!",
+                "message", "Diary API is running with JWT Authentication!",
                 "version", "1.0",
                 "features", List.of(
                         "일기 CRUD",
@@ -256,28 +378,11 @@ public class DiaryController {
                         "감정 분석 연동",
                         "키워드 검색",
                         "감정별 필터링",
-                        "통계 조회"
+                        "통계 조회",
+                        "JWT 인증"
                 )
         );
 
         return ResponseEntity.ok(response);
-    }
-
-    /**
-     * 테스트용 간단한 일기 생성 (JSON)
-     * POST /api/diary/simple
-     */
-    @PostMapping("/simple")
-    public ResponseEntity<DiaryResponse> createSimpleDiary(@Valid @RequestBody DiaryCreateRequest request) {
-        try {
-            log.info("간단한 일기 생성 API 호출 - 사용자: {}", request.getUserId());
-
-            DiaryResponse response = diaryService.createDiary(request, null);
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-
-        } catch (Exception e) {
-            log.error("간단한 일기 생성 API 오류", e);
-            return ResponseEntity.internalServerError().build();
-        }
     }
 }
