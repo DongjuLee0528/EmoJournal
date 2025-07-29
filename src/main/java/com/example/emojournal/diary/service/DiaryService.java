@@ -225,10 +225,10 @@ public class DiaryService {
         try {
             log.debug("감정 분석 시작 - 일기 ID: {}", diary.getId());
 
-            // 감정 분석 요청 생성
+            // 감정 분석 요청 생성 (userId 제거)
             EmotionAnalysisRequest analysisRequest = new EmotionAnalysisRequest();
             analysisRequest.setDiaryText(diary.getContent());
-            analysisRequest.setUserId(diary.getUserId());
+            // analysisRequest.setUserId(diary.getUserId()); // ← 이제 불필요함
 
             // 감정 분석 실행
             EmotionAnalysisResponse analysisResponse = emotionAnalysisService.analyzeEmotion(analysisRequest);

@@ -51,7 +51,7 @@ public class SecurityConfig {
                                 "/h2-console/**"                 // H2 콘솔 (개발용)
                         ).permitAll()
 
-                        // 나머지 모든 요청은 인증 필요
+                        // 나머지 모든 요청은 인증 필요 (감정 분석 API 포함)
                         .anyRequest().authenticated()
                 )
 
