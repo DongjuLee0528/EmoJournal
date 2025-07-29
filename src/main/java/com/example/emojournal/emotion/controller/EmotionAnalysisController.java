@@ -4,10 +4,12 @@ import com.example.emojournal.emotion.dto.EmotionAnalysisRequest;
 import com.example.emojournal.emotion.dto.EmotionAnalysisResponse;
 import com.example.emojournal.emotion.service.EmotionAnalysisService;
 import com.example.emojournal.emotion.service.EmotionImageService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,29 +26,51 @@ public class EmotionAnalysisController {
     private final EmotionImageService emotionImageService;
 
     /**
+     * JWT 토큰에서 사용자 ID 추출
+     */
+    private String getUserIdFromAuth(Authentication auth, HttpServletRequest request) {
+        if (auth != null && auth.getPrincipal() != null) {
+            Long memberId = (Long) request.getAttribute("memberId");
+            return "member_" + memberId;
+        }
+        throw new RuntimeException("인증되지 않은 사용자입니다.");
+    }
+
+    /**
      * 일기 텍스트 감정 분석 API (새 버전 - 9가지 감정 분류)
      * POST /api/emotion/analyze
      */
     @PostMapping("/analyze")
     public ResponseEntity<EmotionAnalysisResponse> analyzeEmotion(
-            @Valid @RequestBody EmotionAnalysisRequest request) {
-
-        log.info("감정 분석 API 호출 - 사용자: {}, 텍스트 길이: {}",
-                request.getUserId(), request.getDiaryText().length());
+            @Valid @RequestBody EmotionAnalysisRequest request,
+            Authentication auth,
+            HttpServletRequest httpRequest) {
 
         try {
+            String userId = getUserIdFromAuth(auth, httpRequest);
+
+            log.info("감정 분석 API 호출 - 사용자: {}, 텍스트 길이: {}",
+                    userId, request.getDiaryText().length());
+
+            // EmotionAnalysisRequest는 이제 userId 없이 일기 텍스트만 포함
             EmotionAnalysisResponse response = emotionAnalysisService.analyzeEmotion(request);
 
             if (response.isSuccess()) {
-                log.info("감정 분석 성공 - 감정: {}, 감정키워드: {}, 일기키워드: {}, 이미지: {}",
-                        response.getEmotion(), response.getEmotionKeyword(),
-                        response.getDiaryKeywords(), response.getImageFileName());
+                log.info("감정 분석 성공 - 감정: {}, 키워드: {}, 이미지: {}",
+                        response.getEmotion(), response.getAllKeywords(), response.getImageFileName());
                 return ResponseEntity.ok(response);
             } else {
                 log.warn("감정 분석 실패: {}", response.getMessage());
                 return ResponseEntity.badRequest().body(response);
             }
 
+        } catch (RuntimeException e) {
+            if (e.getMessage().contains("인증되지 않은")) {
+                log.error("감정 분석 API 인증 오류: {}", e.getMessage());
+                return ResponseEntity.status(401).build();
+            }
+            log.error("감정 분석 API 런타임 오류: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
         } catch (Exception e) {
             log.error("감정 분석 API 처리 중 오류", e);
             EmotionAnalysisResponse errorResponse = EmotionAnalysisResponse.failure(
@@ -54,32 +78,6 @@ public class EmotionAnalysisController {
                     "서버 오류가 발생했습니다: " + e.getMessage()
             );
             return ResponseEntity.internalServerError().body(errorResponse);
-        }
-    }
-
-    /**
-     * 모든 감정 이미지 URL 목록 제공 (정적 파일 경로)
-     * GET /api/emotion/images
-     */
-    @GetMapping("/images")
-    public ResponseEntity<Map<String, Object>> getAllEmotionImageUrls() {
-        try {
-            List<String> emotions = emotionAnalysisService.getAvailableEmotions();
-            Map<String, String> imageUrls = emotionImageService.getAllEmotionImageUrls();
-
-            Map<String, Object> response = Map.of(
-                    "imageUrls", imageUrls,
-                    "totalImages", emotions.size(),
-                    "basePath", "/images/emotions/"
-            );
-
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            log.error("감정 이미지 URL 목록 조회 중 오류", e);
-            return ResponseEntity.internalServerError().body(
-                    Map.of("error", "이미지 URL을 가져오는 중 오류가 발생했습니다.")
-            );
         }
     }
 
@@ -161,9 +159,9 @@ public class EmotionAnalysisController {
     public ResponseEntity<Map<String, Object>> healthCheck() {
         Map<String, Object> response = Map.of(
                 "status", "UP",
-                "message", "Emotion Analysis API is running!",
+                "message", "Emotion Analysis API is running with JWT Authentication!",
                 "supportedEmotions", emotionAnalysisService.getAvailableEmotions(),
-                "version", "2.0 (9 emotion categories with static images)",
+                "version", "2.0 (9 emotion categories with JWT auth)",
                 "imageBasePath", "/images/emotions/"
         );
         return ResponseEntity.ok(response);
@@ -174,11 +172,17 @@ public class EmotionAnalysisController {
      * POST /api/emotion/test
      */
     @PostMapping("/test")
-    public ResponseEntity<Map<String, Object>> testEmotion(@RequestBody Map<String, String> request) {
+    public ResponseEntity<Map<String, Object>> testEmotion(
+            @RequestBody Map<String, String> request,
+            Authentication auth,
+            HttpServletRequest httpRequest) {
+
         String testText = request.getOrDefault("text", "");
-        log.info("감정 분석 테스트 - 입력: {}", testText);
 
         try {
+            String userId = getUserIdFromAuth(auth, httpRequest);
+            log.info("감정 분석 테스트 - 사용자: {}, 입력: {}", userId, testText);
+
             // 간단한 키워드 기반 테스트
             String predictedEmotion = predictEmotionByKeywords(testText);
             String imageUrl = emotionImageService.getEmotionImageUrl(predictedEmotion);
@@ -188,11 +192,21 @@ public class EmotionAnalysisController {
                     "predictedEmotion", predictedEmotion,
                     "imageUrl", imageUrl,
                     "confidence", "테스트 모드",
-                    "message", predictedEmotion + " 감정이 감지되었습니다!"
+                    "message", predictedEmotion + " 감정이 감지되었습니다!",
+                    "userId", userId
             );
 
             return ResponseEntity.ok(response);
 
+        } catch (RuntimeException e) {
+            if (e.getMessage().contains("인증되지 않은")) {
+                log.error("감정 분석 테스트 API 인증 오류: {}", e.getMessage());
+                return ResponseEntity.status(401).build();
+            }
+            log.error("감정 분석 테스트 API 런타임 오류: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body(
+                    Map.of("error", "테스트 중 오류가 발생했습니다.")
+            );
         } catch (Exception e) {
             log.error("감정 분석 테스트 중 오류", e);
             return ResponseEntity.internalServerError().body(
