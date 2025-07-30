@@ -24,7 +24,7 @@ public class GoogleTokenService {
     // 4. 그냥 놔두고
     // 5. 존재하지 않는다면 새로 만들어준다
 
-    public void save(Long memberId, GoogleTokenDto googleTokenDto) {
+    public void saveIfNotExists(Long memberId, GoogleTokenDto googleTokenDto) {
         Member member = memberRepository.findById(memberId).orElseThrow();
         Optional<GoogleToken> googleToken = googleTokenRepository.findByMember(member);
         if (googleToken.isPresent()) {
