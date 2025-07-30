@@ -3,12 +3,17 @@ package com.example.emojournal.member.entity;
 import com.example.emojournal.auth.jwt.entity.RefreshToken;
 import com.example.emojournal.auth.jwt.entity.item.OAuthProvider;
 import com.example.emojournal.member.dto.MemberResponseDto;
+import com.example.emojournal.member.entity.Item.Gender;
+import com.example.emojournal.member.entity.Item.Mbti;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,6 +21,7 @@ import java.util.List;
 @Setter
 @Entity
 @NoArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
 public class Member {
 
     @Id
@@ -29,6 +35,15 @@ public class Member {
     @Enumerated(EnumType.STRING)
     private OAuthProvider oAuthProvider;
 
+    @Enumerated(EnumType.STRING)
+    private Mbti mbti;
+
+    @Enumerated(EnumType.STRING)
+    private Gender gender;
+
+    @CreatedDate
+    private LocalDateTime createDate;
+    
     @OneToMany(mappedBy = "member")
     private List<RefreshToken> refreshTokens = new ArrayList<>();
 
@@ -46,6 +61,7 @@ public class Member {
                 .email(member.getEmail())
                 .nickname(member.getNickname())
                 .oAuthProvider(member.getOAuthProvider().toString())
+                .createDate(member.createDate.toString())
                 .build();
     }
 
