@@ -14,5 +14,7 @@ public class MemberResponseDto {
     private String email;
     private String nickname;
     private String oAuthProvider;
-
+    private String gender;
+    private String mbti;
+    private String createDate;
 }
