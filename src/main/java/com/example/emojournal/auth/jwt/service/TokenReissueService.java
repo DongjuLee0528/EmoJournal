@@ -7,6 +7,7 @@ import com.example.emojournal.auth.jwt.repository.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.NoSuchElementException;
@@ -21,8 +22,9 @@ public class TokenReissueService {
 
     private final RefreshTokenRepository refreshTokenRepository;
 
-    // access token 재발급
-    // refresh token 이
+    // 스프링 서버에서 발급한 refresh token
+    // 이걸로 access token 발급
+    @Transactional(readOnly = true)
     public Optional<AuthTokens> reissueAccessToken(String refreshToken) {
         log.info("refresh Token : " + refreshToken);
 

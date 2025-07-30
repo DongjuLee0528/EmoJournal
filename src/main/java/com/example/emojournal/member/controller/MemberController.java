@@ -1,13 +1,14 @@
 package com.example.emojournal.member.controller;
 
+import com.example.emojournal.member.dto.requst.MemberUpdateRequest;
 import com.example.emojournal.member.entity.Member;
 import com.example.emojournal.member.dto.MemberResponseDto;
 import com.example.emojournal.member.service.MemberService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
@@ -21,7 +22,14 @@ public class MemberController {
 
         Long memberId = (Long)request.getAttribute("memberId");
 
-
         return Member.fromEntity(memberService.findMemberById(memberId));
     }
+
+//    @PutMapping("/member")
+//    public ResponseEntity<?> setMember(@RequestBody MemberUpdateRequest memberUpdateRequest) {
+//
+//
+//
+//        return null;
+//    }
 }

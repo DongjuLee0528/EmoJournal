@@ -51,7 +51,9 @@ public class OAuthLoginService {
         // 있다면 유저 id 를 가져옴
         // 둘다 마지막에 id 를 가져오는 건 똑같음
         return memberRepository.findByEmail(oAuthInfoResponse.getEmail())
+                // member.getId() 로 member 를 찾음
                 .map(Member::getId)
+                // 없다면 새로 만듬
                 .orElseGet(() -> newMember(oAuthInfoResponse));
     }
 
