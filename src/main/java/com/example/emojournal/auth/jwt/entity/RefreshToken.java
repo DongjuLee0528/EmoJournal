@@ -32,18 +32,22 @@ public class RefreshToken {
     @Column(nullable = false)
     private Boolean revoked = false;
 
+    @Column(nullable = false)
+    private String ipAddress;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
     private Member member;
 
     // 정적 팩토리 메서드
-    public static RefreshToken create(String refreshToken, LocalDateTime expiresAt, Member member) {
+    public static RefreshToken create(String refreshToken, LocalDateTime expiresAt,String ipAddress ,Member member) {
         RefreshToken token = new RefreshToken();
         token.refreshToken = refreshToken;
         token.createdAt = LocalDateTime.now();
         token.expiresAt = expiresAt;
         token.revoked = false;
         token.member = member;
+        token.ipAddress = ipAddress;
         return token;
     }
 
