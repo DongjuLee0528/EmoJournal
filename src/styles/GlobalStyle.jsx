@@ -1,8 +1,17 @@
 import { createGlobalStyle } from 'styled-components';
-import bgImage from '../image/background.png'; // 이미지 경로
+import bgImage from '../image/background.png';
+import OngleapFont from '../fonts/온글잎 의연체.ttf'; // 한글 이름 유지 가능
 
 const GlobalStyle = createGlobalStyle`
   @import url('https://fonts.googleapis.com/css2?family=Cherry+Bomb+One&display=swap');
+
+  @font-face {
+    font-family: 'Ongleap';
+    src: url('${OngleapFont}') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+  }
+
   * {
     margin: 0;
     padding: 0;
@@ -10,15 +19,16 @@ const GlobalStyle = createGlobalStyle`
   }
 
   body {
-    font-family: 'Cherry Bomb One', cursive;
+    font-family: 'Ongleap', 'Cherry Bomb One', cursive;
     background-image: url(${bgImage});
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center;
     min-height: 100vh;
   }
-    main {
-    padding-top: 60px; /* 헤더 높이와 동일하게 */
+
+  main {
+    padding-top: 60px;
   }
 
   @media (max-width: 480px) {

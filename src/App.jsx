@@ -15,6 +15,7 @@ import LoginPageTest from './pages/LoginPageTest';
 import MyInformationPageTest from './pages/MyInformationPageTest';
 import MyInformationPage from './pages/MyInformationPage';
 import MovePage from './pages/MovePage';
+//import OngleapFont from '../fonts/온글잎 의연체.ttf';
 
 
 const App = () => {
@@ -33,7 +34,6 @@ const App = () => {
           <Route path="/LoginPageTest" element={<LoginPageTest />} />
           <Route path="/MyInformationPageTest" element={<MyInformationPageTest />} />
           <Route path="/MyInformationPage" element={<MyInformationPage />} />
-
         </Routes>
       </div>
       <Footer/>
