@@ -204,6 +204,7 @@ const MainPage = () => {
   const [events, setEvents] = useState([]);
   const [isGoogleApiLoaded, setIsGoogleApiLoaded] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // 로딩 상태 추가
 
   const config = useMemo(() => ({
     GOOGLE_API_KEY: process.env.REACT_APP_GOOGLE_API_KEY,
@@ -236,6 +237,7 @@ const MainPage = () => {
   const loadGoogleCalendarEvents = useCallback(async () => {
     if (!isGoogleApiLoaded || !isAuthenticated) return;
 
+    setIsLoading(true); // 로딩 시작
     try {
       const response = await window.gapi.client.calendar.events.list({
         calendarId: config.CALENDAR_ID,
@@ -255,18 +257,35 @@ const MainPage = () => {
         color: getRandomColor(i),
       }));
       setEvents(formatted);
+      console.log('구글 캘린더 이벤트 로드 완료:', formatted.length, '개');
     } catch (error) {
       console.error('이벤트 불러오기 실패:', error);
       loadSampleEvents();
+    } finally {
+      setIsLoading(false); // 로딩 완료
     }
   }, [isGoogleApiLoaded, isAuthenticated, currentDate, config.CALENDAR_ID, getRandomColor, loadSampleEvents]);
 
   const signIn = useCallback(async () => {
-    const authInstance = window.gapi.auth2.getAuthInstance();
-    await authInstance.signIn();
-    setIsAuthenticated(true);
-    loadGoogleCalendarEvents();
+    try {
+      setIsLoading(true);
+      const authInstance = window.gapi.auth2.getAuthInstance();
+      await authInstance.signIn();
+      setIsAuthenticated(true);
+      console.log('로그인 성공, 캘린더 데이터 로드 중...');
+      await loadGoogleCalendarEvents(); // await 추가로 순차 실행 보장
+    } catch (error) {
+      console.error('로그인 실패:', error);
+      setIsLoading(false);
+    }
   }, [loadGoogleCalendarEvents]);
+
+  // 월 변경 시에도 이벤트 다시 로드
+  useEffect(() => {
+    if (isAuthenticated && isGoogleApiLoaded) {
+      loadGoogleCalendarEvents();
+    }
+  }, [currentDate, isAuthenticated, isGoogleApiLoaded, loadGoogleCalendarEvents]);
 
   useEffect(() => {
     const initializeGapi = async () => {
@@ -288,6 +307,18 @@ const MainPage = () => {
 
             setIsGoogleApiLoaded(true);
             const authInstance = window.gapi.auth2.getAuthInstance();
+            
+            // 인증 상태 변화 감지 리스너 추가
+            authInstance.isSignedIn.listen((isSignedIn) => {
+              setIsAuthenticated(isSignedIn);
+              if (isSignedIn) {
+                loadGoogleCalendarEvents();
+              } else {
+                loadSampleEvents();
+              }
+            });
+
+            // 초기 인증 상태 확인
             if (authInstance.isSignedIn.get()) {
               setIsAuthenticated(true);
               loadGoogleCalendarEvents();
@@ -312,7 +343,6 @@ const MainPage = () => {
     }
   }, [config, loadSampleEvents, loadGoogleCalendarEvents]);
 
-  // 날짜 관련 유틸리티 함수들
   const dateUtils = useMemo(() => ({
     getDaysInMonth: (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate(),
     getFirstDayOfMonth: (date) => new Date(date.getFullYear(), date.getMonth(), 1).getDay(),
@@ -387,12 +417,22 @@ const MainPage = () => {
       <Header />
       <CalendarContainer>
         <MonthHeader>
-          <MonthTitle onClick={handleMonthClick}>&lt; {dateUtils.formatMonth(currentDate)} &gt;</MonthTitle>
+          <MonthTitle onClick={handleMonthClick}>
+            &lt; {dateUtils.formatMonth(currentDate)} &gt;
+          </MonthTitle>
         </MonthHeader>
 
         {!isAuthenticated && isGoogleApiLoaded && (
           <div style={{ textAlign: 'center' }}>
-            <LoginButton onClick={signIn}>구글 캘린더 로그인</LoginButton>
+            <LoginButton onClick={signIn} disabled={isLoading}>
+              {isLoading ? '로그인 중...' : '구글 캘린더 로그인'}
+            </LoginButton>
+          </div>
+        )}
+
+        {isLoading && (
+          <div style={{ textAlign: 'center', margin: '1rem 0' }}>
+            캘린더 데이터를 불러오는 중...
           </div>
         )}
 
