@@ -30,7 +30,7 @@ public class RefreshToken {
     private LocalDateTime expiresAt;
 
     @Column(nullable = false)
-    private Boolean revoked = false;
+    private Boolean revoked;
 
     @Column(nullable = false)
     private String ipAddress;

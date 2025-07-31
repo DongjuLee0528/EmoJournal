@@ -7,7 +7,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -17,46 +19,44 @@ public class EmotionAnalysisService {
     private final GeminiApiClient geminiApiClient;
 
     /**
-     * 일기 텍스트의 감정을 분석하여 8가지 감정 중 1개와 키워드 최대 2개, 감정 해석을 반환
+     * 일기 텍스트의 감정을 분석하여 해시태그, 대표/서브 태그, 이모지를 모두 반환
      */
     public EmotionAnalysisResponse analyzeEmotion(EmotionAnalysisRequest request) {
         try {
-            log.info("감정 분석 요청 처리 시작: {}",
-                    request.getDiaryText().substring(0, Math.min(50, request.getDiaryText().length())));
+            log.info("감정 분석 요청 처리 시작: {}", request.getDiaryText().substring(0, Math.min(50, request.getDiaryText().length())));
 
             // 입력 텍스트 전처리
             String cleanedText = preprocessText(request.getDiaryText());
 
-            // 1. Gemini API로 감정, 키워드 분석
-            GeminiApiClient.EmotionAnalysisResult analysisResult =
-                    geminiApiClient.analyzeEmotionWithKeywords(cleanedText);
+            // 1. 감정 해시태그 생성 (1~3개)
+            String rawEmotionTags = geminiApiClient.analyzeEmotionTags(cleanedText);
+            String emotionTags = validateAndCleanEmotionTags(rawEmotionTags);
 
-            // 2. 감정 해석 생성 (전체 키워드 리스트 사용)
-            String interpretation = geminiApiClient.generateEmotionInterpretation(
-                    analysisResult.getEmotion(),
-                    analysisResult.getKeywords(), // 전체 키워드 리스트 (감정키워드 + 일기키워드)
-                    cleanedText
-            );
+            // 2. 해시태그를 리스트로 변환
+            List<String> tagList = parseEmotionTags(emotionTags);
 
-            log.info("감정 분석 완료 - 감정: {}, 감정키워드: {}, 일기키워드: {}, 이미지: {}",
-                    analysisResult.getEmotion(), analysisResult.getEmotionKeyword(),
-                    analysisResult.getDiaryKeywords(), analysisResult.getImageFileName());
+            // 3. 대표 태그와 서브 태그 분리
+            String mainTag = getMainTag(tagList);
+            List<String> subTags = getSubTags(tagList);
+
+            // 4. 대표 태그에 어울리는 이모지 생성
+            String mainEmoji = geminiApiClient.generateMainEmoji(mainTag);
+
+            log.info("감정 분석 완료 - 대표태그: {}, 서브태그: {}, 이모지: {}",
+                    mainTag, subTags, mainEmoji);
 
             return EmotionAnalysisResponse.success(
                     request.getDiaryText(),
-                    analysisResult.getEmotion(),
-                    analysisResult.getEmotionKeyword(),
-                    analysisResult.getDiaryKeywords(),
-                    analysisResult.getImageFileName(),
-                    interpretation
+                    emotionTags,
+                    tagList,
+                    mainTag,
+                    subTags,
+                    mainEmoji
             );
 
         } catch (Exception e) {
             log.error("감정 분석 중 오류 발생", e);
-            return EmotionAnalysisResponse.failure(
-                    request.getDiaryText(),
-                    "감정 분석 중 오류가 발생했습니다: " + e.getMessage()
-            );
+            return EmotionAnalysisResponse.failure(request.getDiaryText(), "감정 분석 중 오류가 발생했습니다: " + e.getMessage());
         }
     }
 
@@ -70,39 +70,68 @@ public class EmotionAnalysisService {
 
         return text.trim()
                 .replaceAll("\\s+", " ")  // 여러 공백을 하나로
-                .replaceAll("[\\r\\n]+", " ")  // 줄바꿈을 공백으로
-                .replaceAll("[^가-힣a-zA-Z0-9\\s.,!?]", ""); // 특수문자 제거
+                .replaceAll("[\\r\\n]+", " ");  // 줄바꿈을 공백으로
     }
 
     /**
-     * 9가지 감정 목록 반환 (프론트엔드에서 사용할 수 있도록)
+     * 감정 해시태그 문자열을 리스트로 파싱
+     * 예: "#행복 #기쁨 #만족" → ["행복", "기쁨", "만족"]
      */
-    public List<String> getAvailableEmotions() {
-        return List.of("기쁨", "슬픔", "분노", "두려움", "혐오감", "놀람", "신뢰감", "사랑", "혼합감정");
+    private List<String> parseEmotionTags(String emotionTags) {
+        if (emotionTags == null || emotionTags.trim().isEmpty()) {
+            return List.of("중성");
+        }
+
+        return Arrays.stream(emotionTags.split("\\s+"))
+                .map(tag -> tag.replace("#", "").trim())
+                .filter(tag -> !tag.isEmpty())
+                .collect(Collectors.toList());
     }
 
     /**
-     * 감정 유효성 검증
+     * 대표 태그 추출 (첫 번째 태그)
      */
-    public boolean isValidEmotion(String emotion) {
-        return getAvailableEmotions().contains(emotion);
+    private String getMainTag(List<String> tagList) {
+        if (tagList == null || tagList.isEmpty()) {
+            return "#중성";
+        }
+        return "#" + tagList.get(0);
     }
 
     /**
-     * 감정별 기본 설명 반환
+     * 서브 태그들 추출 (두 번째부터)
      */
-    public String getEmotionDescription(String emotion) {
-        return switch (emotion) {
-            case "기쁨" -> "즐겁고 행복한 감정";
-            case "슬픔" -> "우울하고 아쉬운 감정";
-            case "분노" -> "화나고 짜증나는 감정";
-            case "두려움" -> "불안하고 걱정되는 감정";
-            case "혐오감" -> "불쾌하고 싫은 감정";
-            case "놀람" -> "예상치 못한 놀라운 감정";
-            case "신뢰감" -> "믿음직하고 안정된 감정";
-            case "사랑" -> "따뜻하고 애정 어린 감정";
-            case "혼합감정" -> "복합적이고 다양한 감정";
-            default -> "알 수 없는 감정";
-        };
+    private List<String> getSubTags(List<String> tagList) {
+        if (tagList == null || tagList.size() <= 1) {
+            return List.of();
+        }
+
+        return tagList.subList(1, tagList.size()).stream()
+                .map(tag -> "#" + tag)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 감정 분석 결과 검증 및 후처리 (1~3개 제한)
+     */
+    private String validateAndCleanEmotionTags(String emotionTags) {
+        if (emotionTags == null || emotionTags.trim().isEmpty() || !emotionTags.contains("#")) {
+            return "#중성";
+        }
+
+        // 중복 제거 및 정리 (1~3개로 제한)
+        List<String> uniqueTags = Arrays.stream(emotionTags.split("\\s+"))
+                .map(tag -> tag.trim())
+                .filter(tag -> tag.startsWith("#") && tag.length() > 1)
+                .distinct()
+                .limit(3)  // 최대 3개까지만
+                .collect(Collectors.toList());
+
+        // 최소 1개는 보장
+        if (uniqueTags.isEmpty()) {
+            return "#중성";
+        }
+
+        return String.join(" ", uniqueTags);
     }
 }

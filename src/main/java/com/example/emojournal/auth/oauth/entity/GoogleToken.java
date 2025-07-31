@@ -34,7 +34,7 @@ public class GoogleToken {
     private LocalDateTime accessTokenExpiresAt;
 
     @Column(name = "revoked", nullable = false)
-    private boolean revoked = false;
+    private boolean revoked;
 
     public static GoogleToken create(Member member, GoogleTokenDto googleTokenDto) {
         GoogleToken googleToken = new GoogleToken();
@@ -43,10 +43,5 @@ public class GoogleToken {
         googleToken.setAccessToken(googleTokenDto.getAccessToken());
         googleToken.setAccessTokenExpiresAt(googleTokenDto.getAccessTokenExpiresAt());
         return googleToken;
-    }
-
-    public void updateAccessToken(String newAccessToken, LocalDateTime newExpiresAt) {
-        this.accessToken = newAccessToken;
-        this.accessTokenExpiresAt = newExpiresAt;
     }
 }

@@ -10,12 +10,11 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @RequiredArgsConstructor
 public class WebMvcConfig implements WebMvcConfigurer {
 
-    private final GoogleTokenInterceptor googleTokenInterceptor;
+    private  final GoogleTokenInterceptor googleTokenInterceptor;
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(googleTokenInterceptor)
-                .addPathPatterns("/member")
-                .addPathPatterns("/api/calendar/**");
+                .addPathPatterns("/member");
     }
 }

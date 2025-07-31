@@ -25,11 +25,18 @@ public class MemberController {
         return Member.fromEntity(memberService.findMemberById(memberId));
     }
 
-//    @PutMapping("/member")
-//    public ResponseEntity<?> setMember(@RequestBody MemberUpdateRequest memberUpdateRequest) {
-//
-//
-//
-//        return null;
-//    }
+    @PutMapping("/member")
+    public ResponseEntity<MemberResponseDto> setMember(@RequestBody MemberUpdateRequest memberUpdateRequest,HttpServletRequest request) {
+
+        Long memberId = (Long) request.getAttribute("memberId");
+
+        log.info("memberUpdateRequest : "+ memberUpdateRequest.toString());
+
+        Member member = memberService.setMember(memberUpdateRequest, memberId);
+
+        MemberResponseDto memberResponseDto = Member.fromEntity(member);
+
+        return ResponseEntity.ok()
+                .body(memberResponseDto);
+    }
 }
