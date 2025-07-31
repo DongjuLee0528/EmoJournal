@@ -39,7 +39,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 인증 없이 접근 가능한 경로들
                         .requestMatchers(
-                                "/login/oauth2/**",              // OAuth 로그인
+                                "/login/oauth2/**",// OAuth 로그인
+                                "/api/login/oauth2/**",
                                 "/auth/**",                      // 토큰 재발급
                                 "/api/emotion/health",           // 헬스체크
                                 "/api/diary/health",             // 헬스체크
@@ -48,7 +49,8 @@ public class SecurityConfig {
                                 "/uploads/**",                   // 업로드된 파일
                                 "/api/diary/upload-info",        // 업로드 정보 (공개)
                                 "/favicon.ico",                  // 파비콘
-                                "/h2-console/**"                 // H2 콘솔 (개발용)
+                                "/h2-console/**"                // H2 콘솔 (개발용)
+
                         ).permitAll()
 
                         // 나머지 모든 요청은 인증 필요 (감정 분석 API 포함)
