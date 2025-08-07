@@ -1,15 +1,23 @@
-# Default ignored files
+# === IntelliJ 설정 관련 ===
+.idea/
+*.iml
+*.iws
+# 단, 공유할 필요 있는 설정이 있다면 선택적으로 추가
+
+# === 기본 무시 설정 ===
 /shelf/
 /workspace.xml
-# Editor-based HTTP Client requests
+
+# === HTTP 클라이언트 요청 ===
 /httpRequests/
-# Datasource local storage ignored files
+
+# === 데이터 소스 ===
 /dataSources/
 /dataSources.local.xml
 
-# Environment files
+# === 환경 설정 파일 ===
 /src/main/resources/env.properties
 env.properties
 
-# Build files
+# === 빌드 디렉토리 ===
 /build/
