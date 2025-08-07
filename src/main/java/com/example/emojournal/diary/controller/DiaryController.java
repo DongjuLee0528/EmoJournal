@@ -15,7 +15,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,7 +25,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/diary")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class DiaryController {
 
     private final DiaryService diaryService;
@@ -35,11 +33,10 @@ public class DiaryController {
     /**
      * JWT 토큰에서 사용자 ID 추출
      */
-    private String getUserIdFromAuth(Authentication auth, HttpServletRequest request) {
-        if (auth != null && auth.getPrincipal() != null) {
-            // JWT 필터에서 설정한 memberId 사용
-            Long memberId = (Long) request.getAttribute("memberId");
-            return "member_" + memberId; // 일기 시스템용 userId 형식
+    private String getUserIdFromAuth(HttpServletRequest request) {
+        Object memberId = request.getAttribute("memberId");
+        if(memberId != null) {
+            return "member_" + memberId;
         }
         throw new RuntimeException("인증되지 않은 사용자입니다.");
     }
@@ -52,11 +49,10 @@ public class DiaryController {
     public ResponseEntity<DiaryResponse> createDiary(
             @Valid @ModelAttribute DiaryCreateRequest request,
             @RequestParam(value = "image", required = false) MultipartFile imageFile,
-            Authentication auth,
             HttpServletRequest httpRequest) {
 
         try {
-            String userId = getUserIdFromAuth(auth, httpRequest);
+            String userId = getUserIdFromAuth(httpRequest);
             request.setUserId(userId); // 토큰에서 추출한 userId 설정
 
             log.info("일기 생성 API 호출 - 사용자: {}, 이미지 포함: {}",
@@ -89,10 +85,9 @@ public class DiaryController {
     @PostMapping("/simple")
     public ResponseEntity<DiaryResponse> createSimpleDiary(
             @Valid @RequestBody DiaryCreateRequest request,
-            Authentication auth,
             HttpServletRequest httpRequest) {
         try {
-            String userId = getUserIdFromAuth(auth, httpRequest);
+            String userId = getUserIdFromAuth(httpRequest);
             request.setUserId(userId);
 
             log.info("간단한 일기 생성 API 호출 - 사용자: {}", userId);
@@ -118,11 +113,10 @@ public class DiaryController {
             @PathVariable Long id,
             @Valid @ModelAttribute DiaryUpdateRequest request,
             @RequestParam(value = "image", required = false) MultipartFile imageFile,
-            Authentication auth,
             HttpServletRequest httpRequest) {
 
         try {
-            String userId = getUserIdFromAuth(auth, httpRequest);
+            String userId = getUserIdFromAuth(httpRequest);
 
             log.info("일기 수정 API 호출 - ID: {}, 사용자: {}", id, userId);
 
@@ -156,11 +150,10 @@ public class DiaryController {
     @GetMapping("/{id}")
     public ResponseEntity<DiaryResponse> getDiary(
             @PathVariable Long id,
-            Authentication auth,
             HttpServletRequest httpRequest) {
 
         try {
-            String userId = getUserIdFromAuth(auth, httpRequest);
+            String userId = getUserIdFromAuth(httpRequest);
 
             log.info("일기 조회 API 호출 - ID: {}, 사용자: {}", id, userId);
 
@@ -193,11 +186,10 @@ public class DiaryController {
     public ResponseEntity<Page<DiaryResponse>> getDiaries(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            Authentication auth,
             HttpServletRequest httpRequest) {
 
         try {
-            String userId = getUserIdFromAuth(auth, httpRequest);
+            String userId = getUserIdFromAuth( httpRequest);
 
             log.info("일기 목록 조회 API 호출 - 사용자: {}, 페이지: {}, 크기: {}", userId, page, size);
 
@@ -228,11 +220,10 @@ public class DiaryController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteDiary(
             @PathVariable Long id,
-            Authentication auth,
             HttpServletRequest httpRequest) {
 
         try {
-            String userId = getUserIdFromAuth(auth, httpRequest);
+            String userId = getUserIdFromAuth(httpRequest);
 
             log.info("일기 삭제 API 호출 - ID: {}, 사용자: {}", id, userId);
 
@@ -266,11 +257,10 @@ public class DiaryController {
     @GetMapping("/search")
     public ResponseEntity<List<DiaryResponse>> searchDiaries(
             @RequestParam String keyword,
-            Authentication auth,
             HttpServletRequest httpRequest) {
 
         try {
-            String userId = getUserIdFromAuth(auth, httpRequest);
+            String userId = getUserIdFromAuth(httpRequest);
 
             log.info("일기 검색 API 호출 - 사용자: {}, 키워드: {}", userId, keyword);
 
@@ -293,11 +283,10 @@ public class DiaryController {
     @GetMapping("/emotion/{emotion}")
     public ResponseEntity<List<DiaryResponse>> getDiariesByEmotion(
             @PathVariable String emotion,
-            Authentication auth,
             HttpServletRequest httpRequest) {
 
         try {
-            String userId = getUserIdFromAuth(auth, httpRequest);
+            String userId = getUserIdFromAuth( httpRequest);
 
             log.info("감정별 일기 조회 API 호출 - 사용자: {}, 감정: {}", userId, emotion);
 
@@ -319,10 +308,9 @@ public class DiaryController {
      */
     @GetMapping("/statistics/emotion")
     public ResponseEntity<Map<String, Object>> getEmotionStatistics(
-            Authentication auth,
             HttpServletRequest httpRequest) {
         try {
-            String userId = getUserIdFromAuth(auth, httpRequest);
+            String userId = getUserIdFromAuth( httpRequest);
 
             log.info("감정 통계 조회 API 호출 - 사용자: {}", userId);
 

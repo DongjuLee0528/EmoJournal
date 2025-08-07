@@ -9,7 +9,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,7 +18,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/emotion")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*") // CORS 모든 출처 허용
 public class EmotionAnalysisController {
 
     private final EmotionAnalysisService emotionAnalysisService;
@@ -29,14 +27,13 @@ public class EmotionAnalysisController {
      * JWT 인증 정보를 통해 사용자 ID 추출
      * memberId는 JWT 필터에서 request에 저장되어야 함
      */
-    private String getUserIdFromAuth(Authentication auth, HttpServletRequest request) {
-        if (auth != null && auth.getPrincipal() != null) {
-            Long memberId = (Long) request.getAttribute("memberId");
+    private String getUserIdFromAuth(HttpServletRequest request) {
+        Object memberId = request.getAttribute("memberId");
+        if(memberId != null) {
             return "member_" + memberId;
         }
         throw new RuntimeException("인증되지 않은 사용자입니다.");
     }
-
     /**
      * 감정 분석 API (9가지 감정 기반)
      * 일기 텍스트를 분석하여 감정 결과 반환
@@ -45,11 +42,10 @@ public class EmotionAnalysisController {
     @PostMapping("/analyze")
     public ResponseEntity<EmotionAnalysisResponse> analyzeEmotion(
             @Valid @RequestBody EmotionAnalysisRequest request,
-            Authentication auth,
             HttpServletRequest httpRequest) {
 
         try {
-            String userId = getUserIdFromAuth(auth, httpRequest); // 인증된 사용자 ID 추출
+            String userId = getUserIdFromAuth(httpRequest); // 인증된 사용자 ID 추출
 
             log.info("감정 분석 API 호출 - 사용자: {}, 텍스트 길이: {}",
                     userId, request.getDiaryText().length());
@@ -174,13 +170,12 @@ public class EmotionAnalysisController {
     @PostMapping("/test")
     public ResponseEntity<Map<String, Object>> testEmotion(
             @RequestBody Map<String, String> request,
-            Authentication auth,
             HttpServletRequest httpRequest) {
 
         String testText = request.getOrDefault("text", "");
 
         try {
-            String userId = getUserIdFromAuth(auth, httpRequest); // 인증 사용자 ID 추출
+            String userId = getUserIdFromAuth(httpRequest); // 인증 사용자 ID 추출
             log.info("감정 분석 테스트 - 사용자: {}, 입력: {}", userId, testText);
 
             String predictedEmotion = predictEmotionByKeywords(testText);
