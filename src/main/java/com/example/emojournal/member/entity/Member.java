@@ -62,8 +62,6 @@ public class Member {
                 .nickname(member.getNickname())
                 .oAuthProvider(member.getOAuthProvider().toString())
                 .createDate(member.createDate.toString())
-                .gender(String.valueOf(member.getGender()))
-                .mbti(String.valueOf(member.getMbti()))
                 .build();
     }
 
