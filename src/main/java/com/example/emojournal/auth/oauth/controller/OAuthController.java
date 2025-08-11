@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -34,9 +35,11 @@ public class OAuthController {
         GoogleLoginParams params = new GoogleLoginParams();
         params.setAuthorizationCode(authorizationCodeRequest.getCode());
 
+        // 로그인을 총괄하는 메서드
         OAuthLoginTokenDto oAuthLoginTokenDto = oAuthLoginFacadeService.handleOAuthLogin(request, params);
 
-        ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", oAuthLoginTokenDto.getGoogleRefreshToken())
+        // 쿠키 세팅 변수
+        ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", oAuthLoginTokenDto.getRefreshToken())
                 .httpOnly(true) // 자바스크립트에서 접근불가
                 .secure(false) // HTTPS 일때만 전송됨
                 .path("/auth") // /auth 요청할 때만 쿠키 자동 포함됨
@@ -47,10 +50,11 @@ public class OAuthController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE,refreshTokenCookie.toString())
                 .body(Map.of(
-                        "accessToken",oAuthLoginTokenDto.getAccessToken(),
+                        "accessToken",oAuthLoginTokenDto.getAuthTokens().getAccessToken(),
                         "tokenType", oAuthLoginTokenDto.getAuthTokens().getGrantType(),
                         "expiresIn",oAuthLoginTokenDto.getAuthTokens().getExpiresIn()
                 ));
+
     }
 
 }

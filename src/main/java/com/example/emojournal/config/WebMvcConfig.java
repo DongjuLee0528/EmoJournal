@@ -1,5 +1,6 @@
 package com.example.emojournal.config;
 
+import com.example.emojournal.auth.jwt.interceptor.JwtAuthenticationInterceptor;
 import com.example.emojournal.auth.oauth.interceptor.GoogleTokenInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
@@ -10,11 +11,15 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @RequiredArgsConstructor
 public class WebMvcConfig implements WebMvcConfigurer {
 
-    private  final GoogleTokenInterceptor googleTokenInterceptor;
+    private final GoogleTokenInterceptor googleTokenInterceptor;
+    private final JwtAuthenticationInterceptor jwtAuthenticationInterceptor;
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(googleTokenInterceptor)
+        registry.addInterceptor(jwtAuthenticationInterceptor)
                 .addPathPatterns("/member");
+
+        registry.addInterceptor(googleTokenInterceptor)
+                .addPathPatterns("/calendar");
     }
 }

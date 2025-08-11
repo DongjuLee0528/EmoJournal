@@ -1,5 +1,6 @@
 package com.example.emojournal.member.controller;
 
+import com.example.emojournal.auth.jwt.utils.AuthenticationContextHolder;
 import com.example.emojournal.member.dto.requst.MemberUpdateRequest;
 import com.example.emojournal.member.entity.Member;
 import com.example.emojournal.member.dto.MemberResponseDto;
@@ -20,7 +21,9 @@ public class MemberController {
     @GetMapping("/member")
     public MemberResponseDto showMember(HttpServletRequest request) {
 
-        Long memberId = (Long)request.getAttribute("memberId");
+        Long memberId = AuthenticationContextHolder.getContext();
+
+        log.info("memberId : " + memberId);
 
         return Member.fromEntity(memberService.findMemberById(memberId));
     }
@@ -28,7 +31,7 @@ public class MemberController {
     @PutMapping("/member")
     public ResponseEntity<MemberResponseDto> setMember(@RequestBody MemberUpdateRequest memberUpdateRequest,HttpServletRequest request) {
 
-        Long memberId = (Long) request.getAttribute("memberId");
+        Long memberId = AuthenticationContextHolder.getContext();
 
         log.info("memberUpdateRequest : "+ memberUpdateRequest.toString());
 

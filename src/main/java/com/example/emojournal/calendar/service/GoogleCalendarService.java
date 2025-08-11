@@ -33,7 +33,7 @@ public class GoogleCalendarService {
 
         Member member = memberRepository.findById(memberId).orElseThrow(NoSuchElementException::new);
 
-        GoogleToken googleToken = googleTokenRepository.findByMember(member).orElseThrow(NoSuchElementException::new);
+        GoogleToken googleToken = googleTokenRepository.findByMemberId(member.getId()).orElseThrow(NoSuchElementException::new);
 
         String accessToken = cryptoUtil.decrypt(googleToken.getAccessToken());
 
