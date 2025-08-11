@@ -3,32 +3,17 @@ import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import menu from '../image/menu.png';
 import profile from '../image/profile.svg';
-import SideBar from './Sidebar';
-
-// 상수 정의
-const BREAKPOINTS = {
-  mobile: '480px',
-  tablet: '768px',
-  small: '320px'
-};
-
-const HEADER_HEIGHT = {
-  desktop: '60px',
-  tablet: '60px',
-  mobile: '55px',
-  small: '50px'
-};
+import { useNavigate } from 'react-router-dom';
 
 // Styled-components 정의
 const HeaderWrapper = styled.header`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: ${HEADER_HEIGHT.desktop};
+  height: 60px;
   background-color: #ffffff;
   border-bottom: 1px solid #e0e0e0;
   padding: 0 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   position: fixed;
   top: 0;
   left: 0;
@@ -125,7 +110,7 @@ const Logo = styled.div`
   align-items: center;
   cursor: pointer;
   transition: transform 0.2s ease;
-  
+
   &:hover {
     transform: translateY(-1px);
   }
@@ -137,11 +122,11 @@ const Logo = styled.div`
 
 const MainText = styled.h1`
   font-family: 'Cherry Bomb One', cursive;
-  color: rgba(255, 86, 139, 0.67);
+  color: rgba(255, 88, 172, 0.67);
   text-shadow: 0px 2px 4px rgba(0, 0, 0, 0.25);
   -webkit-text-stroke-width: 1px;
   -webkit-text-stroke-color: #060606;
-  font-size: clamp(20px, 4vw, 36px);
+  font-size: clamp(28px, 5.5vw, 48px);
   margin: 0;
   padding: 0;
   line-height: 1;
@@ -153,7 +138,7 @@ const MainText = styled.h1`
 const SubText = styled.p`
   font-family: 'Cherry Bomb One', cursive;
   color: rgba(0, 0, 0, 0.83);
-  font-size: clamp(10px, 2vw, 13px);
+  font-size: clamp(12px, 2.5vw, 16px);
   margin: -2px 0 0 0;
   padding: 0;
   line-height: 1;
@@ -201,43 +186,18 @@ const Header = memo(() => {
   }, [handleLogoClick]);
   
   return (
-    <>
-      <HeaderWrapper role="banner">
-        <MenuButton 
-          onClick={handleMenuClick}
-          aria-label="메뉴 열기"
-          type="button"
-        >
-          <img src={menu} alt="" />
-        </MenuButton>
-        
-        <Logo 
-          onClick={handleLogoClick}
-          onKeyDown={handleLogoKeyDown}
-          tabIndex={0}
-          role="button"
-          aria-label="메인페이지로 이동"
-        >
-          <MainText>EMOJOURNAL</MainText>
-          <SubText>My Mood Diary</SubText>
-        </Logo>
-        
-        <ProfileButton 
-          onClick={handleProfileClick}
-          aria-label="사용자 프로필"
-          type="button"
-        >
-          <img src={profile} alt="" />
-        </ProfileButton>
-      </HeaderWrapper>
-      
-      { isSideBarOpen && (
-        <SideBar 
-          isOpen={isSideBarOpen} 
-          onClose={handleSideBarClose} 
-        />
-      )} 
-    </>
+    <HeaderWrapper>
+      <MenuBar>
+        <img src={menu} alt="메뉴바" />
+      </MenuBar>
+      <Logo onClick={() => navigate('/')}>
+        <MainText>EMOJOURNAL</MainText>
+        <SubText>My Mood Diary</SubText>
+      </Logo>
+      <ProfileBar>
+        <img src={profile} alt="프로필바" />
+      </ProfileBar>
+    </HeaderWrapper>
   );
 });
 

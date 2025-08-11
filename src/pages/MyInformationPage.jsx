@@ -4,12 +4,15 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import api from '../api/axiosInstance';
 
 const Container = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: calc(100vh - 118px);
+  font-size: 30px;
+  font-family: '온글잎 의연체', sans-serif;
   padding: 30px;
   box-sizing: border-box;
 
@@ -111,16 +114,67 @@ const InfoItem = styled.div`
   border: 1px solid rgba(0, 0, 0, 0.1);
 `;
 
-const InfoText = styled.span`
+const InfoText = styled.div`
   font-size: 40px;
   color: #333;
   font-weight: 500;
   letter-spacing: 0.5px;
-  display: block;
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
 
   @media (max-width: 768px) {
     font-size: 22px;
+    flex-direction: column;
+    gap: 10px;
+  }
+`;
+
+const InputField = styled.input`
+  font-size: 32px;
+  padding: 8px 15px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-family: '온글잎 의연체', sans-serif;
+  background: #f9f9f9;
+  color: #333;
+  min-width: 200px;
+  transition: all 0.2s ease;
+
+  &:focus {
+    outline: none;
+    border-color: #999;
+    background: white;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 18px;
+    min-width: 150px;
+  }
+`;
+
+const SelectField = styled.select`
+  font-size: 32px;
+  padding: 8px 15px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-family: '온글잎 의연체', sans-serif;
+  background: #f9f9f9;
+  color: #333;
+  min-width: 150px;
+  transition: all 0.2s ease;
+
+  &:focus {
+    outline: none;
+    border-color: #999;
+    background: white;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 18px;
+    min-width: 120px;
   }
 `;
 
@@ -128,13 +182,15 @@ const ProfileFooter = styled.div`
   position: absolute;
   bottom: 30px;
   right: 45px;
+  display: flex;
+  gap: 15px;
 `;
 
-const EditButton = styled.button`
+const Button = styled.button`
   background: #ffffff;
   border: 2px solid #ccc;
   border-radius: 12px;
-  padding: 3px 30px;
+  padding: 8px 30px;
   font-size: 32px;
   color: #363434;
   cursor: pointer;
@@ -150,86 +206,264 @@ const EditButton = styled.button`
   &:active {
     transform: translateY(1px);
   }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #f5f5f5;
+    border-color: #ddd;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 20px;
+    padding: 6px 20px;
+  }
+`;
+
+const SaveButton = styled(Button)`
+  background: #4CAF50;
+  color: white;
+  border-color: #4CAF50;
+
+  &:hover:not(:disabled) {
+    background: #45a049;
+    border-color: #45a049;
+  }
+`;
+
+const CancelButton = styled(Button)`
+  background: #f44336;
+  color: white;
+  border-color: #f44336;
+
+  &:hover {
+    background: #da190b;
+    border-color: #da190b;
+  }
+`;
+
+const LoadingMessage = styled.div`
+  text-align: center;
+  font-size: 24px;
+  color: #666;
+  padding: 40px;
 `;
 
 const MyInformationPage = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
+  const [member, setMember] = useState(null);
+  const [nickname, setNickname] = useState('');
+  const [gender, setGender] = useState('');
+  const [mbti, setMbti] = useState('');
+  const [originalData, setOriginalData] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    // 로컬스토리지에서 user 정보 가져오기
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-  }, []);
-
-  const handleEditClick = () => {
-    console.log('수정 버튼 클릭됨');
-    // 예) 수정 페이지로 이동
-    // navigate('/edit-profile');
+  const isMemberChanged = () => {
+    return (
+      member &&
+      (member.nickname !== nickname || 
+       member.gender !== gender ||
+       member.mbti !== mbti) &&
+      nickname.trim() !== "" && 
+      gender !== "" && 
+      mbti !== ""
+    );
   };
 
-  if (!user) {
+  const getMemberInfo = async () => {
+    try {
+      setIsLoading(true);
+      if(localStorage.getItem("accessToken")) {
+        const res = await api.get("/member");
+        console.log("회원 정보: ", res.data);
+
+        const cleanedData = { ...res.data };
+        for (let key in cleanedData) {
+          if (cleanedData[key] === null) {
+            cleanedData[key] = "";
+          }
+        }
+
+        setMember(cleanedData);
+        setNickname(cleanedData.nickname || '');
+        setGender(cleanedData.gender || '');
+        setMbti(cleanedData.mbti || '');
+        
+        // 원본 데이터 저장 (취소할 때 사용)
+        setOriginalData({
+          nickname: cleanedData.nickname || '',
+          gender: cleanedData.gender || '',
+          mbti: cleanedData.mbti || ''
+        });
+      }
+    } catch(err) {
+      console.error("회원 정보 조회 실패: ", err);
+      alert("회원 정보를 불러오는데 실패했습니다.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    getMemberInfo();
+  }, []);
+
+  const handleSaveClick = async () => {
+    if (!isMemberChanged()) return;
+
+    try {
+      setIsLoading(true);
+      const res = await api.patch("/member", {
+        nickname: nickname.trim(),
+        gender,
+        mbti
+      });
+      
+      console.log("수정 완료:", res.data);
+      
+      // 성공시 member 상태 업데이트
+      setMember(prev => ({
+        ...prev,
+        nickname: nickname.trim(),
+        gender,
+        mbti
+      }));
+
+      // 원본 데이터도 업데이트
+      setOriginalData({
+        nickname: nickname.trim(),
+        gender,
+        mbti
+      });
+
+      alert("정보가 성공적으로 수정되었습니다!");
+      
+    } catch(err) {
+      console.error("정보 수정 실패:", err);
+      alert("정보 수정에 실패했습니다. 다시 시도해주세요.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCancelClick = () => {
+    // 원본 데이터로 되돌리기
+    setNickname(originalData.nickname);
+    setGender(originalData.gender);
+    setMbti(originalData.mbti);
+  };
+
+  if (isLoading) {
     return (
       <Container>
-        <p>사용자 정보를 불러오는 중입니다... 또는 로그인이 필요합니다.</p>
+        <LoadingMessage>
+          {member ? "정보를 수정하는 중입니다..." : "사용자 정보를 불러오는 중입니다..."}
+        </LoadingMessage>
+      </Container>
+    );
+  }
+
+  if (!member) {
+    return (
+      <Container>
+        <LoadingMessage>
+          사용자 정보를 불러올 수 없습니다. 로그인이 필요하거나 오류가 발생했습니다.
+        </LoadingMessage>
       </Container>
     );
   }
 
   return (
     <>
-      {/* 필요하면 Header, Footer 포함 */}
-      {/* <Header /> */}
-
       <Container>
         <ProfileCard>
           <ProfileHeader>
             <ProfileAvatar>
               <AvatarCircle>
-                {user.picture ? (
-                  <AvatarImage src={user.picture} alt="프로필 사진" />
+                {member.picture ? (
+                  <AvatarImage src={member.picture} alt="프로필 사진" />
                 ) : (
                   <AvatarEmoji>🙂</AvatarEmoji>
                 )}
               </AvatarCircle>
             </ProfileAvatar>
-            <Greeting>안녕하세요 {user.name}님</Greeting>
+            <Greeting>안녕하세요 {nickname || '사용자'}님</Greeting>
           </ProfileHeader>
 
           <ProfileInfo>
             <InfoItem>
               <InfoText>
-                이름 : {user.name} {user.nickname ? `[닉네임 : ${user.nickname}]` : ''}
+                <span>이메일:</span>
+                <span>{member.email}</span>
               </InfoText>
             </InfoItem>
+
             <InfoItem>
               <InfoText>
-                이메일 : {user.email}
+                <span>닉네임:</span>
+                <InputField
+                  value={nickname}
+                  onChange={(e) => setNickname(e.target.value)}
+                  placeholder="닉네임을 입력하세요"
+                  maxLength={20}
+                />
               </InfoText>
             </InfoItem>
+
             <InfoItem>
               <InfoText>
-                성별 : {user.gneder} MBTI : {user.mbti}
+                <span>성별:</span>
+                <SelectField 
+                  value={gender} 
+                  onChange={(e) => setGender(e.target.value)}
+                >
+                  <option value="">선택하세요</option>
+                  <option value="MALE">남성</option>
+                  <option value="FEMALE">여성</option>
+                </SelectField>
               </InfoText>
             </InfoItem>
+
             <InfoItem>
               <InfoText>
-                가입한 날 : {user.joinDate}
+                <span>MBTI:</span>
+                <SelectField 
+                  value={mbti} 
+                  onChange={(e) => setMbti(e.target.value)}
+                >
+                  <option value="">선택하세요</option>
+                  {["INTJ", "INTP", "ENTJ", "ENTP", "INFJ", "INFP", "ENFJ", "ENFP",
+                    "ISTJ", "ISFJ", "ESTJ", "ESFJ", "ISTP", "ISFP", "ESTP", "ESFP"]
+                    .map(type => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                </SelectField>
               </InfoText>
             </InfoItem>
-            {/* 필요하면 다른 정보도 추가 */}
-            {/* 예: 생년월일, 성별 등은 구글 JWT 토큰에 없으면 백엔드에서 추가 제공 필요 */}
+
+            <InfoItem>
+              <InfoText>
+                <span>가입한 날:</span>
+                <span>{member.createDate?.split('T')[0]}</span>
+              </InfoText>
+            </InfoItem>
           </ProfileInfo>
 
           <ProfileFooter>
-            <EditButton onClick={handleEditClick}>수정</EditButton>
+            {isMemberChanged() && (
+              <CancelButton onClick={handleCancelClick}>
+                취소
+              </CancelButton>
+            )}
+            <SaveButton 
+              disabled={!isMemberChanged() || isLoading}
+              onClick={handleSaveClick}
+            >
+              {isLoading ? "저장중..." : "저장"}
+            </SaveButton>
           </ProfileFooter>
         </ProfileCard>
       </Container>
-
-      {/* <Footer /> */}
     </>
   );
 };

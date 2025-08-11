@@ -9,13 +9,9 @@ import Footer from './components/Footer';
 import MainPage from './pages/MainPage';
 import DiaryListPage from './pages/DiaryListPage';
 import DiaryWritingPage from './pages/DiaryWritingPage';
-import LoginPageGsi from './pages/LoginPageGsi'; // gsi 방식 로그인
 import LoginPageOauth from './pages/LoginPageOauth'; // oauth 방식 로그인
-import LoginPageTest from './pages/LoginPageTest';
-import MyInformationPageTest from './pages/MyInformationPageTest';
 import MyInformationPage from './pages/MyInformationPage';
 import MovePage from './pages/MovePage';
-//import OngleapFont from '../fonts/온글잎 의연체.ttf';
 
 
 const App = () => {
@@ -29,11 +25,9 @@ const App = () => {
           <Route path="/MainPage" element={<MainPage />} />
           <Route path="/DiaryListPage" element={<DiaryListPage />} />
           <Route path="/DiaryWritingPage" element={<DiaryWritingPage />} />
-          <Route path="/LoginPageGsi" element={<LoginPageGsi />} />
-          <Route path="/LoginPageOauth" element={<LoginPageGsi />} />
-          <Route path="/LoginPageTest" element={<LoginPageTest />} />
-          <Route path="/MyInformationPageTest" element={<MyInformationPageTest />} />
+          <Route path="/LoginPageOauth" element={<LoginPageOauth />} />
           <Route path="/MyInformationPage" element={<MyInformationPage />} />
+
         </Routes>
       </div>
       <Footer/>
