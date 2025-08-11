@@ -1,6 +1,49 @@
 import React from 'react';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import { useLocation, Link } from 'react-router-dom';
+
+// 애니메이션 정의 - 가벼운 버전
+const slideInLeft = keyframes`
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+`;
+
+const slideOutLeft = keyframes`
+  0% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+`;
+
+const fadeIn = keyframes`
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+`;
+
+const fadeInUp = keyframes`
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
 
 const SidebarOverlay = styled.div`
   position: fixed;
@@ -8,17 +51,18 @@ const SidebarOverlay = styled.div`
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.2);
   z-index: 1500;
+  animation: ${fadeIn} 0.2s ease;
   opacity: ${props => props.isOpen ? 1 : 0};
   visibility: ${props => props.isOpen ? 'visible' : 'hidden'};
-  transition: opacity 0.3s ease, visibility 0.3s ease;
 `;
 
 const SidebarWrapper = styled.div`
-  width: 200px;
+  width: 220px;
   height: 100vh;
-  background: linear-gradient(to bottom, #f8d2ec, #e5b9f0);
+  background: #ffeef8;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -26,33 +70,38 @@ const SidebarWrapper = styled.div`
   left: 0;
   top: 0;
   z-index: 1600;
+  animation: ${props => props.isOpen ? slideInLeft : slideOutLeft} 0.25s ease;
   transform: translateX(${props => props.isOpen ? '0' : '-100%'});
-  transition: transform 0.3s ease;
+  border-radius: 0 15px 15px 0;
   
   @media (max-width: 768px) {
-    width: 250px;
+    width: 240px;
   }
   
   @media (max-width: 480px) {
-    width: 280px;
+    width: 260px;
   }
 `;
 
 const CloseButton = styled.button`
   position: absolute;
-  top: 15px;
-  right: 15px;
+  top: 20px;
+  right: 20px;
   background: none;
   border: none;
   font-size: 24px;
-  color: #333;
+  color: #bbb;
   cursor: pointer;
-  padding: 5px;
-  line-height: 1;
-  transition: color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  opacity: 0.6;
   
   &:hover {
-    color: #ffffffff;
+    color: #ff91a4;
+    opacity: 1;
   }
 `;
 
@@ -60,25 +109,29 @@ const Logo = styled.div`
   font-family: '온글잎 의연체', sans-serif;
   font-size: 30px;
   text-align: center;
-  margin: 50px 0 10px;
-  color: #000000ff;
+  margin: 40px 0 20px;
+  color: #333;
   cursor: pointer;
-  transition: transform 0.2s ease;
+  transition: color 0.2s ease;
+  animation: ${fadeInUp} 0.3s ease 0.1s both;
   
   &:hover {
-    transform: scale(1.05);
+    color: #ff6b6b;
   }
   
   @media (max-width: 480px) {
-    font-size: 20px;
-    margin: 60px 0 10px;
+    font-size: 22px;
+    margin: 50px 0 20px;
   }
 `;
 
 const MenuList = styled.ul`
   list-style: none;
-  padding: 0;
-  margin-top: 20px;
+  padding: 0 10px;
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 `;
 
 const StyledLink = styled(Link)`
@@ -89,42 +142,51 @@ const StyledLink = styled(Link)`
 const MenuItem = styled.li`
   display: flex;
   align-items: center;
-  padding: 14px 20px;
+  padding: 12px 16px;
+  border-radius: 10px;
   cursor: pointer;
-  color: ${props => (props.active ? 'white' : '#000')};
-  background-color: ${props => (props.active ? '#f0a4cfff' : 'transparent')};
+  color: ${props => (props.active ? 'white' : '#333')};
+  background: ${props => props.active 
+    ? '#ff91a4' 
+    : 'transparent'};
   font-weight: ${props => (props.active ? 'bold' : 'normal')};
   font-family: '온글잎 의연체', sans-serif;
-  font-size: 26px;
+  font-size: 24px;
   transition: all 0.2s ease;
+  animation: ${fadeInUp} 0.2s ease ${props => (props.index + 1) * 0.05}s both;
   
   &:hover {
-    background-color: #f3a5d3;
+    background: ${props => props.active ? '#ff6b6b' : '#ffb3ba'};
     color: white;
-    transform: translateX(5px);
   }
   
   @media (max-width: 480px) {
-    padding: 16px 20px;
+    padding: 14px 16px;
     font-size: 16px;
   }
 `;
 
-const BottomText = styled.div`
+const BottomText = styled(Link)`
+  text-decoration: none;
   text-align: center;
-  font-size: 28px;
+  font-size: 20px;
   font-family: '온글잎 의연체', sans-serif;
-  padding: 15px;
-  color: #333;
-  transition: transform 0.2s ease;
+  padding: 20px;
+  color: #666;
+  transition: color 0.2s ease;
+  animation: ${fadeInUp} 0.3s ease 0.3s both;
+  cursor: pointer;
   
   &:hover {
-    transform: scale(1.02);
+    color: #ff6b6b;
   }
   
   small {
-    font-size: 25px;
+    font-size: 16px;
     opacity: 0.8;
+    display: block;
+    margin-top: 5px;
+    color: #888;
   }
 `;
 
@@ -164,13 +226,16 @@ const SideBar = ({ isOpen, onClose }) => {
         <div>
           <Logo>EMOJOURNAL</Logo>
           <MenuList>
-            {menus.map(menu => (
+            {menus.map((menu, index) => (
               <StyledLink 
                 to={menu.path} 
                 key={menu.path}
                 onClick={handleMenuClick}
               >
-                <MenuItem active={location.pathname === menu.path}>
+                <MenuItem 
+                  active={location.pathname === menu.path}
+                  index={index}
+                >
                   {menu.label}
                 </MenuItem>
               </StyledLink>
@@ -178,7 +243,7 @@ const SideBar = ({ isOpen, onClose }) => {
           </MenuList>
         </div>
         
-        <BottomText>
+        <BottomText to="/AboutPage" onClick={handleMenuClick}>
           EmoJournal<br />
           <small>My Mood Diary</small>
         </BottomText>

@@ -1,8 +1,6 @@
 import React, { memo, useCallback, useState } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
-import menu from '../image/menu.png';
-import profile from '../image/profile.svg';
 import SideBar from './SideBar';
 
 // 상수 정의
@@ -48,71 +46,51 @@ const HeaderWrapper = styled.header`
   }
 `;
 
-const IconButton = styled.button`
+const TextButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  padding: 8px;
+  padding: 8px 12px;
   border: none;
   background: transparent;
-  border-radius: 4px;
-  transition: transform 0.15s ease;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  font-family: '온글잎 의연체', sans-serif;
+  font-size: 28px;
+  font-weight: 500;
+  color: #333;
   
   &:hover {
-    transform: scale(1.05);
+    background: rgba(255, 145, 164, 0.1);
+    color: #ff91a4;
   }
   
-  &:active {
-    transform: scale(0.95);
+  @media (max-width: ${BREAKPOINTS.tablet}) {
+    font-size: 15px;
+    padding: 6px 10px;
+  }
+  
+  @media (max-width: ${BREAKPOINTS.mobile}) {
+    font-size: 14px;
+    padding: 6px 8px;
+  }
+  
+  @media (max-width: ${BREAKPOINTS.small}) {
+    font-size: 13px;
+    padding: 5px 6px;
   }
 `;
 
-const MenuButton = styled(IconButton)`
-  img {
-    width: 24px;
-    height: 24px;
-    object-fit: contain;
-    
-    @media (max-width: ${BREAKPOINTS.tablet}) {
-      width: 22px;
-      height: 22px;
-    }
-    
-    @media (max-width: ${BREAKPOINTS.mobile}) {
-      width: 20px;
-      height: 20px;
-    }
-    
-    @media (max-width: ${BREAKPOINTS.small}) {
-      width: 18px;
-      height: 18px;
-    }
-  }
-`;
+const MenuButton = styled(TextButton)``;
 
-const ProfileButton = styled(IconButton)`
-  border-radius: 50%;
+const ProfileButton = styled(TextButton)`
+  color: ${props => props.isLoggedIn ? '#ff91a4' : '#666'};
+  font-weight: ${props => props.isLoggedIn ? '600' : '500'};
   
-  img {
-    width: 32px;
-    height: 32px;
-    object-fit: contain;
-    
-    @media (max-width: ${BREAKPOINTS.tablet}) {
-      width: 28px;
-      height: 28px;
-    }
-    
-    @media (max-width: ${BREAKPOINTS.mobile}) {
-      width: 26px;
-      height: 26px;
-    }
-    
-    @media (max-width: ${BREAKPOINTS.small}) {
-      width: 24px;
-      height: 24px;
-    }
+  &:hover {
+    background: ${props => props.isLoggedIn ? 'rgba(255, 145, 164, 0.15)' : 'rgba(102, 102, 102, 0.1)'};
+    color: ${props => props.isLoggedIn ? '#ff6b6b' : '#333'};
   }
 `;
 
@@ -171,6 +149,8 @@ const Header = memo(() => {
     // 또는 다른 로그인 상태 확인 로직
   };
   
+  const loggedIn = isLoggedIn();
+  
   const handleLogoClick = useCallback(() => {
     navigate('/MainPage');
   }, [navigate]);
@@ -180,12 +160,12 @@ const Header = memo(() => {
   }, []);
   
   const handleProfileClick = useCallback(() => {
-    if (isLoggedIn()) {
+    if (loggedIn) {
       navigate('/MyInformationPage');
     } else {
       navigate('/LoginPageOauth');
     }
-  }, [navigate]);
+  }, [navigate, loggedIn]);
   
   const handleSideBarClose = useCallback(() => {
     setIsSideBarOpen(false);
@@ -206,7 +186,7 @@ const Header = memo(() => {
           aria-label="메뉴 열기"
           type="button"
         >
-          <img src={menu} alt="" />
+          Menu
         </MenuButton>
         
         <Logo 
@@ -222,10 +202,11 @@ const Header = memo(() => {
         
         <ProfileButton 
           onClick={handleProfileClick}
-          aria-label="사용자 프로필"
+          aria-label={loggedIn ? "사용자 프로필" : "로그인"}
           type="button"
+          isLoggedIn={loggedIn}
         >
-          <img src={profile} alt="" />
+          {loggedIn ? 'Profile' : 'Login'}
         </ProfileButton>
       </HeaderWrapper>
       
