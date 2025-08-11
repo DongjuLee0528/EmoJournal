@@ -1,17 +1,8 @@
-# === IntelliJ 설정 관련 ===
-.idea/
-*.iml
-*.iws
-# 단, 공유할 필요 있는 설정이 있다면 선택적으로 추가
-
-# === 기본 무시 설정 ===
 /shelf/
 /workspace.xml
-
-# === HTTP 클라이언트 요청 ===
+# Editor-based HTTP Client requests
 /httpRequests/
-
-# === 데이터 소스 ===
+# Datasource local storage ignored files
 /dataSources/
 /dataSources.local.xml
 
