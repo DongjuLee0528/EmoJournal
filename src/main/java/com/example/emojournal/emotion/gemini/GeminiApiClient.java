@@ -69,6 +69,26 @@ public class GeminiApiClient {
     }
 
     /**
+     * 커스텀 프롬프트로 감정 분석 (개인화 서비스용)
+     */
+    public EmotionAnalysisResult analyzeEmotionWithCustomPrompt(String customPrompt) {
+        try {
+            log.debug("커스텀 프롬프트 감정 분석 시작");
+
+            Map<String, Object> requestBody = createRequestBody(customPrompt);
+            String response = callGeminiApi(requestBody);
+            EmotionAnalysisResult result = parseEmotionResponse(response);
+
+            log.debug("커스텀 프롬프트 감정 분석 결과: 감정={}, 키워드={}", result.getEmotion(), result.getKeywords());
+            return result;
+
+        } catch (Exception e) {
+            log.error("커스텀 프롬프트 감정 분석 중 오류 발생", e);
+            return new EmotionAnalysisResult("기쁨", "평온", List.of("일반"), "joy.png");
+        }
+    }
+
+    /**
      * 감정에 따른 감정 해석을 생성 (더 자세하고 따뜻한 톤으로)
      */
     public String generateEmotionInterpretation(String emotion, List<String> allKeywords, String diaryText) {
@@ -100,6 +120,26 @@ public class GeminiApiClient {
         } catch (Exception e) {
             log.error("Gemini API 감정 해석 생성 중 오류 발생", e);
             return getDefaultInterpretation(emotion);
+        }
+    }
+
+    /**
+     * 커스텀 프롬프트로 Gemini API 호출하여 텍스트 응답 받기 (개인화 서비스용)
+     */
+    public String callGeminiApiWithPrompt(String customPrompt) {
+        try {
+            log.debug("커스텀 프롬프트 API 호출 시작");
+
+            Map<String, Object> requestBody = createRequestBody(customPrompt);
+            String response = callGeminiApi(requestBody);
+            String result = parseResponse(response);
+
+            log.debug("커스텀 프롬프트 API 호출 완료");
+            return result;
+
+        } catch (Exception e) {
+            log.error("커스텀 프롬프트 API 호출 중 오류 발생", e);
+            return "개인화된 해석을 생성할 수 없습니다.";
         }
     }
 
