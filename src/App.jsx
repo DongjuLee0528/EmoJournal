@@ -11,7 +11,10 @@ import DiaryListPage from './pages/DiaryListPage';
 import DiaryWritingPage from './pages/DiaryWritingPage';
 import LoginPageOauth from './pages/LoginPageOauth'; // oauth 방식 로그인
 import MyInformationPage from './pages/MyInformationPage';
-import MovePage from './pages/MovePage';
+import DemoInformationPage from './pages/DemoInformationPage';
+import MovePage from './pages/MainPage';
+import OAuthCallback from './pages/OAuthCallback';
+import SideBar from './components/SideBar';
 
 
 const App = () => {
@@ -27,6 +30,13 @@ const App = () => {
           <Route path="/DiaryWritingPage" element={<DiaryWritingPage />} />
           <Route path="/LoginPageOauth" element={<LoginPageOauth />} />
           <Route path="/MyInformationPage" element={<MyInformationPage />} />
+          <Route path="/DemoInformationPage" element={<DemoInformationPage />} />
+          
+          {/* 사이드바 컴포넌트 추가 */}
+          <Route path="/SideBar" element={<SideBar />} />
+
+          {/* 소셜로그인후 콜백 페이지 */}
+          <Route path="/oauth/callback" element={<OAuthCallback />} />
 
         </Routes>
       </div>

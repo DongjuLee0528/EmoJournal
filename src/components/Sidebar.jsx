@@ -2,12 +2,6 @@ import React from 'react';
 import styled from 'styled-components';
 import { useLocation, Link } from 'react-router-dom';
 
-// 임시로 이미지 import 주석 처리
-// import pencil from '../image/pencil.png';
-// import list from '../image/list.png';
-// import information from '../image/information.png';
-// import login from '../image/login.png';
-
 const SidebarOverlay = styled.div`
   position: fixed;
   top: 0;
@@ -55,9 +49,10 @@ const CloseButton = styled.button`
   cursor: pointer;
   padding: 5px;
   line-height: 1;
+  transition: color 0.2s ease;
   
   &:hover {
-    color: #e54fb0;
+    color: #ffffffff;
   }
 `;
 
@@ -67,6 +62,12 @@ const Logo = styled.div`
   text-align: center;
   margin: 50px 0 10px;
   color: #000000ff;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  
+  &:hover {
+    transform: scale(1.05);
+  }
   
   @media (max-width: 480px) {
     font-size: 20px;
@@ -91,7 +92,7 @@ const MenuItem = styled.li`
   padding: 14px 20px;
   cursor: pointer;
   color: ${props => (props.active ? 'white' : '#000')};
-  background-color: ${props => (props.active ? '#de5fa7' : 'transparent')};
+  background-color: ${props => (props.active ? '#f0a4cfff' : 'transparent')};
   font-weight: ${props => (props.active ? 'bold' : 'normal')};
   font-family: '온글잎 의연체', sans-serif;
   font-size: 26px;
@@ -100,6 +101,7 @@ const MenuItem = styled.li`
   &:hover {
     background-color: #f3a5d3;
     color: white;
+    transform: translateX(5px);
   }
   
   @media (max-width: 480px) {
@@ -114,6 +116,11 @@ const BottomText = styled.div`
   font-family: '온글잎 의연체', sans-serif;
   padding: 15px;
   color: #333;
+  transition: transform 0.2s ease;
+  
+  &:hover {
+    transform: scale(1.02);
+  }
   
   small {
     font-size: 25px;
@@ -126,6 +133,7 @@ const menus = [
   { path: '/DiaryWritingPage', label: '일기 작성' },
   { path: '/DiaryListPage', label: '일기 목록' },
   { path: '/MyInformationPage', label: '내 정보' },
+  { path: '/DemoInformationPage', label: 'DEMO 내 정보' },
   { path: '/LoginPageOauth', label: '로그인' },
 ];
 

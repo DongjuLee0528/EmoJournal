@@ -3,16 +3,28 @@ import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import menu from '../image/menu.png';
 import profile from '../image/profile.svg';
-import { useNavigate } from 'react-router-dom';
+import SideBar from './SideBar';
+
+// 상수 정의
+const BREAKPOINTS = {
+  mobile: '480px',
+  tablet: '768px',
+  small: '320px'
+};
+
+const HEADER_HEIGHT = {
+  desktop: '60px',
+  tablet: '60px',
+  mobile: '55px',
+  small: '50px'
+};
 
 // Styled-components 정의
 const HeaderWrapper = styled.header`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 60px;
-  background-color: #ffffff;
-  border-bottom: 1px solid #e0e0e0;
+  height: ${HEADER_HEIGHT.desktop};
   padding: 0 20px;
   position: fixed;
   top: 0;
@@ -110,7 +122,8 @@ const Logo = styled.div`
   align-items: center;
   cursor: pointer;
   transition: transform 0.2s ease;
-
+  margin-top: 8px;
+  
   &:hover {
     transform: translateY(-1px);
   }
@@ -186,18 +199,43 @@ const Header = memo(() => {
   }, [handleLogoClick]);
   
   return (
-    <HeaderWrapper>
-      <MenuBar>
-        <img src={menu} alt="메뉴바" />
-      </MenuBar>
-      <Logo onClick={() => navigate('/')}>
-        <MainText>EMOJOURNAL</MainText>
-        <SubText>My Mood Diary</SubText>
-      </Logo>
-      <ProfileBar>
-        <img src={profile} alt="프로필바" />
-      </ProfileBar>
-    </HeaderWrapper>
+    <>
+      <HeaderWrapper role="banner">
+        <MenuButton 
+          onClick={handleMenuClick}
+          aria-label="메뉴 열기"
+          type="button"
+        >
+          <img src={menu} alt="" />
+        </MenuButton>
+        
+        <Logo 
+          onClick={handleLogoClick}
+          onKeyDown={handleLogoKeyDown}
+          tabIndex={0}
+          role="button"
+          aria-label="메인페이지로 이동"
+        >
+          <MainText>EMOJOURNAL</MainText>
+          <SubText>My Mood Diary</SubText>
+        </Logo>
+        
+        <ProfileButton 
+          onClick={handleProfileClick}
+          aria-label="사용자 프로필"
+          type="button"
+        >
+          <img src={profile} alt="" />
+        </ProfileButton>
+      </HeaderWrapper>
+      
+      {isSideBarOpen && (
+        <SideBar 
+          isOpen={isSideBarOpen} 
+          onClose={handleSideBarClose} 
+        />
+      )}
+    </>
   );
 });
 
