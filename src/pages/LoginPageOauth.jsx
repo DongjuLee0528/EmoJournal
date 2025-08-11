@@ -1,5 +1,7 @@
 // src/pages/LoginPage.jsx
 import React, { useState } from 'react';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
 
 const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -40,6 +42,8 @@ const LoginPage = () => {
   };
 
   return (
+    <>
+    <Header />
     <div style={{
       minHeight: '85vh',
       display: 'flex',
@@ -215,6 +219,8 @@ const LoginPage = () => {
         }
       `}</style>
     </div>
+    <Footer />
+    </>
   );
 };
 

@@ -1,5 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import styled from 'styled-components';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
 
 const Container = styled.div`
   font-family: '온글잎 의연체', sans-serif;
@@ -363,6 +365,8 @@ const DiaryListPage = () => {
   const totalEntries = currentMonthEntries.length;
 
   return (
+    <>
+    <Header />
     <HeaderPadding>
       <Container>
         <HeaderWrapper>
@@ -447,6 +451,8 @@ const DiaryListPage = () => {
         </ListWrapper>
       </Container>
     </HeaderPadding>
+    <Footer />
+    </>
   );
 };
 

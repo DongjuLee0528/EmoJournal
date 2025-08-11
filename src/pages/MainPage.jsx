@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
+import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
@@ -77,20 +78,6 @@ const MonthTitle = styled.h2`
   user-select: none;
 `;
 
-const NavButton = styled.button`
-  background: none;
-  border: none;
-  font-size: 1.4rem;
-  cursor: pointer;
-  padding: 0.5rem;
-  border-radius: 50%;
-  transition: all 0.2s;
-  &:hover {
-    background: #fce4ec;
-    transform: scale(1.1);
-  }
-`;
-
 const WeekHeader = styled.div`
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -164,8 +151,8 @@ const EventTag = styled.div`
   padding: 1px 2px;
   border-radius: 3px;
   margin-bottom: 0px;
-  background-color: #FF92D3;
-  color: black;
+  background-color: ${({ bg }) => bg || '#FF92D3'};
+  color: ${({ text }) => text || 'black'};
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -184,21 +171,100 @@ const EventTag = styled.div`
   }
 `;
 
+// 로그인 오버레이 스타일
+const LoginOverlay = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.8);
+  z-index: 10;
+  backdrop-filter: blur(2px);
+  padding-bottom: 10%;
+
+  @media (max-width: 768px) {
+    padding-bottom: 8%;
+  }
+
+  @media (max-width: 480px) {
+    padding-bottom: 5%;
+  }
+`;
+
+const LoginPromptTitle = styled.h1`
+  font-size: 3rem;
+  color: #333;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+  text-align: center;
+
+  @media (max-width: 768px) {
+    font-size: 2.5rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 2rem;
+  }
+`;
+
+const LoginPromptSubtitle = styled.p`
+  font-size: 1.2rem;
+  color: #666;
+  margin-bottom: 1rem;
+  text-align: center;
+
+  @media (max-width: 768px) {
+    font-size: 1.1rem;
+    margin-bottom: 0.8rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1rem;
+    margin-bottom: 0.8rem;
+  }
+`;
+
 const LoginButton = styled.button`
-  margin: 1rem 0;
-  padding: 0.5rem 1rem;
-  font-size: 0.9rem;
+  padding: 0.4rem 3rem;
+  font-size: 1.2rem;
   background: #ff80ab;
   color: white;
   border: none;
-  border-radius: 10px;
+  border-radius: 25px;
   cursor: pointer;
+  transition: all 0.3s;
+  font-weight: 600;
+  
   &:hover {
     background: #ff4081;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(255, 64, 129, 0.4);
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  @media (max-width: 768px) {
+    padding: 0.8rem 2.5rem;
+    font-size: 1.1rem;
+  }
+
+  @media (max-width: 480px) {
+    padding: 0.7rem 2rem;
+    font-size: 1rem;
   }
 `;
 
 const MainPage = () => {
+  const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date(2025, 5, 1));
   const [events, setEvents] = useState([]);
   const [isGoogleApiLoaded, setIsGoogleApiLoaded] = useState(false);
@@ -224,6 +290,12 @@ const MainPage = () => {
 
   const getRandomColor = useCallback((i) => colors[i % colors.length], [colors]);
 
+  // 로그인 페이지로 이동하는 함수
+  const handleLoginClick = useCallback(() => {
+    navigate('/LoginPageOauth');
+  }, [navigate]);
+
+  // 샘플 이벤트 로드 함수
   const loadSampleEvents = useCallback(() => {
     const sampleEvents = [
       { id: '1', summary: '감정체크', start: { date: '2025-06-01' } },
@@ -233,6 +305,7 @@ const MainPage = () => {
     setEvents(sampleEvents.map((e, i) => ({ ...e, color: getRandomColor(i) })));
   }, [getRandomColor]);
 
+  // 구글 캘린더 이벤트 로드 함수
   const loadGoogleCalendarEvents = useCallback(async () => {
     if (!isGoogleApiLoaded || !isAuthenticated) return;
 
@@ -264,20 +337,6 @@ const MainPage = () => {
       setIsLoading(false);
     }
   }, [isGoogleApiLoaded, isAuthenticated, currentDate, config.CALENDAR_ID, getRandomColor, loadSampleEvents]);
-
-  const signIn = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const authInstance = window.gapi.auth2.getAuthInstance();
-      await authInstance.signIn();
-      setIsAuthenticated(true);
-      console.log('로그인 성공, 캘린더 데이터 로드 중...');
-      await loadGoogleCalendarEvents();
-    } catch (error) {
-      console.error('로그인 실패:', error);
-      setIsLoading(false);
-    }
-  }, [loadGoogleCalendarEvents]);
 
   useEffect(() => {
     if (isAuthenticated && isGoogleApiLoaded) {
@@ -326,6 +385,8 @@ const MainPage = () => {
             loadSampleEvents();
           }
         });
+      } else {
+        loadSampleEvents();
       }
     };
 
@@ -337,7 +398,7 @@ const MainPage = () => {
     } else {
       initializeGapi();
     }
-  }, [config, loadSampleEvents, loadGoogleCalendarEvents]);
+  }, [config, loadGoogleCalendarEvents, loadSampleEvents]);
 
   const dateUtils = useMemo(() => ({
     getDaysInMonth: (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate(),
@@ -393,7 +454,7 @@ const MainPage = () => {
         <DayCell key={day}>
           <DayNumber isToday={isToday}>{day}</DayNumber>
           {dayEvents.map((e) => (
-            <EventTag key={e.id} bg={e.color.bg} text={e.color.text}>
+            <EventTag key={e.id} bg={e.color?.bg} text={e.color?.text}>
               {e.summary}
             </EventTag>
           ))}
@@ -409,20 +470,13 @@ const MainPage = () => {
   return (
     <Wrapper>
       <Header />
-      <CalendarContainer>
+      
+      <CalendarContainer style={{ position: 'relative' }}>
         <MonthHeader>
           <MonthTitle onClick={handleMonthClick}>
             &lt; {dateUtils.formatMonth(currentDate)} &gt;
           </MonthTitle>
         </MonthHeader>
-
-        {!isAuthenticated && isGoogleApiLoaded && (
-          <div style={{ textAlign: 'center' }}>
-            <LoginButton onClick={signIn} disabled={isLoading}>
-              {isLoading ? '로그인 중...' : '구글 캘린더 로그인'}
-            </LoginButton>
-          </div>
-        )}
 
         {isLoading && (
           <div style={{ textAlign: 'center', margin: '1rem 0' }}>
@@ -439,7 +493,19 @@ const MainPage = () => {
         </WeekHeader>
         
         <DaysGrid>{calendarDays}</DaysGrid>
+
+        {/* 로그인하지 않았을 때 오버레이 표시 */}
+        {!isAuthenticated && (
+          <LoginOverlay>
+            <LoginPromptTitle>EmoJournal 시작하기</LoginPromptTitle>
+            <LoginPromptSubtitle>로그인 후 이용해 주세요</LoginPromptSubtitle>
+            <LoginButton onClick={handleLoginClick} disabled={isLoading}>
+              로그인
+            </LoginButton>
+          </LoginOverlay>
+        )}
       </CalendarContainer>
+      
       <Footer />
     </Wrapper>
   );

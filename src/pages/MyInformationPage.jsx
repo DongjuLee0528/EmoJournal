@@ -15,9 +15,19 @@ const Container = styled.div`
   font-family: '온글잎 의연체', sans-serif;
   padding: 30px;
   box-sizing: border-box;
+  margin-top: 60px; /* Header 높이만큼 마진 추가 */
 
   @media (max-width: 768px) {
     padding: 20px 10px;
+    margin-top: 60px;
+  }
+
+  @media (max-width: 480px) {
+    margin-top: 55px;
+  }
+
+  @media (max-width: 320px) {
+    margin-top: 50px;
   }
 `;
 
@@ -355,26 +365,35 @@ const MyInformationPage = () => {
 
   if (isLoading) {
     return (
-      <Container>
-        <LoadingMessage>
-          {member ? "정보를 수정하는 중입니다..." : "사용자 정보를 불러오는 중입니다..."}
-        </LoadingMessage>
-      </Container>
+      <>
+        <Header />
+        <Container>
+          <LoadingMessage>
+            {member ? "정보를 수정하는 중입니다..." : "사용자 정보를 불러오는 중입니다..."}
+          </LoadingMessage>
+        </Container>
+        <Footer />
+      </>
     );
   }
 
   if (!member) {
     return (
-      <Container>
-        <LoadingMessage>
-          사용자 정보를 불러올 수 없습니다. 로그인이 필요하거나 오류가 발생했습니다.
-        </LoadingMessage>
-      </Container>
+      <>
+        <Header />
+        <Container>
+          <LoadingMessage>
+            사용자 정보를 불러올 수 없습니다. 로그인이 필요하거나 오류가 발생했습니다.
+          </LoadingMessage>
+        </Container>
+        <Footer />
+      </>
     );
   }
 
   return (
     <>
+      <Header />
       <Container>
         <ProfileCard>
           <ProfileHeader>
@@ -464,6 +483,7 @@ const MyInformationPage = () => {
           </ProfileFooter>
         </ProfileCard>
       </Container>
+      <Footer />
     </>
   );
 };

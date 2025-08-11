@@ -1,5 +1,8 @@
 // src/pages/OAuthCallback.jsx
 import React, { useEffect, useState } from "react";
+import Header from '../components/Header';
+import Footer from '../components/Footer';
+
 
 const OAuthCallback = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -181,6 +184,8 @@ const OAuthCallback = () => {
   };
 
   return (
+    <>
+    <Header />
     <div style={{
       minHeight: '85vh',
       display: 'flex',
@@ -359,6 +364,8 @@ const OAuthCallback = () => {
         }
       `}</style>
     </div>
+    <Footer />
+    </>
   );
 };
 
