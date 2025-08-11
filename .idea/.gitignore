@@ -1,15 +1,50 @@
-# Default ignored files
-/shelf/
-/workspace.xml
-# Editor-based HTTP Client requests
+# ----------------------------
+# IDE / OS
+# ----------------------------
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# ----------------------------
+# Gradle / Build outputs
+# ----------------------------
+.gradle/
+**/build/
+**/out/
+**/target/
+**/bin/
+
+# Java compiled artifacts (보호차원)
+*.class
+*.jar
+*.war
+*.ear
+
+# ----------------------------
+# Logs / Reports / Temp
+# ----------------------------
+*.log
+logs/
+**/reports/
+**/test-results/
+**/tmp/
+**/.cache/
+
+# ----------------------------
+# Environment / Secrets
+# ----------------------------
+.env
+.env.*
+env.properties
+/src/main/resources/env.properties
+*.local.properties
+
+# ----------------------------
+# JetBrains HTTP/DB helpers
+# ----------------------------
 /httpRequests/
-# Datasource local storage ignored files
 /dataSources/
 /dataSources.local.xml
-
-# Environment files
-/src/main/resources/env.properties
-env.properties
-
-# Build files
-/build/
+/shelf/
+/workspace.xml
