@@ -3,18 +3,15 @@ package com.example.emojournal.auth.jwt.filter;
 import com.example.emojournal.auth.jwt.utils.JwtTokenProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.ArrayList;
 
 @Slf4j
 @Component
@@ -27,13 +24,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        final String requestTokenHeader = request.getHeader("Authorization");
-        final String requestURI = request.getRequestURI();
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            response.setStatus(HttpServletResponse.SC_OK);
+            response.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
+            response.setHeader("Access-Control-Allow-Credentials", "true");
+            response.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type");
+            response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+            return;
+        }
+
+        String requestTokenHeader = request.getHeader("Authorization");
+        String requestURI = request.getRequestURI();
 
         Long memberId = null;
         String jwtToken = null;
 
-        // Authorization 헤더에서 JWT 토큰 추출
         if (requestTokenHeader != null && requestTokenHeader.startsWith("Bearer ")) {
             jwtToken = requestTokenHeader.substring(7);
             try {
@@ -46,42 +51,52 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             log.debug("JWT 토큰이 Bearer로 시작하지 않음. URI: {}", requestURI);
         }
 
-        // JWT 토큰 검증 및 SecurityContext 설정
-        if (memberId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-
-            if (jwtTokenProvider.validateToken(jwtToken)) {
-                log.debug("JWT 토큰 검증 성공: 회원 ID {}", memberId);
-
-                UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(memberId.toString(), null, new ArrayList<>());
-
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
-
-                request.setAttribute("memberId", memberId);
-                request.setAttribute("userId", "member_" + memberId);
-
-                log.debug("사용자 인증 완료: 회원 ID {}", memberId);
-            } else {
-                log.warn("JWT 토큰 검증 실패: 회원 ID {}", memberId);
-            }
+        if (memberId != null && jwtTokenProvider.validateToken(jwtToken)) {
+            request.setAttribute("memberId", memberId);
+            log.debug("JWT 토큰 검증 성공, 요청에 memberId 설정 완료");
+        } else if (extractRefreshTokenFromCookie(request) != null) {
+            log.debug("RefreshToken 존재 -> 필터 통과");
+            filterChain.doFilter(request, response);
+            return;
+        } else {
+            log.warn("유효하지 않은 토큰이거나 토큰이 없음");
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json;charset=UTF-8");
+            response.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
+            response.setHeader("Access-Control-Allow-Credentials", "true");
+            response.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type");
+            response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+            response.getWriter().write("{\"error\": \"Unauthorized - Invalid or missing token\"}");
+            return;
         }
 
         filterChain.doFilter(request, response);
     }
 
+    private String extractRefreshTokenFromCookie(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) return null;
+
+        for (Cookie cookie : cookies) {
+            if ("refreshToken".equals(cookie.getName())) {
+                return cookie.getValue();
+            }
+        }
+        return null;
+    }
+
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String path = request.getRequestURI();
-
-        return path.startsWith("/login/oauth2/") ||         // OAuth 로그인 (Spring 기본 경로)
+        return path.startsWith("/login/oauth2/") ||
                 path.startsWith("/api/login/oauth2/") ||
-                path.startsWith("/auth/") ||                 // 토큰 재발급
-                path.equals("/api/emotion/health") ||        // 헬스체크
+                path.startsWith("/auth/") ||
+                path.equals("/api/emotion/health") ||
                 path.equals("/api/diary/health") ||
-                path.startsWith("/images/") ||               // 정적 이미지
+                path.startsWith("/images/") ||
                 path.startsWith("/uploads/") ||
                 path.startsWith("/api/emotion/categories") ||
-                path.equals("/favicon.ico");
+                path.equals("/favicon.ico") ||
+                path.startsWith("/login/oauth2/code");
     }
 }
