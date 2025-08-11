@@ -1,6 +1,8 @@
 // src/pages/DemoInformationPage.jsx
 import React, { useState } from 'react';
 import styled from 'styled-components';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
 
 const Container = styled.div`
   display: flex;
@@ -322,6 +324,8 @@ const DemoInformationPage = () => {
   };
 
   return (
+    <>
+    <Header />
     <Container>
       <ProfileCard>
         <ProfileHeader>
@@ -410,6 +414,8 @@ const DemoInformationPage = () => {
         </ProfileFooter>
       </ProfileCard>
     </Container>
+    <Footer />
+    </>
   );
 };
 
