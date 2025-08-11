@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -98,4 +99,23 @@ public interface DiaryRepository extends JpaRepository<Diary, Long> {
      * 최근 작성된 전체 일기 20개 조회 (관리자 대시보드용 등)
      */
     List<Diary> findTop20ByOrderByCreatedAtDesc();
+
+    /**
+     * 1년 전 오늘 작성한 일기 조회
+     */
+    @Query("SELECT d FROM Diary d WHERE d.userId = :userId " +
+            "AND FUNCTION('DATE', d.diaryDate) = :targetDate")
+    Optional<Diary> findOneYearAgoDiary(@Param("userId") String userId,
+                                        @Param("targetDate") LocalDate targetDate);
+
+    /**
+     * 특정 사용자의 모든 일기 목록 조회 (최신순)
+     */
+    List<Diary> findAllByUserIdOrderByDiaryDateDesc(String userId);
+
+    /**
+     * 특정 날짜의 일기 조회 (예: 2025-06-30)
+     */
+    @Query("SELECT d FROM Diary d WHERE d.userId = :userId AND FUNCTION('DATE', d.diaryDate) = :targetDate ORDER BY d.diaryDate DESC")
+    List<Diary> findByUserIdAndDiaryDate(@Param("userId") String userId, @Param("targetDate") LocalDate targetDate);
 }
