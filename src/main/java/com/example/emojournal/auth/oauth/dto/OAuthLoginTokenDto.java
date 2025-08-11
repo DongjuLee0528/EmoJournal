@@ -9,7 +9,6 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class OAuthLoginTokenDto {
-    private String googleRefreshToken;
-    private String accessToken;
+    private String refreshToken;
     private AuthTokens authTokens;
 }

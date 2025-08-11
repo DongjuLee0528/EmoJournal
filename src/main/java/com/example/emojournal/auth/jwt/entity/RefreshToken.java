@@ -1,5 +1,6 @@
 package com.example.emojournal.auth.jwt.entity;
 
+import com.example.emojournal.auth.jwt.entity.embedded.ClientInfo;
 import com.example.emojournal.member.entity.Member;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -32,22 +33,22 @@ public class RefreshToken {
     @Column(nullable = false)
     private Boolean revoked = false;
 
-    @Column(nullable = false)
-    private String ipAddress;
+    @Embedded
+    private ClientInfo clientInfo;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
     private Member member;
 
     // 정적 팩토리 메서드
-    public static RefreshToken create(String refreshToken, LocalDateTime expiresAt,String ipAddress ,Member member) {
+    public static RefreshToken create(String refreshToken, LocalDateTime expiresAt,ClientInfo clientInfo ,Member member) {
         RefreshToken token = new RefreshToken();
         token.refreshToken = refreshToken;
         token.createdAt = LocalDateTime.now();
         token.expiresAt = expiresAt;
         token.revoked = false;
         token.member = member;
-        token.ipAddress = ipAddress;
+        token.clientInfo = clientInfo;
         return token;
     }
 

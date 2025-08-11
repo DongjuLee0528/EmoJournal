@@ -44,9 +44,4 @@ public class GoogleToken {
         googleToken.setAccessTokenExpiresAt(googleTokenDto.getAccessTokenExpiresAt());
         return googleToken;
     }
-
-    public void updateAccessToken(String newAccessToken, LocalDateTime newExpiresAt) {
-        this.accessToken = newAccessToken;
-        this.accessTokenExpiresAt = newExpiresAt;
-    }
 }
