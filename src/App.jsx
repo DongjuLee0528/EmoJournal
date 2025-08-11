@@ -15,6 +15,7 @@ import DemoInformationPage from './pages/DemoInformationPage';
 import MovePage from './pages/MainPage';
 import OAuthCallback from './pages/OAuthCallback';
 import SideBar from './components/SideBar';
+import AboutPage from './pages/AboutPage'; // About 페이지 추가
 
 
 const App = () => {
@@ -31,6 +32,7 @@ const App = () => {
           <Route path="/LoginPageOauth" element={<LoginPageOauth />} />
           <Route path="/MyInformationPage" element={<MyInformationPage />} />
           <Route path="/DemoInformationPage" element={<DemoInformationPage />} />
+          <Route path="/AboutPage" element={<AboutPage />} />
           
           {/* 사이드바 컴포넌트 추가 */}
           <Route path="/SideBar" element={<SideBar />} />
