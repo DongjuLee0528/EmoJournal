@@ -1,5 +1,6 @@
 package com.example.emojournal.auth.jwt.service;
 
+import com.example.emojournal.auth.jwt.entity.exception.InvalidRefreshTokenException;
 import com.example.emojournal.auth.jwt.utils.AuthTokenGenerator;
 import com.example.emojournal.auth.jwt.dto.AuthTokens;
 import com.example.emojournal.auth.jwt.entity.RefreshToken;
@@ -25,7 +26,7 @@ public class TokenReissueService {
     // 스프링 서버에서 발급한 refresh token
     // 이걸로 access token 발급
     @Transactional(readOnly = true)
-    public Optional<AuthTokens> reissueAccessToken(String refreshToken) {
+    public AuthTokens reissueAccessToken(String refreshToken) {
         log.info("refresh Token : " + refreshToken);
 
         RefreshToken dbRefreshToken = refreshTokenRepository.findByRefreshToken(refreshToken).orElseThrow(NoSuchElementException::new);
@@ -33,10 +34,11 @@ public class TokenReissueService {
         LocalDateTime expiresAt = dbRefreshToken.getExpiresAt();
 
         if(LocalDateTime.now().isBefore(expiresAt)) {
-            return Optional.of(authTokenGenerator.generate(dbRefreshToken.getMember().getId()));
+            return authTokenGenerator.generate(dbRefreshToken.getMember().getId());
+        } else {
+            throw new InvalidRefreshTokenException("refresh token 토큰이 만료되었습니다.");
         }
 
-        return Optional.empty();
     }
 
 }
