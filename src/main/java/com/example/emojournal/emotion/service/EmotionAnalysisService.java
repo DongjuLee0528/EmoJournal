@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -17,6 +18,24 @@ import java.util.stream.Collectors;
 public class EmotionAnalysisService {
 
     private final GeminiApiClient geminiApiClient;
+
+    // 지원하는 감정 카테고리 정의
+    private static final List<String> AVAILABLE_EMOTIONS = List.of(
+            "기쁨", "슬픔", "분노", "두려움", "혐오감", "놀람", "신뢰감", "사랑", "혼합감정"
+    );
+
+    // 감정별 설명 정의
+    private static final Map<String, String> EMOTION_DESCRIPTIONS = Map.of(
+            "기쁨", "즐겁고 행복한 감정",
+            "슬픔", "우울하고 아쉬운 감정",
+            "분노", "화나고 짜증나는 감정",
+            "두려움", "불안하고 걱정되는 감정",
+            "혐오감", "불쾌하고 싫은 감정",
+            "놀람", "예상치 못한 놀라운 감정",
+            "신뢰감", "믿음직하고 안정된 감정",
+            "사랑", "따뜻하고 애정 어린 감정",
+            "혼합감정", "복합적이고 다양한 감정"
+    );
 
     /**
      * 일기 텍스트의 감정을 분석하여 해시태그, 대표/서브 태그, 이모지를 모두 반환
@@ -58,6 +77,33 @@ public class EmotionAnalysisService {
             log.error("감정 분석 중 오류 발생", e);
             return EmotionAnalysisResponse.failure(request.getDiaryText(), "감정 분석 중 오류가 발생했습니다: " + e.getMessage());
         }
+    }
+
+    /**
+     * 지원 가능한 감정 목록 반환
+     */
+    public List<String> getAvailableEmotions() {
+        return AVAILABLE_EMOTIONS;
+    }
+
+    /**
+     * 유효한 감정인지 확인
+     */
+    public boolean isValidEmotion(String emotion) {
+        if (emotion == null || emotion.trim().isEmpty()) {
+            return false;
+        }
+        return AVAILABLE_EMOTIONS.contains(emotion.trim());
+    }
+
+    /**
+     * 감정에 대한 설명 반환
+     */
+    public String getEmotionDescription(String emotion) {
+        if (emotion == null || emotion.trim().isEmpty()) {
+            return "알 수 없는 감정입니다.";
+        }
+        return EMOTION_DESCRIPTIONS.getOrDefault(emotion.trim(), "정의되지 않은 감정입니다.");
     }
 
     /**

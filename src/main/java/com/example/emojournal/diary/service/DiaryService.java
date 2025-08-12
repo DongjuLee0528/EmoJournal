@@ -237,13 +237,14 @@ public class DiaryService {
             EmotionAnalysisResponse response = emotionAnalysisService.analyzeEmotion(request);
 
             if (response.isSuccess()) {
-                diary.setAnalyzedEmotion(response.getEmotion());
-                diary.setEmotionKeyword(response.getEmotionKeyword());
-                diary.setDiaryKeywordsList(response.getDiaryKeywords());
-                diary.setEmotionInterpretation(response.getInterpretation());
-                diary.setEmotionImageFile(response.getImageFileName());
+                // 수정된 부분: EmotionAnalysisResponse DTO에 맞게 변경
+                diary.setAnalyzedEmotion(response.getMainTag());        // getEmotion() → getMainTag()
+                diary.setEmotionKeyword(response.getEmotionTags());     // getEmotionKeyword() → getEmotionTags()
+                diary.setDiaryKeywordsList(response.getTagList());      // getDiaryKeywords() → getTagList()
+                diary.setEmotionInterpretation(response.getMessage());  // getInterpretation() → getMessage()
+                diary.setEmotionImageFile(response.getMainEmoji());     // getImageFileName() → getMainEmoji()
 
-                log.debug("감정 분석 성공 - 감정: {}, 키워드: {}", response.getEmotion(), response.getAllKeywords());
+                log.debug("감정 분석 성공 - 메인 태그: {}, 전체 태그: {}", response.getMainTag(), response.getEmotionTags());
             } else {
                 log.warn("감정 분석 실패 - ID: {}, 메시지: {}", diary.getId(), response.getMessage());
                 setDefaultEmotion(diary);
@@ -259,10 +260,10 @@ public class DiaryService {
      * 감정 분석 실패 시 기본값 설정
      */
     private void setDefaultEmotion(Diary diary) {
-        diary.setAnalyzedEmotion("기쁨");
-        diary.setEmotionKeyword("평온");
+        diary.setAnalyzedEmotion("#기쁨");
+        diary.setEmotionKeyword("#평온");
         diary.setDiaryKeywordsList(List.of("일반"));
         diary.setEmotionInterpretation("오늘도 소중한 하루였습니다.");
-        diary.setEmotionImageFile("joy.png");
+        diary.setEmotionImageFile("😊");
     }
 }

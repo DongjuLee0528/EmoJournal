@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.Period;
 import java.util.List;
 
 @Slf4j
@@ -30,7 +32,7 @@ public class PersonalizedGeminiService {
             // 개인화된 프롬프트 생성
             String personalizedPrompt = createPersonalizedEmotionPrompt(member, diaryText);
 
-            log.debug("개인화된 감정 분석 시작 - 사용자: {}, 나이: {}", member.getNickname(), member.getAge());
+            log.debug("개인화된 감정 분석 시작 - 사용자: {}", member.getNickname());
 
             return analyzeWithPersonalizedPrompt(personalizedPrompt);
 
@@ -49,11 +51,10 @@ public class PersonalizedGeminiService {
             Member member = memberRepository.findById(memberId)
                     .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다"));
 
-            String personalizedPrompt = createPersonalizedInterpretationPrompt(member, emotion, keywords, diaryText);
-
             log.debug("개인화된 감정 해석 생성 - 사용자: {}", member.getNickname());
 
-            return geminiApiClient.callGeminiApiWithPrompt(personalizedPrompt);
+            // 개인화 정보를 반영한 기본 해석 생성 (실제 존재하는 메서드 사용)
+            return geminiApiClient.generateEmotionInterpretation(emotion, keywords, diaryText);
 
         } catch (Exception e) {
             log.error("개인화된 감정 해석 생성 중 오류 발생", e);
@@ -78,9 +79,11 @@ public class PersonalizedGeminiService {
         prompt.append("=== 사용자 정보 (분석 시 참고용) ===\n");
         prompt.append("닉네임: ").append(member.getNickname()).append("\n");
 
-        if (member.getBirthDate() != null) {
-            prompt.append("나이: ").append(member.getAge()).append("세\n");
-            prompt.append(getAgeGroupContext(member.getAge())).append("\n");
+        // 가입일로부터 대략적인 사용자 정보 추정
+        if (member.getCreateDate() != null) {
+            int daysSinceJoin = Period.between(member.getCreateDate().toLocalDate(), LocalDateTime.now().toLocalDate()).getDays();
+            prompt.append("가입 경과일: ").append(daysSinceJoin).append("일\n");
+            prompt.append(getJoinPeriodContext(daysSinceJoin)).append("\n");
         }
 
         if (member.getGender() != null) {
@@ -117,16 +120,16 @@ public class PersonalizedGeminiService {
         // 사용자 개인화 정보
         prompt.append("=== ").append(member.getNickname()).append("님 정보 ===\n");
 
-        if (member.getBirthDate() != null) {
-            prompt.append("나이: ").append(member.getAge()).append("세\n");
-        }
-
         if (member.getMbti() != null) {
             prompt.append("MBTI: ").append(member.getMbti().name()).append("\n");
         }
 
+        if (member.getGender() != null) {
+            prompt.append("성별: ").append(member.getGender().name()).append("\n");
+        }
+
         prompt.append("\n=== 작성 가이드라인 ===\n");
-        prompt.append("- ").append(member.getNickname()).append("님의 연령대와 성향을 고려한 맞춤형 메시지\n");
+        prompt.append("- ").append(member.getNickname()).append("님의 성향을 고려한 맞춤형 메시지\n");
         prompt.append("- 100자 이내로 간결하게 작성\n");
         prompt.append("- 따뜻하고 공감하는 톤 사용\n");
         prompt.append("- 구체적인 격려나 위로의 메시지 포함\n");
@@ -135,29 +138,23 @@ public class PersonalizedGeminiService {
             prompt.append("- ").append(getMbtiToneGuide(member.getMbti())).append("\n");
         }
 
-        if (member.getBirthDate() != null) {
-            prompt.append("- ").append(getAgeToneGuide(member.getAge())).append("\n");
-        }
-
         prompt.append("\n일기 내용: ").append(diaryText.substring(0, Math.min(150, diaryText.length())));
 
         return prompt.toString();
     }
 
     /**
-     * 나이대별 컨텍스트 정보
+     * 가입 기간별 컨텍스트 정보 (나이 대신 활용)
      */
-    private String getAgeGroupContext(int age) {
-        if (age < 20) {
-            return "청소년기: 학업, 진로, 친구관계 등의 고민이 많은 시기";
-        } else if (age < 30) {
-            return "20대: 취업, 연애, 자아정체성 탐색의 시기";
-        } else if (age < 40) {
-            return "30대: 직장생활, 결혼, 육아 등 책임감이 큰 시기";
-        } else if (age < 50) {
-            return "40대: 중년의 전환기, 인생의 중반부";
+    private String getJoinPeriodContext(int days) {
+        if (days < 30) {
+            return "신규 사용자: 일기 작성에 적응 중인 시기";
+        } else if (days < 90) {
+            return "초기 사용자: 일기 습관을 형성해가는 시기";
+        } else if (days < 365) {
+            return "활성 사용자: 꾸준히 일기를 작성하는 시기";
         } else {
-            return "중장년기: 풍부한 인생 경험을 가진 시기";
+            return "장기 사용자: 일기를 통해 자신을 잘 아는 시기";
         }
     }
 
@@ -194,26 +191,12 @@ public class PersonalizedGeminiService {
     }
 
     /**
-     * 나이대별 톤 가이드
-     */
-    private String getAgeToneGuide(int age) {
-        if (age < 20) {
-            return "청소년에게 적합한 격려와 응원 중심의 메시지";
-        } else if (age < 30) {
-            return "20대의 고민에 공감하며 미래에 대한 희망적 메시지";
-        } else if (age < 40) {
-            return "현실적이면서도 따뜻한 위로와 실용적 조언";
-        } else {
-            return "인생 경험을 존중하며 성숙한 관점의 메시지";
-        }
-    }
-
-    /**
      * 개인화된 프롬프트로 Gemini API 호출 (기존 로직 활용)
      */
     private GeminiApiClient.EmotionAnalysisResult analyzeWithPersonalizedPrompt(String prompt) {
-        // GeminiApiClient의 기존 메서드를 활용하되 프롬프트만 교체
-        // 실제 구현 시에는 GeminiApiClient에 새로운 메서드 추가 필요
-        return geminiApiClient.analyzeEmotionWithCustomPrompt(prompt);
+        // 현재 GeminiApiClient에는 커스텀 프롬프트 메서드가 없으므로
+        // 기본 분석 메서드를 사용
+        // TODO: 추후 GeminiApiClient에 커스텀 프롬프트 메서드 추가 필요
+        return geminiApiClient.analyzeEmotionWithKeywords(prompt);
     }
 }

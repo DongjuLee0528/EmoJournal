@@ -45,8 +45,9 @@ public class EmotionAnalysisController {
             EmotionAnalysisResponse response = emotionAnalysisService.analyzeEmotion(request);
 
             if (response.isSuccess()) {
-                log.info("감정 분석 성공 - 감정: {}, 키워드: {}, 이미지: {}",
-                        response.getEmotion(), response.getAllKeywords(), response.getImageFileName());
+                // 수정된 부분: 존재하는 메서드들로 변경
+                log.info("감정 분석 성공 - 메인 태그: {}, 전체 태그: {}, 이모지: {}",
+                        response.getMainTag(), response.getEmotionTags(), response.getMainEmoji());
                 return ResponseEntity.ok(response);
             } else {
                 log.warn("감정 분석 실패: {}", response.getMessage());
