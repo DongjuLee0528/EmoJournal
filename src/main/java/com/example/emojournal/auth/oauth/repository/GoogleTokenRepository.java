@@ -10,4 +10,6 @@ public  interface GoogleTokenRepository extends JpaRepository<GoogleToken,Long> 
     Optional<Long> findByRefreshToken(String refreshToken);
 
     Optional<GoogleToken> findByMember(Member member);
+
+    Optional<GoogleToken> findByMemberId(Long memberId);
 }
