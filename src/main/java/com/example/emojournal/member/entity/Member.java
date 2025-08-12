@@ -13,9 +13,7 @@ import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.Period;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,17 +41,9 @@ public class Member {
     @Enumerated(EnumType.STRING)
     private Gender gender;
 
-    // 새로 추가할 생년월일 필드
-    @Column(name = "birth_date")
-    private LocalDate birthDate;
-
-    // 프로필 완성 여부 체크 (추가 정보 입력 완료 여부)
-    @Column(name = "profile_completed", nullable = false)
-    private Boolean profileCompleted = false;
-
     @CreatedDate
     private LocalDateTime createDate;
-
+    
     @OneToMany(mappedBy = "member")
     private List<RefreshToken> refreshTokens = new ArrayList<>();
 
@@ -63,25 +53,6 @@ public class Member {
         this.email = email;
         this.nickname = nickname;
         this.oAuthProvider = oAuthProvider;
-        this.profileCompleted = false; // 초기에는 false
-    }
-
-    // 나이 계산 메서드
-    public int getAge() {
-        if (birthDate == null) {
-            return 0;
-        }
-        return Period.between(birthDate, LocalDate.now()).getYears();
-    }
-
-    // 프로필 완성 체크 메서드
-    public boolean isProfileComplete() {
-        return birthDate != null && gender != null && mbti != null;
-    }
-
-    // 프로필 완성 상태 업데이트
-    public void updateProfileCompletedStatus() {
-        this.profileCompleted = isProfileComplete();
     }
 
     public static MemberResponseDto fromEntity(Member member) {
@@ -89,13 +60,9 @@ public class Member {
                 .id(member.getId())
                 .email(member.getEmail())
                 .nickname(member.getNickname())
-                .oAuthProvider(member.getOAuthProvider() != null ? member.getOAuthProvider().toString() : null)
-                .createDate(member.createDate != null ? member.createDate.toString() : null)
-                .birthDate(member.getBirthDate())
-                .age(member.getAge())
-                .gender(member.getGender() != null ? member.getGender().name() : null)  // enum을 String으로 변환
-                .mbti(member.getMbti() != null ? member.getMbti().name() : null)        // enum을 String으로 변환
-                .profileCompleted(member.getProfileCompleted())
+                .oAuthProvider(member.getOAuthProvider().toString())
+                .createDate(member.createDate.toString())
                 .build();
     }
+
 }
