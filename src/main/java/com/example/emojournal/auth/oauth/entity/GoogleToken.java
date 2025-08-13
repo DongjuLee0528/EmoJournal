@@ -34,7 +34,7 @@ public class GoogleToken {
     private LocalDateTime accessTokenExpiresAt;
 
     @Column(name = "revoked", nullable = false)
-    private boolean revoked = false;
+    private boolean revoked;
 
     public static GoogleToken create(Member member, GoogleTokenDto googleTokenDto) {
         GoogleToken googleToken = new GoogleToken();

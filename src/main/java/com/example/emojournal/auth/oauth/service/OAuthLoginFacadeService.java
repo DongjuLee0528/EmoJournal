@@ -89,15 +89,8 @@ public class OAuthLoginFacadeService {
             log.info("googleTokenInfo :  " + googleTokenDto);
 
             // 구글 토큰 저장
-            googleTokenService.saveIfNotExists(member.getId(),googleTokenDto);
+            googleTokenService.saveOrUpdate(member.getId(),googleTokenDto);
         }
-
-//        log.info("ip address : " + request.getRemoteAddr());
-
-        // 로그인한 상태에서 refresh token 을 갱신해야되나 말아야 되나?
-        // referesh token 이 존재한다면 이걸 새로 갈아껴야되나
-        // 없다면 당연이 갈아껴야되고
-
 
         // 스프링 서버에서 만든 토큰 저장
         // 만약 멤버가 이미있다면 null 리턴

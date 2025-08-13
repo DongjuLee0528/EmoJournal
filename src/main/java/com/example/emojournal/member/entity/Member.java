@@ -2,9 +2,11 @@ package com.example.emojournal.member.entity;
 
 import com.example.emojournal.auth.jwt.entity.RefreshToken;
 import com.example.emojournal.auth.jwt.entity.item.OAuthProvider;
-import com.example.emojournal.member.dto.MemberResponseDto;
+import com.example.emojournal.member.dto.BirthDateDto;
+import com.example.emojournal.member.dto.response.MemberResponseDto;
 import com.example.emojournal.member.entity.Item.Gender;
 import com.example.emojournal.member.entity.Item.Mbti;
+import com.example.emojournal.member.entity.embedded.BirthDate;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
@@ -43,7 +45,10 @@ public class Member {
 
     @CreatedDate
     private LocalDateTime createDate;
-    
+
+    @Embedded
+    private BirthDate birthDate; // 생년월일 임베디드 타입
+
     @OneToMany(mappedBy = "member")
     private List<RefreshToken> refreshTokens = new ArrayList<>();
 
@@ -53,16 +58,6 @@ public class Member {
         this.email = email;
         this.nickname = nickname;
         this.oAuthProvider = oAuthProvider;
-    }
-
-    public static MemberResponseDto fromEntity(Member member) {
-        return MemberResponseDto.builder()
-                .id(member.getId())
-                .email(member.getEmail())
-                .nickname(member.getNickname())
-                .oAuthProvider(member.getOAuthProvider().toString())
-                .createDate(member.createDate.toString())
-                .build();
     }
 
 }

@@ -1,14 +1,14 @@
-package com.example.emojournal.member.dto;
+package com.example.emojournal.member.dto.response;
 
+import com.example.emojournal.member.dto.BirthDateDto;
 import lombok.*;
-
-import java.time.LocalDate;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ToString
 public class MemberResponseDto {
 
     private Long id;
@@ -20,7 +20,7 @@ public class MemberResponseDto {
     private String createDate;
 
     // 새로 추가할 필드들
-    private LocalDate birthDate;  // 생년월일
+    private BirthDateDto birthDate;  // 생년월일
     private Integer age;          // 나이 (계산된 값)
     private Boolean profileCompleted;  // 프로필 완성 여부
 }

@@ -3,7 +3,8 @@ package com.example.emojournal.member.controller;
 import com.example.emojournal.auth.jwt.utils.AuthenticationContextHolder;
 import com.example.emojournal.member.dto.requst.MemberUpdateRequest;
 import com.example.emojournal.member.entity.Member;
-import com.example.emojournal.member.dto.MemberResponseDto;
+import com.example.emojournal.member.dto.response.MemberResponseDto;
+import com.example.emojournal.member.mapper.MemberMapper;
 import com.example.emojournal.member.service.MemberService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +26,11 @@ public class MemberController {
 
         log.info("memberId : " + memberId);
 
-        return Member.fromEntity(memberService.findMemberById(memberId));
+        MemberResponseDto memberResponseDto = MemberMapper.toDto(memberService.findMemberById(memberId));
+
+        log.info("memberResponseDto : " + memberResponseDto);
+
+        return memberResponseDto;
     }
 
     @PutMapping("/member")
@@ -37,7 +42,9 @@ public class MemberController {
 
         Member member = memberService.setMember(memberUpdateRequest, memberId);
 
-        MemberResponseDto memberResponseDto = Member.fromEntity(member);
+        MemberResponseDto memberResponseDto = MemberMapper.toDto(member);
+
+        log.info("put memberResponseDto : " + memberResponseDto.toString());
 
         return ResponseEntity.ok()
                 .body(memberResponseDto);

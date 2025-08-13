@@ -5,9 +5,11 @@ import com.example.emojournal.auth.oauth.entity.GoogleToken;
 import com.example.emojournal.member.entity.Member;
 import com.example.emojournal.auth.oauth.dto.GoogleTokenDto;
 import com.example.emojournal.auth.oauth.repository.GoogleTokenRepository;
+import com.example.emojournal.member.entity.exception.MemberNotFoundException;
 import com.example.emojournal.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -37,6 +39,26 @@ public class GoogleTokenService {
         }
         // 구글 토큰저장
         googleTokenRepository.save(GoogleToken.create(member,googleTokenDto));
+    }
+
+    @Transactional
+    public void saveOrUpdate(Long memberId, GoogleTokenDto googleTokenDto) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new MemberNotFoundException("멤버를 찾을 수 없습니다. id= " + memberId));
+
+        Optional<GoogleToken> existingTokenOpt = googleTokenRepository.findByMemberId(member.getId());
+
+        if (existingTokenOpt.isPresent()) {
+            // 업데이트
+            GoogleToken existingToken = existingTokenOpt.get();
+            existingToken.setAccessToken(googleTokenDto.getAccessToken());
+            existingToken.setRefreshToken(googleTokenDto.getRefreshToken());
+            existingToken.setAccessTokenExpiresAt(googleTokenDto.getAccessTokenExpiresAt());
+            googleTokenRepository.save(existingToken);
+        } else {
+            // 신규 저장
+            googleTokenRepository.save(GoogleToken.create(member, googleTokenDto));
+        }
     }
 
     public Long findByMemberId(Long memberId) {
