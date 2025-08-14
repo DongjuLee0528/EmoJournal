@@ -34,7 +34,7 @@ const PageContainer = styled.div`
 `;
 
 const Container = styled.div`
-  max-width: 800px;
+  max-width: 1000px;
   margin: 0 auto;
   padding: 0 20px;
 `;
@@ -60,24 +60,24 @@ const Title = styled.h1`
 const Section = styled.div`
   background: white;
   border-radius: 20px;
-  padding: 40px;
-  margin-bottom: 25px;
+  padding: 50px;
+  margin-bottom: 30px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   animation: ${fadeInUp} 0.8s ease ${props => props.delay || 0}s both;
   
   @media (max-width: 768px) {
-    padding: 30px 25px;
+    padding: 35px 30px;
   }
   
   @media (max-width: 480px) {
-    padding: 25px 20px;
-    margin-bottom: 20px;
+    padding: 30px 25px;
+    margin-bottom: 25px;
   }
 `;
 
 const SectionTitle = styled.h2`
   font-family: '온글잎 의연체', sans-serif;
-  font-size: 40px;
+  font-size: 32px;
   color: #ff6b6b;
   margin-bottom: 25px;
   text-align: center;
@@ -94,7 +94,7 @@ const SectionTitle = styled.h2`
 
 const Content = styled.p`
   font-family: '온글잎 의연체', sans-serif;
-  font-size: 24px;
+  font-size: 26px;
   line-height: 1.8;
   color: #555;
   text-align: center;
@@ -121,7 +121,7 @@ const TeamGrid = styled.div`
 `;
 
 const BackendGrid = styled(TeamGrid)`
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   
   @media (max-width: 480px) {
     grid-template-columns: 1fr;
@@ -129,7 +129,7 @@ const BackendGrid = styled(TeamGrid)`
 `;
 
 const FrontendGrid = styled(TeamGrid)`
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   
   @media (max-width: 480px) {
     grid-template-columns: 1fr;
@@ -146,7 +146,7 @@ const TeamCategory = styled.div`
 
 const TeamCategoryTitle = styled.h3`
   font-family: '온글잎 의연체', sans-serif;
-  font-size: 22px;
+  font-size: 28px;
   color: #666;
   margin-bottom: 20px;
   text-align: center;
@@ -158,7 +158,7 @@ const TeamCategoryTitle = styled.h3`
 
 const TeamMember = styled.div`
   border-radius: 15px;
-  padding: 25px;
+  padding: 30px;
   text-align: center;
   animation: ${slideInLeft} 0.6s ease ${props => props.delay || 0}s both;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -169,7 +169,7 @@ const TeamMember = styled.div`
   }
   
   @media (max-width: 480px) {
-    padding: 20px;
+    padding: 25px;
   }
 `;
 
@@ -195,7 +195,7 @@ const FrontendMember = styled(TeamMember)`
 
 const MemberName = styled.h4`
   font-family: '온글잎 의연체', sans-serif;
-  font-size: 24px;
+  font-size: 30px;
   margin-bottom: 10px;
   font-weight: bold;
   
@@ -206,7 +206,7 @@ const MemberName = styled.h4`
 
 const MemberRole = styled.p`
   font-family: '온글잎 의연체', sans-serif;
-  font-size: 16px;
+  font-size: 30px;
   opacity: 0.8;
   margin: 5px 0 15px 0;
   font-weight: 500;
@@ -218,7 +218,7 @@ const MemberRole = styled.p`
 
 const MemberDescription = styled.p`
   font-family: '온글잎 의연체', sans-serif;
-  font-size: 14px;
+  font-size: 23px;
   opacity: 0.9;
   line-height: 1.5;
   color: #666;
@@ -242,7 +242,7 @@ const CopyrightSection = styled.div`
 
 const CopyrightText = styled.p`
   font-family: '온글잎 의연체', sans-serif;
-  font-size: 14px;
+  font-size: 25px;
   color: #666;
   line-height: 1.6;
   margin-bottom: 10px;
@@ -261,27 +261,27 @@ const AboutPage = () => {
     {
       name: "이동주",
       role: "Backend Developer",
-      description: "서버 아키텍처 설계와 API 개발을 담당하며, 안정적이고 확장 가능한 백엔드 시스템을 구축합니다."
+      description: "백엔드 담당자 입니다.."
     },
     {
       name: "정하형",
       role: "Backend Developer", 
-      description: "데이터베이스 최적화와 서버 보안을 담당하며, 효율적인 데이터 처리 시스템을 개발합니다."
+      description: "백엔드 담당자 입니다."
     },
     {
       name: "이지훈",
       role: "Frontend Developer",
-      description: "React 기반의 사용자 인터페이스를 개발하며, 직관적이고 반응형인 웹 경험을 제공합니다."
+      description: "프론트 담당자 입니다."
     },
     {
       name: "양하진",
       role: "Frontend Developer",
-      description: "UI/UX 구현과 사용자 상호작용을 담당하며, 접근성과 사용성을 고려한 인터페이스를 설계합니다."
+      description: "프론트 담당자 입니다."
     },
     {
       name: "장원영",
       role: "Frontend Developer",
-      description: "감정 시각화와 애니메이션 구현을 담당하며, 사용자에게 감성적인 디자인 경험을 선사합니다."
+      description: "프론트 담당자 입니다."
     }
   ];
 
@@ -370,7 +370,7 @@ const AboutPage = () => {
               • 온글잎 의연체 폰트는 온글잎의 저작물입니다.
             </CopyrightText>
             <CopyrightText style={{ marginTop: '15px', fontSize: '12px', opacity: 0.7 }}>
-              문의사항이 있으시면 contact@emojournal.com으로 연락해 주세요.
+              문의사항이 있으시면 @emojournal.com으로 연락해 주세요.
             </CopyrightText>
           </CopyrightSection>
         </Section>
