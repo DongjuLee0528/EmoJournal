@@ -7,10 +7,15 @@ import com.example.emojournal.member.entity.embedded.BirthDate;
 
 public class MemberMapper {
 
+    private static String safeEnum(Enum<?> e) {
+        return e != null ? e.toString() : null;
+    }
+
     static public MemberResponseDto toDto(Member member) {
-        Integer age = (member.getBirthDate() != null)
-                ? member.getBirthDate().getAge().orElse(null)
-                : null;
+        Integer age = null;
+        if(member.getBirthDate() != null && member.getBirthDate().getAge() != null) {
+            age = member.getBirthDate().getAge();
+        }
 
         return MemberResponseDto.builder()
                 .id(member.getId())
@@ -23,10 +28,6 @@ public class MemberMapper {
                 .birthDate(safeBirthDateDto(member.getBirthDate()))
                 .age(age)
                 .build();
-    }
-
-    private static String safeEnum(Enum<?> e) {
-        return e != null ? e.toString() : null;
     }
 
     private static String safeToString(Object obj) {

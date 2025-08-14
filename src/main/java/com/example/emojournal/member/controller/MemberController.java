@@ -7,6 +7,7 @@ import com.example.emojournal.member.dto.response.MemberResponseDto;
 import com.example.emojournal.member.mapper.MemberMapper;
 import com.example.emojournal.member.service.MemberService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -34,7 +35,7 @@ public class MemberController {
     }
 
     @PutMapping("/member")
-    public ResponseEntity<MemberResponseDto> setMember(@RequestBody MemberUpdateRequest memberUpdateRequest,HttpServletRequest request) {
+    public ResponseEntity<MemberResponseDto> setMember(@RequestBody @Valid MemberUpdateRequest memberUpdateRequest, HttpServletRequest request) {
 
         Long memberId = AuthenticationContextHolder.getContext();
 

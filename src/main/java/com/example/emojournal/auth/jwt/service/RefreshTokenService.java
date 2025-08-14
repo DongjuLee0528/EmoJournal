@@ -1,7 +1,6 @@
 package com.example.emojournal.auth.jwt.service;
 
 import com.example.emojournal.auth.jwt.entity.embedded.ClientInfo;
-import com.example.emojournal.auth.jwt.entity.exception.RefreshTokenAlreadyExistsException;
 import com.example.emojournal.auth.jwt.utils.JwtTokenProvider;
 import com.example.emojournal.auth.jwt.entity.RefreshToken;
 import com.example.emojournal.auth.jwt.repository.RefreshTokenRepository;

@@ -18,7 +18,7 @@ public class BirthDate {
 
     protected BirthDate() {} // JPA 기본 생성자
 
-    public BirthDate(int year, int month, int day) {
+    public BirthDate(Integer year, Integer month, Integer day) {
         this.year = year;
         this.month = month;
         this.day = day;
@@ -30,11 +30,11 @@ public class BirthDate {
     }
 
     // 편의 메서드: 나이 계산
-    public Optional<Integer> getAge() {
+    public Integer getAge() {
         if (year == null || month == null || day == null) {
-            return Optional.empty();
+            return null;
         }
-        return Optional.of(Period.between(toLocalDate(), LocalDate.now()).getYears());
+        return Period.between(toLocalDate(), LocalDate.now()).getYears();
     }
 
 }

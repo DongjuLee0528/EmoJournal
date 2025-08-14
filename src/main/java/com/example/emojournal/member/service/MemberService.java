@@ -13,8 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.NoSuchElementException;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -36,6 +34,10 @@ public class MemberService {
         member.setNickname(memberUpdateRequest.getNickname());
 
         BirthDateDto birthDate = memberUpdateRequest.getBirthDate();
+//        if (birthDate == null || birthDate.getYear() == null || birthDate.getMonth() == null || birthDate.getDay() == null) {
+//            throw new InvalidBirthDateException("생년월일 정보가 올바르지 않습니다.");
+//        }
+
         member.setBirthDate(new BirthDate(birthDate.getYear(), birthDate.getMonth(), birthDate.getDay()));
 
         log.info("mbti : " + member.getMbti().toString());

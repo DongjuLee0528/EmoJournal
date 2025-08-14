@@ -1,5 +1,6 @@
 package com.example.emojournal.member.dto;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -7,9 +8,14 @@ import lombok.Setter;
 @Setter
 public class BirthDateDto {
 
-    private int year;
-    private int month;
-    private int day;
+    @NotNull(message = "년도는 필수입니다.")
+    private Integer year;
+
+    @NotNull(message = "월은 필수입니다.")
+    private Integer month;
+
+    @NotNull(message = "일은 필수입니다.")
+    private Integer day;
 
     public BirthDateDto() {}
 
