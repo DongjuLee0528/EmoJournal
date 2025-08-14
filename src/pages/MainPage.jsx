@@ -173,6 +173,7 @@ const EventTag = styled.div`
 
 // 로그인 오버레이 스타일
 const LoginOverlay = styled.div`
+  font-family: '온글잎 의연체', sans-serif;
   position: absolute;
   top: 0;
   left: 0;
