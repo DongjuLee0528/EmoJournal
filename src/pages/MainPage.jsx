@@ -267,16 +267,58 @@ const MainPage = () => {
   const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date(2025, 5, 1));
   const [events, setEvents] = useState([]);
-  const [isGoogleApiLoaded, setIsGoogleApiLoaded] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // API 기본 설정
+  const apiConfig = useMemo(() => ({
+    baseURL: process.env.REACT_APP_API_BASE_URL || '',
+    timeout: 10000
+  }), []);
+
+  // API 호출 헬퍼 함수
+  const apiCall = useCallback(async (endpoint, options = {}) => {
+    const token = localStorage.getItem('access_token');
+    const url = `${apiConfig.baseURL}${endpoint}`;
+    
+    const defaultOptions = {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` })
+      },
+      credentials: 'include',
+      ...options
+    };
+
+    try {
+      const response = await fetch(url, defaultOptions);
+      
+      if (response.status === 401) {
+        localStorage.removeItem('access_token');
+        setIsAuthenticated(false);
+        throw new Error('Unauthorized');
+      }
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error(`API 호출 실패 (${endpoint}):`, error);
+      throw error;
+    }
+  }, [apiConfig.baseURL]);
+
+  // 백엔드에서 제공한 Google OAuth 설정
   const config = useMemo(() => ({
-    GOOGLE_API_KEY: process.env.REACT_APP_GOOGLE_API_KEY,
-    CLIENT_ID: process.env.REACT_APP_GOOGLE_CLIENT_ID,
-    CALENDAR_ID: 'primary',
-    DISCOVERY_DOC: 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest',
-    SCOPES: 'https://www.googleapis.com/auth/calendar.readonly'
+    CLIENT_ID: '639506784430-mvf0oth3lt0jc4nab5dbjq18ki7nggsv.apps.googleusercontent.com',
+    REDIRECT_URI: 'https://emojournal.djloghub.com/oauth/callback',
+    SCOPES: [
+      'https://www.googleapis.com/auth/calendar.readonly',
+      'https://www.googleapis.com/auth/userinfo.email',
+      'https://www.googleapis.com/auth/userinfo.profile'
+    ].join(' ')
   }), []);
 
   const colors = useMemo(() => [
@@ -290,10 +332,18 @@ const MainPage = () => {
 
   const getRandomColor = useCallback((i) => colors[i % colors.length], [colors]);
 
-  // 로그인 페이지로 이동하는 함수
+  // 백엔드 OAuth URL로 리다이렉트하는 함수
   const handleLoginClick = useCallback(() => {
-    navigate('/LoginPageOauth');
-  }, [navigate]);
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+      `client_id=${config.CLIENT_ID}&` +
+      `redirect_uri=${encodeURIComponent(config.REDIRECT_URI)}&` +
+      `response_type=code&` +
+      `scope=${encodeURIComponent(config.SCOPES)}&` +
+      `access_type=offline&` +
+      `prompt=consent`;
+    
+    window.location.href = authUrl;
+  }, [config]);
 
   // 샘플 이벤트 로드 함수
   const loadSampleEvents = useCallback(() => {
@@ -301,104 +351,103 @@ const MainPage = () => {
       { id: '1', summary: '감정체크', start: { date: '2025-06-01' } },
       { id: '2', summary: 'JAVA, SPRING', start: { date: '2025-06-02' }, end: { date: '2025-06-07' } },
       { id: '3', summary: '오송역시, 약속', start: { date: '2025-06-02' } },
+      { id: '4', summary: '팀 미팅', start: { date: '2025-06-05' } },
+      { id: '5', summary: '프로젝트 발표', start: { date: '2025-06-10' } },
+      { id: '6', summary: '개인 일정', start: { date: '2025-06-15' } },
     ];
     setEvents(sampleEvents.map((e, i) => ({ ...e, color: getRandomColor(i) })));
   }, [getRandomColor]);
 
-  // 구글 캘린더 이벤트 로드 함수
-  const loadGoogleCalendarEvents = useCallback(async () => {
-    if (!isGoogleApiLoaded || !isAuthenticated) return;
+  // 백엔드에서 캘린더 데이터를 가져오는 함수
+  const loadCalendarEvents = useCallback(async () => {
+    if (!isAuthenticated) {
+      loadSampleEvents();
+      return;
+    }
 
     setIsLoading(true);
     try {
-      const response = await window.gapi.client.calendar.events.list({
-        calendarId: config.CALENDAR_ID,
-        timeMin: new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString(),
-        timeMax: new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString(),
-        showDeleted: false,
-        singleEvents: true,
-        orderBy: 'startTime',
+      const params = new URLSearchParams({
+        year: currentDate.getFullYear().toString(),
+        month: (currentDate.getMonth() + 1).toString()
       });
 
-      const googleEvents = response.result.items || [];
-      const formatted = googleEvents.map((e, i) => ({
+      const data = await apiCall(`/api/calendar/events?${params}`);
+      
+      const formatted = data.map((e, i) => ({
         id: e.id,
         summary: e.summary,
         start: e.start,
         end: e.end,
         color: getRandomColor(i),
       }));
+      
       setEvents(formatted);
-      console.log('구글 캘린더 이벤트 로드 완료:', formatted.length, '개');
+      console.log('백엔드에서 캘린더 이벤트 로드 완료:', formatted.length, '개');
     } catch (error) {
-      console.error('이벤트 불러오기 실패:', error);
-      loadSampleEvents();
+      console.error('캘린더 이벤트 불러오기 실패:', error);
+      if (error.message !== 'Unauthorized') {
+        loadSampleEvents();
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [isGoogleApiLoaded, isAuthenticated, currentDate, config.CALENDAR_ID, getRandomColor, loadSampleEvents]);
+  }, [isAuthenticated, currentDate, getRandomColor, loadSampleEvents, apiCall]);
 
+  // OAuth 콜백 처리 및 인증 상태 확인
   useEffect(() => {
-    if (isAuthenticated && isGoogleApiLoaded) {
-      loadGoogleCalendarEvents();
-    }
-  }, [currentDate, isAuthenticated, isGoogleApiLoaded, loadGoogleCalendarEvents]);
+    const checkAuthStatus = async () => {
+      try {
+        // URL에서 authorization code 확인
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const error = urlParams.get('error');
 
-  useEffect(() => {
-    const initializeGapi = async () => {
-      if (!config.GOOGLE_API_KEY || !config.CLIENT_ID) {
-        console.warn('API 키 미설정. 샘플 데이터 사용.');
-        loadSampleEvents();
-        return;
-      }
+        if (error) {
+          console.error('OAuth 에러:', error);
+          return;
+        }
 
-      if (window.gapi) {
-        window.gapi.load('client:auth2', async () => {
-          try {
-            await window.gapi.client.init({
-              apiKey: config.GOOGLE_API_KEY,
-              clientId: config.CLIENT_ID,
-              discoveryDocs: [config.DISCOVERY_DOC],
-              scope: config.SCOPES,
-            });
-
-            setIsGoogleApiLoaded(true);
-            const authInstance = window.gapi.auth2.getAuthInstance();
-            
-            authInstance.isSignedIn.listen((isSignedIn) => {
-              setIsAuthenticated(isSignedIn);
-              if (isSignedIn) {
-                loadGoogleCalendarEvents();
-              } else {
-                loadSampleEvents();
-              }
-            });
-
-            if (authInstance.isSignedIn.get()) {
+        if (code) {
+          // 백엔드에 authorization code 전송
+          const data = await apiCall('/api/oauth/callback', {
+            method: 'POST',
+            body: JSON.stringify({ code })
+          });
+          
+          localStorage.setItem('access_token', data.access_token);
+          setIsAuthenticated(true);
+          
+          // URL에서 code 파라미터 제거
+          const newUrl = window.location.pathname;
+          window.history.replaceState({}, document.title, newUrl);
+        } else {
+          // 기존 토큰 확인
+          const token = localStorage.getItem('access_token');
+          if (token) {
+            try {
+              await apiCall('/api/auth/verify');
               setIsAuthenticated(true);
-              loadGoogleCalendarEvents();
-            } else {
-              loadSampleEvents();
+            } catch (error) {
+              console.log('토큰 검증 실패:', error);
+              localStorage.removeItem('access_token');
+              setIsAuthenticated(false);
             }
-          } catch (error) {
-            console.error('GAPI 초기화 실패:', error);
-            loadSampleEvents();
           }
-        });
-      } else {
-        loadSampleEvents();
+        }
+      } catch (error) {
+        console.error('인증 상태 확인 실패:', error);
+        setIsAuthenticated(false);
       }
     };
 
-    if (!window.gapi && config.GOOGLE_API_KEY && config.CLIENT_ID) {
-      const script = document.createElement('script');
-      script.src = 'https://apis.google.com/js/api.js';
-      script.onload = initializeGapi;
-      document.body.appendChild(script);
-    } else {
-      initializeGapi();
-    }
-  }, [config, loadGoogleCalendarEvents, loadSampleEvents]);
+    checkAuthStatus();
+  }, [apiCall]);
+
+  // 인증 상태나 현재 날짜가 변경될 때 이벤트 로드
+  useEffect(() => {
+    loadCalendarEvents();
+  }, [currentDate, isAuthenticated, loadCalendarEvents]);
 
   const dateUtils = useMemo(() => ({
     getDaysInMonth: (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate(),

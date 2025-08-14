@@ -13,12 +13,18 @@ const LoginPage = () => {
   const scope = "https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/calendar";
   const responseType = "code";
 
-  // Google OAuth 로그인 시작
+  // Google OAuth 로그인 시작 (수정된 버전)
   const handleGoogleLogin = () => {
     setIsLoading(true);
     setError('');
     
     try {
+      // 랜덤한 state 값 생성 (CSRF 방지)
+      const state = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      
+      // sessionStorage에 state 값 저장
+      sessionStorage.setItem('oauth_state', state);
+      
       // Google OAuth 2.0 Authorization URL 생성
       const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
       authUrl.searchParams.set('response_type', responseType);
@@ -27,8 +33,9 @@ const LoginPage = () => {
       authUrl.searchParams.set('scope', scope);
       authUrl.searchParams.set('prompt', 'consent');
       authUrl.searchParams.set('access_type', 'offline');
-      authUrl.searchParams.set('state', 'login'); // CSRF 방지
+      authUrl.searchParams.set('state', state); // 생성한 랜덤 state 값 사용
       
+      console.log('생성된 state:', state);
       console.log('Google OAuth URL로 이동:', authUrl.toString());
       
       // Google 로그인 페이지로 리다이렉트
