@@ -34,6 +34,7 @@ const Wrapper = styled.div`
 `;
 
 const CalendarContainer = styled.div`
+  position: relative;
   width: 95%;
   max-width: 1400px;
   flex: 1;
@@ -171,7 +172,7 @@ const EventTag = styled.div`
   }
 `;
 
-// 로그인 오버레이 스타일
+// 로그인 오버레이 스타일 - 캘린더 컨테이너 내부에만 적용
 const LoginOverlay = styled.div`
   font-family: '온글잎 의연체', sans-serif;
   position: absolute;
@@ -186,23 +187,27 @@ const LoginOverlay = styled.div`
   background-color: rgba(255, 255, 255, 0.8);
   z-index: 10;
   backdrop-filter: blur(2px);
-  padding-bottom: 10%;
+  border-radius: 30px;
+  padding-bottom: 8%;
 
   @media (max-width: 768px) {
-    padding-bottom: 8%;
+    backdrop-filter: blur(1.5px);
+    padding-bottom: 6%;
   }
 
   @media (max-width: 480px) {
-    padding-bottom: 5%;
+    backdrop-filter: blur(1px);
+    padding-bottom: 4%;
   }
 `;
 
 const LoginPromptTitle = styled.h1`
   font-size: 3rem;
-  color: #333;
+  color: #333333;
   margin-bottom: 0.5rem;
   font-weight: bold;
   text-align: center;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
   @media (max-width: 768px) {
     font-size: 2.5rem;
@@ -215,36 +220,39 @@ const LoginPromptTitle = styled.h1`
 
 const LoginPromptSubtitle = styled.p`
   font-size: 1.2rem;
-  color: #666;
-  margin-bottom: 1rem;
+  color: #666666;
+  margin-bottom: 2rem;
   text-align: center;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 
   @media (max-width: 768px) {
     font-size: 1.1rem;
-    margin-bottom: 0.8rem;
+    margin-bottom: 1.5rem;
   }
 
   @media (max-width: 480px) {
     font-size: 1rem;
-    margin-bottom: 0.8rem;
+    margin-bottom: 1.2rem;
   }
 `;
 
 const LoginButton = styled.button`
-  padding: 0.4rem 3rem;
-  font-size: 1.2rem;
-  background: #ff80ab;
+  padding: 0.6rem 2rem;
+  font-size: 1.1rem;
+  background: linear-gradient(135deg, #ff4081);
   color: white;
   border: none;
-  border-radius: 25px;
+  border-radius: 15px;
   cursor: pointer;
   transition: all 0.3s;
   font-weight: 600;
+  box-shadow: 0 4px 15px rgba(255, 64, 129, 0.3);
+  width: 280px;
   
   &:hover {
-    background: #ff4081;
+    background: linear-gradient(135deg, #e91e63);
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(255, 64, 129, 0.4);
+    box-shadow: 0 8px 25px rgba(255, 64, 129, 0.5);
   }
 
   &:disabled {
@@ -254,13 +262,15 @@ const LoginButton = styled.button`
   }
 
   @media (max-width: 768px) {
-    padding: 0.8rem 2.5rem;
-    font-size: 1.1rem;
+    padding: 0.5rem 1.5rem;
+    font-size: 1rem;
+    width: 240px;
   }
 
   @media (max-width: 480px) {
-    padding: 0.7rem 2rem;
-    font-size: 1rem;
+    padding: 0.5rem 1.2rem;
+    font-size: 0.9rem;
+    width: 200px;
   }
 `;
 
@@ -472,7 +482,7 @@ const MainPage = () => {
     <Wrapper>
       <Header />
       
-      <CalendarContainer style={{ position: 'relative' }}>
+      <CalendarContainer>
         <MonthHeader>
           <MonthTitle onClick={handleMonthClick}>
             &lt; {dateUtils.formatMonth(currentDate)} &gt;
@@ -495,7 +505,7 @@ const MainPage = () => {
         
         <DaysGrid>{calendarDays}</DaysGrid>
 
-        {/* 로그인하지 않았을 때 오버레이 표시 */}
+        {/* 로그인하지 않았을 때 캘린더 컨테이너에만 오버레이 표시 */}
         {!isAuthenticated && (
           <LoginOverlay>
             <LoginPromptTitle>EmoJournal 시작하기</LoginPromptTitle>
