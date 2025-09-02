@@ -6,7 +6,7 @@ const GlobalStyle = createGlobalStyle`
   @import url('https://fonts.googleapis.com/css2?family=Cherry+Bomb+One&display=swap');
 
   @font-face {
-    font-family: 'Ongleap';
+    font-family: '온글잎 의연체';
     src: url('${OngleapFont}') format('truetype');
     font-weight: normal;
     font-style: normal;
@@ -19,7 +19,7 @@ const GlobalStyle = createGlobalStyle`
   }
 
   body {
-    font-family: 'Ongleap', 'Cherry Bomb One', cursive;
+    font-family: '온글잎 의연체', 'Cherry Bomb One', cursive;
     background-image: url(${bgImage});
     background-size: cover;
     background-repeat: no-repeat;
