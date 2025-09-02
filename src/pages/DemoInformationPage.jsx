@@ -9,22 +9,22 @@ const Container = styled.div`
   justify-content: center;
   align-items: center;
   min-height: 85vh;
-  font-size: 30px;
+  font-size: 18px;
   font-family: '온글잎 의연체', sans-serif;
-  padding: 30px;
+  padding: 25px;
   box-sizing: border-box;
 
   @media (max-width: 768px) {
-    padding: 20px 10px;
+    padding: 20px;
   }
 `;
 
 const ProfileCard = styled.div`
-  width: 900px;
-  min-height: 681px;
+  width: 800px;
+  min-height: 580px;
   background: linear-gradient(135deg, #f8e8f0 0%, #e8d5e8 100%);
-  border-radius: 24px;
-  padding: 45px;
+  border-radius: 20px;
+  padding: 35px;
   box-sizing: border-box;
   font-family: '온글잎 의연체', sans-serif;
   position: relative;
@@ -32,52 +32,51 @@ const ProfileCard = styled.div`
 
   @media (max-width: 1200px) {
     width: 90%;
-    max-width: 1100px;
-    height: auto;
-    min-height: 780px;
+    max-width: 800px;
   }
 
   @media (max-width: 768px) {
     width: 100%;
-    padding: 40px 30px;
+    padding: 30px;
+    min-height: 520px;
   }
 `;
 
 const DemoLabel = styled.div`
   position: absolute;
-  top: -15px;
+  top: -12px;
   left: 50%;
   transform: translateX(-50%);
   background: #ff6b6b;
   color: white;
-  padding: 8px 20px;
-  border-radius: 20px;
-  font-size: 18px;
+  padding: 6px 16px;
+  border-radius: 16px;
+  font-size: 14px;
   font-weight: bold;
   box-shadow: 0 4px 16px rgba(255, 107, 107, 0.3);
   z-index: 10;
 
   @media (max-width: 768px) {
-    font-size: 14px;
-    padding: 6px 15px;
+    font-size: 12px;
+    padding: 5px 12px;
   }
 `;
 
 const ProfileHeader = styled.div`
   text-align: center;
-  margin-bottom: 5px;
+  margin-bottom: 25px;
 `;
 
 const ProfileAvatar = styled.div`
-  margin-bottom: 10px;
+  margin-bottom: 15px;
 `;
 
 const AvatarCircle = styled.div`
-  width: 80px;
-  height: 80px;
+  width: 70px;
+  height: 70px;
   border-radius: 50%;
   background: white;
-  border: 4px solid #333;
+  border: 3px solid #333;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -86,25 +85,25 @@ const AvatarCircle = styled.div`
   overflow: hidden;
 
   @media (max-width: 768px) {
-    width: 100px;
-    height: 100px;
+    width: 60px;
+    height: 60px;
   }
 `;
 
 const AvatarEmoji = styled.span`
-  font-size: 36px;
+  font-size: 32px;
 
   @media (max-width: 768px) {
-    font-size: 36px;
+    font-size: 28px;
   }
 `;
 
 const Greeting = styled.h1`
-  font-size: 64px;
+  font-size: 36px;
   color: #333;
   font-weight: bold;
   margin: 0;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
 
   @media (max-width: 768px) {
     font-size: 28px;
@@ -114,23 +113,23 @@ const Greeting = styled.h1`
 const ProfileInfo = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  margin-bottom: 60px;
+  gap: 12px;
+  margin-bottom: 40px;
 `;
 
 const InfoItem = styled.div`
   background: white;
-  border-radius: 12px;
-  padding: 15px 25px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
+  padding: 15px 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   border: 1px solid rgba(0, 0, 0, 0.1);
 `;
 
 const InfoText = styled.div`
-  font-size: 40px;
+  font-size: 20px;
   color: #333;
   font-weight: 500;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
   text-align: center;
   display: flex;
   align-items: center;
@@ -138,21 +137,21 @@ const InfoText = styled.div`
   gap: 15px;
 
   @media (max-width: 768px) {
-    font-size: 22px;
+    font-size: 18px;
     flex-direction: column;
     gap: 10px;
   }
 `;
 
 const InputField = styled.input`
-  font-size: 32px;
-  padding: 8px 15px;
+  font-size: 18px;
+  padding: 8px 14px;
   border: 2px solid #ddd;
-  border-radius: 8px;
+  border-radius: 6px;
   font-family: '온글잎 의연체', sans-serif;
   background: #f9f9f9;
   color: #333;
-  min-width: 200px;
+  min-width: 180px;
   transition: all 0.2s ease;
 
   &:focus {
@@ -162,20 +161,20 @@ const InputField = styled.input`
   }
 
   @media (max-width: 768px) {
-    font-size: 18px;
-    min-width: 150px;
+    font-size: 16px;
+    min-width: 160px;
   }
 `;
 
 const SelectField = styled.select`
-  font-size: 32px;
-  padding: 8px 15px;
+  font-size: 18px;
+  padding: 8px 14px;
   border: 2px solid #ddd;
-  border-radius: 8px;
+  border-radius: 6px;
   font-family: '온글잎 의연체', sans-serif;
   background: #f9f9f9;
   color: #333;
-  min-width: 150px;
+  min-width: 140px;
   transition: all 0.2s ease;
 
   &:focus {
@@ -185,25 +184,31 @@ const SelectField = styled.select`
   }
 
   @media (max-width: 768px) {
-    font-size: 18px;
+    font-size: 16px;
     min-width: 120px;
   }
 `;
 
 const ProfileFooter = styled.div`
   position: absolute;
-  bottom: 30px;
-  right: 45px;
+  bottom: 20px;
+  right: 30px;
   display: flex;
-  gap: 15px;
+  gap: 10px;
+
+  @media (max-width: 768px) {
+    position: static;
+    justify-content: center;
+    margin-top: 20px;
+  }
 `;
 
 const Button = styled.button`
   background: #ffffff;
   border: 2px solid #ccc;
-  border-radius: 12px;
-  padding: 8px 30px;
-  font-size: 32px;
+  border-radius: 8px;
+  padding: 8px 20px;
+  font-size: 18px;
   color: #363434;
   cursor: pointer;
   font-family: '온글잎 의연체', sans-serif;
@@ -227,8 +232,8 @@ const Button = styled.button`
   }
 
   @media (max-width: 768px) {
-    font-size: 20px;
-    padding: 6px 20px;
+    font-size: 16px;
+    padding: 6px 16px;
   }
 `;
 
@@ -328,10 +333,11 @@ const DemoInformationPage = () => {
     <Header />
     <Container>
       <ProfileCard>
+        <DemoLabel>데모 버전</DemoLabel>
         <ProfileHeader>
           <ProfileAvatar>
             <AvatarCircle>
-              <AvatarEmoji></AvatarEmoji>
+              <AvatarEmoji>👤</AvatarEmoji>
             </AvatarCircle>
           </ProfileAvatar>
           <Greeting>안녕하세요 {nickname}님</Greeting>
