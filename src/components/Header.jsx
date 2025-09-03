@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useState } from 'react';
+import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import SideBar from './SideBar';
@@ -11,10 +11,10 @@ const BREAKPOINTS = {
 };
 
 const HEADER_HEIGHT = {
-  desktop: '60px',
-  tablet: '60px',
-  mobile: '55px',
-  small: '50px'
+  desktop: '65px',
+  tablet: '65px',
+  mobile: '60px',
+  small: '55px'
 };
 
 // Styled-components 정의
@@ -29,7 +29,11 @@ const HeaderWrapper = styled.header`
   left: 0;
   right: 0;
   z-index: 1000;
-  
+
+  /* 스크롤 비율 기준 숨김 애니메이션 */
+  transform: translateY(${props => (props.$hidden ? '-100%' : '0')});
+  transition: transform 220ms ease;
+
   @media (max-width: ${BREAKPOINTS.tablet}) {
     padding: 0 15px;
     height: ${HEADER_HEIGHT.tablet};
@@ -85,12 +89,12 @@ const TextButton = styled.button`
 const MenuButton = styled(TextButton)``;
 
 const ProfileButton = styled(TextButton)`
-  color: ${props => props.isLoggedIn ? '#ff91a4' : '#666'};
-  font-weight: ${props => props.isLoggedIn ? '600' : '500'};
+  color: ${props => (props.isLoggedIn ? '#ff91a4' : '#666')};
+  font-weight: ${props => (props.isLoggedIn ? '600' : '500')};
   
   &:hover {
-    background: ${props => props.isLoggedIn ? 'rgba(255, 145, 164, 0.15)' : 'rgba(102, 102, 102, 0.1)'};
-    color: ${props => props.isLoggedIn ? '#ff6b6b' : '#333'};
+    background: ${props => (props.isLoggedIn ? 'rgba(255, 145, 164, 0.15)' : 'rgba(102, 102, 102, 0.1)')};
+    color: ${props => (props.isLoggedIn ? '#ff6b6b' : '#333')};
   }
 `;
 
@@ -141,16 +145,15 @@ const SubText = styled.p`
 const Header = memo(() => {
   const navigate = useNavigate();
   const [isSideBarOpen, setIsSideBarOpen] = useState(false);
-  
-  // 로그인 상태를 확인하는 함수 (실제 로직에 맞게 수정하세요)
-  const isLoggedIn = () => {
-    // 예시: localStorage에서 토큰 확인
-    return localStorage.getItem('authToken') !== null;
-    // 또는 다른 로그인 상태 확인 로직
-  };
-  
+
+  // ⬇️ 변경: "방향"이 아닌 "스크롤 진행률(%)" 기준으로 숨김
+  const [hideOnScroll, setHideOnScroll] = useState(false);
+  const ticking = useRef(false);
+
+  // 로그인 상태 예시
+  const isLoggedIn = () => localStorage.getItem('authToken') !== null;
   const loggedIn = isLoggedIn();
-  
+
   const handleLogoClick = useCallback(() => {
     navigate('/MainPage');
   }, [navigate]);
@@ -177,10 +180,55 @@ const Header = memo(() => {
       handleLogoClick();
     }
   }, [handleLogoClick]);
-  
+
+  useEffect(() => {
+    const HIDE_THRESHOLD_PERCENT = 15; // ⬅️ 5% 기준
+
+    const calcScrollable = () => {
+      const doc = document.documentElement;
+      return Math.max(0, doc.scrollHeight - window.innerHeight);
+    };
+
+    let maxScrollable = calcScrollable();
+
+    const update = () => {
+      const scrollY = window.scrollY || document.documentElement.scrollTop || 0;
+      // 스크롤 가능한 높이가 0이면(짧은 페이지) 항상 표시
+      if (maxScrollable <= 0) {
+        setHideOnScroll(false);
+        return;
+      }
+      const progress = (scrollY / maxScrollable) * 100;
+      setHideOnScroll(progress >= HIDE_THRESHOLD_PERCENT);
+    };
+
+    const onScrollOrResize = () => {
+      if (ticking.current) return;
+      ticking.current = true;
+      window.requestAnimationFrame(() => {
+        // 리사이즈 시 스크롤 가능 높이 재계산
+        maxScrollable = calcScrollable();
+        update();
+        ticking.current = false;
+      });
+    };
+
+    // 초기 계산
+    maxScrollable = calcScrollable();
+    update();
+
+    window.addEventListener('scroll', onScrollOrResize, { passive: true });
+    window.addEventListener('resize', onScrollOrResize);
+
+    return () => {
+      window.removeEventListener('scroll', onScrollOrResize);
+      window.removeEventListener('resize', onScrollOrResize);
+    };
+  }, []);
+
   return (
     <>
-      <HeaderWrapper role="banner">
+      <HeaderWrapper role="banner" $hidden={hideOnScroll}>
         <MenuButton 
           onClick={handleMenuClick}
           aria-label="메뉴 열기"
@@ -202,7 +250,7 @@ const Header = memo(() => {
         
         <ProfileButton 
           onClick={handleProfileClick}
-          aria-label={loggedIn ? "사용자 프로필" : "로그인"}
+          aria-label={loggedIn ? '사용자 프로필' : '로그인'}
           type="button"
           isLoggedIn={loggedIn}
         >
