@@ -14,7 +14,7 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
   gap: 30px;
-  font-family: 'Ownglyph EuiyeonChae', sans-serif;
+  font-family: '온글잎 의연체', sans-serif;
 
   @media (max-width: 768px) {
     padding: 40px 20px 40px;
@@ -63,7 +63,7 @@ const PreviewImage = styled.img`
 `;
 
 const UploadText = styled.div`
-  font-size: 20px;
+  font-size: 30px;
   color: #333;
   user-select: none;
 `;
@@ -74,7 +74,7 @@ const DiaryMessageBox = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  font-size: 30px;
   border-radius: 12px;
   box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
   padding: 16px 20px;
@@ -97,7 +97,7 @@ const DiaryTextarea = styled.textarea`
   border: none;
   resize: none;
   background: transparent;
-  font-size: 24px;
+  font-size: 30px;
   padding: 0px 20px 20px 20px;
   outline: none;
   box-sizing: border-box;
@@ -146,15 +146,15 @@ const Button = styled.button`
 `;
 
 const ButtonText = styled.span`
-  font-size: 20px;
+  font-size: 30px;
   color: #333;
   user-select: none;
 `;
 
 const WordCount = styled.div`
   align-self: flex-end;
-  font-size: 16px;
-  color: #555;
+  font-size: 30px;
+  color: #848383ff;
   user-select: none;
 `;
 
@@ -184,7 +184,7 @@ const EmotionAnalyze = styled.div`
   height: 100%;
   background-color: #ffffff;
   border-radius: 12px;
-  font-size: 20px;
+  font-size: 30px;
   display: flex;
   align-items: flex-start;
   justify-content: flex-start;
@@ -202,7 +202,7 @@ const EmotionAnalyzeText = styled.p`
 `;
 
 const DateBox = styled.div`
-  font-size: 25px;
+  font-size: 35px;
   font-weight: bold;
   margin: 20px 0px 0px 20px;
   color: #333;
