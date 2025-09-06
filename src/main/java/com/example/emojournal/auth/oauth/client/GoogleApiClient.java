@@ -55,7 +55,7 @@ public class GoogleApiClient implements OAuthApiClient{
         httpHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
         MultiValueMap<String, String> body = params.makeBody();
-        body.add("grant_type", GRANT_TYPE);
+//        body.add("grant_type", GRANT_TYPE);
         body.add("client_id", GOOGLE_CLIENT_ID);
         body.add("client_secret", GOOGLE_CLIENT_SECRET);
         body.add("redirect_uri", LOGIN_REDIRECT_URL); // 여기서 이 redirect_uri는 꼭 필요함

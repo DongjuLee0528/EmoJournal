@@ -10,6 +10,7 @@ import com.example.emojournal.auth.oauth.utils.OAuthInfoResponse;
 import com.example.emojournal.auth.oauth.utils.OAuthLoginParams;
 import com.example.emojournal.member.entity.Member;
 import com.example.emojournal.member.repository.MemberRepository;
+import com.example.emojournal.auth.jwt.service.RefreshTokenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +30,9 @@ public class OAuthLoginService {
     // OAuth 정보들을 요청하는 서비스
     private final RequestOAuthInfoService requestOAuthInfoService;
 
+    // 리프레쉬 토큰 서비스
+    private final RefreshTokenService refreshTokenService;
+
     // OAuthLoginParams 인터페이스 를 구현한 GoogleLoginParams
     public LoginResponse login(OAuthLoginParams params) {
 
@@ -39,6 +43,9 @@ public class OAuthLoginService {
 
         // 가져온 정보 dto 를 가지고 db 에서 정보를 찾거나 or 만들어줌
         Long memberId = findOrCreateMember(oAuthLoginResponse.getOAuthInfoResponse());
+
+        // 기존 리프레쉬 토큰 삭제 (중복 로그인 방지)
+        refreshTokenService.deleteByMemberId(memberId);
 
         AuthTokens authTokens = authTokenGenerator.generate(memberId);
 

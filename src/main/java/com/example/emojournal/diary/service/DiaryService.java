@@ -32,6 +32,9 @@ public class DiaryService {
     private final FileUploadService fileUploadService;
     private final EmotionAnalysisService emotionAnalysisService;
 
+    /**
+     * 일기 생성 (파일 업로드 + 감정 분석 포함)
+     */
     @Transactional
     public DiaryResponse createDiary(DiaryCreateRequest request, MultipartFile imageFile) {
         try {
@@ -53,9 +56,7 @@ public class DiaryService {
             }
 
             diary = diaryRepository.save(diary);
-
             performEmotionAnalysis(diary);
-
             diary = diaryRepository.save(diary);
 
             log.info("일기 생성 완료 - ID: {}, 감정: {}", diary.getId(), diary.getAnalyzedEmotion());
@@ -67,6 +68,9 @@ public class DiaryService {
         }
     }
 
+    /**
+     * 일기 수정
+     */
     @Transactional
     public DiaryResponse updateDiary(Long diaryId, String userId, DiaryUpdateRequest request, MultipartFile imageFile) {
         try {
@@ -91,7 +95,6 @@ public class DiaryService {
                 if (diary.getImagePath() != null) {
                     fileUploadService.deleteFile(diary.getImagePath());
                 }
-
                 String uploadedFileName = fileUploadService.uploadFile(imageFile);
                 diary.setImagePath(uploadedFileName);
                 diary.setOriginalImageName(imageFile.getOriginalFilename());
@@ -114,6 +117,9 @@ public class DiaryService {
         }
     }
 
+    /**
+     * 일기 상세 조회
+     */
     @Transactional
     public DiaryResponse getDiary(Long diaryId, String userId) {
         log.info("일기 조회 - ID: {}, 사용자: {}", diaryId, userId);
@@ -127,6 +133,9 @@ public class DiaryService {
         return DiaryResponse.from(diary);
     }
 
+    /**
+     * 일기 목록 조회 (페이징)
+     */
     public Page<DiaryResponse> getDiaries(String userId, Pageable pageable) {
         log.info("일기 목록 조회(페이징) - 사용자: {}, 페이지: {}", userId, pageable.getPageNumber());
 
@@ -134,8 +143,11 @@ public class DiaryService {
         return diaries.map(DiaryResponse::summary);
     }
 
+    /**
+     * 전체 일기 목록 조회
+     */
     public List<DiaryResponse> getAllDiaries(String userId) {
-        log.info("사용자 전체 일기 목록 조회 - 사용자: {}", userId);
+        log.info("전체 일기 목록 조회 - 사용자: {}", userId);
 
         List<Diary> diaries = diaryRepository.findByUserIdOrderByDiaryDateDesc(userId);
         return diaries.stream()
@@ -143,25 +155,21 @@ public class DiaryService {
                 .collect(Collectors.toList());
     }
 
-    /** 🔹 추가: 전체 일기 리스트 조회 (페이징 없이) */
-    public List<DiaryResponse> getDiaryList(String userId) {
-        log.info("일기 리스트 조회 - 사용자: {}", userId);
-        List<Diary> diaries = diaryRepository.findByUserIdOrderByDiaryDateDesc(userId);
-        return diaries.stream()
-                .map(DiaryResponse::summary)
-                .collect(Collectors.toList());
-    }
-
+    /**
+     * 1년 전 일기 조회
+     */
     public DiaryResponse getOneYearAgoDiary(String userId) {
         log.info("1년 전 일기 조회 - 사용자: {}", userId);
 
         LocalDate targetDate = LocalDate.now().minusYears(1);
-
         return diaryRepository.findOneYearAgoDiary(userId, targetDate)
                 .map(DiaryResponse::from)
                 .orElse(null);
     }
 
+    /**
+     * 일기 삭제
+     */
     @Transactional
     public void deleteDiary(Long diaryId, String userId) {
         log.info("일기 삭제 시작 - ID: {}, 사용자: {}", diaryId, userId);
@@ -178,6 +186,9 @@ public class DiaryService {
         log.info("일기 삭제 완료 - ID: {}", diaryId);
     }
 
+    /**
+     * 키워드 검색
+     */
     public List<DiaryResponse> searchDiaries(String userId, String keyword) {
         log.info("일기 검색 - 사용자: {}, 키워드: {}", userId, keyword);
 
@@ -187,6 +198,9 @@ public class DiaryService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 감정별 일기 조회
+     */
     public List<DiaryResponse> getDiariesByEmotion(String userId, String emotion) {
         log.info("감정별 일기 조회 - 사용자: {}, 감정: {}", userId, emotion);
 
@@ -196,6 +210,9 @@ public class DiaryService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 감정 통계 조회
+     */
     public Map<String, Long> getEmotionStatistics(String userId) {
         log.info("감정 통계 조회 - 사용자: {}", userId);
 
@@ -207,40 +224,46 @@ public class DiaryService {
                 ));
     }
 
+    /**
+     * 감정 분석 실행
+     */
     private void performEmotionAnalysis(Diary diary) {
         try {
             log.debug("감정 분석 시작 - 일기 ID: {}", diary.getId());
 
-            EmotionAnalysisRequest analysisRequest = new EmotionAnalysisRequest();
-            analysisRequest.setDiaryText(diary.getContent());
+            EmotionAnalysisRequest request = new EmotionAnalysisRequest();
+            request.setDiaryText(diary.getContent());
 
-            EmotionAnalysisResponse analysisResponse = emotionAnalysisService.analyzeEmotion(analysisRequest);
+            EmotionAnalysisResponse response = emotionAnalysisService.analyzeEmotion(request);
 
-            if (analysisResponse.isSuccess()) {
-                diary.setAnalyzedEmotion(analysisResponse.getEmotion());
-                diary.setEmotionKeyword(analysisResponse.getEmotionKeyword());
-                diary.setDiaryKeywordsList(analysisResponse.getDiaryKeywords());
-                diary.setEmotionInterpretation(analysisResponse.getInterpretation());
-                diary.setEmotionImageFile(analysisResponse.getImageFileName());
+            if (response.isSuccess()) {
+                // 수정된 부분: EmotionAnalysisResponse DTO에 맞게 변경
+                diary.setAnalyzedEmotion(response.getMainTag());        // getEmotion() → getMainTag()
+                diary.setEmotionKeyword(response.getEmotionTags());     // getEmotionKeyword() → getEmotionTags()
+                diary.setDiaryKeywordsList(response.getTagList());      // getDiaryKeywords() → getTagList()
+                diary.setEmotionInterpretation(response.getMessage());  // getInterpretation() → getMessage()
+                diary.setEmotionImageFile(response.getMainEmoji());     // getImageFileName() → getMainEmoji()
 
-                log.debug("감정 분석 완료 - 감정: {}, 키워드: {}",
-                        analysisResponse.getEmotion(), analysisResponse.getAllKeywords());
+                log.debug("감정 분석 성공 - 메인 태그: {}, 전체 태그: {}", response.getMainTag(), response.getEmotionTags());
             } else {
-                log.warn("감정 분석 실패 - 일기 ID: {}, 오류: {}", diary.getId(), analysisResponse.getMessage());
-                diary.setAnalyzedEmotion("기쁨");
-                diary.setEmotionKeyword("평온");
-                diary.setDiaryKeywordsList(List.of("일반"));
-                diary.setEmotionInterpretation("감정 분석에 실패했지만, 소중한 기록입니다.");
-                diary.setEmotionImageFile("joy.png");
+                log.warn("감정 분석 실패 - ID: {}, 메시지: {}", diary.getId(), response.getMessage());
+                setDefaultEmotion(diary);
             }
 
         } catch (Exception e) {
-            log.error("감정 분석 중 오류 발생 - 일기 ID: {}", diary.getId(), e);
-            diary.setAnalyzedEmotion("기쁨");
-            diary.setEmotionKeyword("평온");
-            diary.setDiaryKeywordsList(List.of("일반"));
-            diary.setEmotionInterpretation("오늘도 소중한 하루였습니다.");
-            diary.setEmotionImageFile("joy.png");
+            log.error("감정 분석 오류 - ID: {}", diary.getId(), e);
+            setDefaultEmotion(diary);
         }
+    }
+
+    /**
+     * 감정 분석 실패 시 기본값 설정
+     */
+    private void setDefaultEmotion(Diary diary) {
+        diary.setAnalyzedEmotion("#기쁨");
+        diary.setEmotionKeyword("#평온");
+        diary.setDiaryKeywordsList(List.of("일반"));
+        diary.setEmotionInterpretation("오늘도 소중한 하루였습니다.");
+        diary.setEmotionImageFile("😊");
     }
 }

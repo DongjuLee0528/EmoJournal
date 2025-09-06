@@ -12,9 +12,11 @@ import org.springframework.util.MultiValueMap;
 @NoArgsConstructor
 @Getter
 @Setter
-public class GoogleLoginParams implements OAuthLoginParams{
+public class GoogleLoginParams implements OAuthLoginParams {
 
-    private String authorizationCode;
+    private String authorizationCode; // code
+    private String redirectUri;       // ✅ 추가
+    private String codeVerifier;      // ✅ 추가
 
     @Override
     public OAuthProvider oAuthProvider() {
@@ -23,12 +25,11 @@ public class GoogleLoginParams implements OAuthLoginParams{
 
     @Override
     public MultiValueMap<String, String> makeBody() {
-        // MultiValueMap 에 대한 설명
-        // 하나의 키값에 여러개의 값을 집어넣는다면
-        // 그냥 HashMap 은 value 값에 하나의 값만 들어갈수있다.
-        // 그와 반대로 MultiValueMap 는 value 에 list 가 들어갈수 있다.
-        MultiValueMap<String,String> body = new LinkedMultiValueMap<>();
-        body.add("code",authorizationCode);
+        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+        body.add("code", authorizationCode);
+        body.add("grant_type", "authorization_code");   // ✅ 필수
+        if (redirectUri != null)   body.add("redirect_uri", redirectUri);     // ✅ 필수
+        if (codeVerifier != null)  body.add("code_verifier", codeVerifier);   // ✅ PKCE
         return body;
     }
 }

@@ -1,5 +1,6 @@
 package com.example.emojournal.member.controller;
 
+import com.example.emojournal.auth.jwt.utils.AuthenticationContextHolder;
 import com.example.emojournal.member.dto.requst.MemberUpdateRequest;
 import com.example.emojournal.member.entity.Member;
 import com.example.emojournal.member.dto.MemberResponseDto;
@@ -20,16 +21,31 @@ public class MemberController {
     @GetMapping("/member")
     public MemberResponseDto showMember(HttpServletRequest request) {
 
-        Long memberId = (Long)request.getAttribute("memberId");
+        Long memberId = AuthenticationContextHolder.getContext();
 
-        return Member.fromEntity(memberService.findMemberById(memberId));
+        log.info("memberId : " + memberId);
+
+        MemberResponseDto memberResponseDto = Member.fromEntity(memberService.findMemberById(memberId));
+
+        log.info("memberResponseDto : " + memberResponseDto);
+
+        return memberResponseDto;
     }
 
-//    @PutMapping("/member")
-//    public ResponseEntity<?> setMember(@RequestBody MemberUpdateRequest memberUpdateRequest) {
-//
-//
-//
-//        return null;
-//    }
+    @PutMapping("/member")
+    public ResponseEntity<MemberResponseDto> setMember(@RequestBody MemberUpdateRequest memberUpdateRequest,HttpServletRequest request) {
+
+        Long memberId = AuthenticationContextHolder.getContext();
+
+        log.info("memberUpdateRequest : "+ memberUpdateRequest.toString());
+
+        Member member = memberService.setMember(memberUpdateRequest, memberId);
+
+        MemberResponseDto memberResponseDto = Member.fromEntity(member);
+
+        log.info("memberResponseDto : " + memberResponseDto.toString());
+
+        return ResponseEntity.ok()
+                .body(memberResponseDto);
+    }
 }
