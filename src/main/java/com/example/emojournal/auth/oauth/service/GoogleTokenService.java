@@ -32,11 +32,16 @@ public class GoogleTokenService {
         Optional<GoogleToken> googleToken = googleTokenRepository.findByMemberId(member.getId());
         // 구글 토큰이 존재한다면?
         if (googleToken.isPresent()) {
-            // 예외처리
-            throw new GoogleTokenAlreadyExistsException(memberId);
+            // 기존 토큰 업데이트
+            GoogleToken existingToken = googleToken.get();
+            existingToken.setAccessToken(googleTokenDto.getAccessToken());
+            existingToken.setRefreshToken(googleTokenDto.getRefreshToken());
+            existingToken.setAccessTokenExpiresAt(googleTokenDto.getAccessTokenExpiresAt());
+            googleTokenRepository.save(existingToken);
+        } else {
+            // 구글 토큰저장
+            googleTokenRepository.save(GoogleToken.create(member,googleTokenDto));
         }
-        // 구글 토큰저장
-        googleTokenRepository.save(GoogleToken.create(member,googleTokenDto));
     }
 
     public Long findByMemberId(Long memberId) {
