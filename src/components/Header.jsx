@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useEffect, useState } from 'react';
+import React, { memo, useCallback, useState } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import SideBar from './SideBar';
@@ -11,10 +11,10 @@ const BREAKPOINTS = {
 };
 
 const HEADER_HEIGHT = {
-  desktop: '60px',
-  tablet: '60px',
-  mobile: '55px',
-  small: '50px'
+  desktop: '65px',
+  tablet: '65px',
+  mobile: '60px',
+  small: '55px'
 };
 
 // Styled-components 정의
@@ -29,9 +29,7 @@ const HeaderWrapper = styled.header`
   left: 0;
   right: 0;
   z-index: 1000;
-  transition: transform 0.3s ease;
-  transform: ${({ isHidden }) => (isHidden ? 'translateY(-60px)' : 'translateY(0)')};
-
+  
   @media (max-width: ${BREAKPOINTS.tablet}) {
     padding: 0 15px;
     height: ${HEADER_HEIGHT.tablet};
@@ -89,10 +87,10 @@ const MenuButton = styled(TextButton)``;
 const ProfileButton = styled(TextButton)`
   color: ${props => props.isLoggedIn ? '#ff91a4' : '#666'};
   font-weight: ${props => props.isLoggedIn ? '600' : '500'};
-
+  
   &:hover {
-    background: ${props => props.isLoggedIn ? 'rgba(255, 145, 164, 0.15)' : 'rgba(102, 102, 102, 0.1)'};
-    color: ${props => props.isLoggedIn ? '#ff6b6b' : '#333'};
+    background: ${props => (props.isLoggedIn ? 'rgba(255, 145, 164, 0.15)' : 'rgba(102, 102, 102, 0.1)')};
+    color: ${props => (props.isLoggedIn ? '#ff6b6b' : '#333')};
   }
 `;
 
@@ -142,37 +140,16 @@ const SubText = styled.p`
 const Header = memo(() => {
   const navigate = useNavigate();
   const [isSideBarOpen, setIsSideBarOpen] = useState(false);
-  const [isHidden, setIsHidden] = useState(false);
-  const [lastScrollY, setLastScrollY] = useState(0);
-
-  // 로그인 상태 확인
+  
+  // 로그인 상태를 확인하는 함수 (실제 로직에 맞게 수정하세요)
   const isLoggedIn = () => {
+    // 예시: localStorage에서 토큰 확인
     return localStorage.getItem('authToken') !== null;
+    // 또는 다른 로그인 상태 확인 로직
   };
-
+  
   const loggedIn = isLoggedIn();
-
-  // 스크롤 감지로 헤더 숨김 처리
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-
-      if (currentScrollY > lastScrollY && currentScrollY > 50) {
-        setIsHidden(true); // 아래로 스크롤 → 숨김
-      } else {
-        setIsHidden(false); // 위로 스크롤 → 보임
-      }
-
-      setLastScrollY(currentScrollY);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, [lastScrollY]);
-
+  
   const handleLogoClick = useCallback(() => {
     navigate('/MainPage');
   }, [navigate]);
@@ -199,11 +176,11 @@ const Header = memo(() => {
       handleLogoClick();
     }
   }, [handleLogoClick]);
-
+  
   return (
     <>
-      <HeaderWrapper role="banner" isHidden={isHidden}>
-        <MenuButton
+      <HeaderWrapper role="banner">
+        <MenuButton 
           onClick={handleMenuClick}
           aria-label="메뉴 열기"
           type="button"
