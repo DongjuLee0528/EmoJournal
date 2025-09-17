@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useState } from 'react';
+import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import SideBar from './SideBar';
@@ -22,24 +22,28 @@ const HeaderWrapper = styled.header`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 60px;
+  height: ${HEADER_HEIGHT.desktop};
   padding: 0 20px;
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 1000;
-  
+
+  /* 스크롤 비율 기준 숨김 애니메이션 */
+  transform: translateY(${props => (props.$hidden ? '-100%' : '0')});
+  transition: transform 220ms ease;
+
   @media (max-width: ${BREAKPOINTS.tablet}) {
     padding: 0 15px;
     height: ${HEADER_HEIGHT.tablet};
   }
-
+  
   @media (max-width: ${BREAKPOINTS.mobile}) {
     padding: 0 12px;
     height: ${HEADER_HEIGHT.mobile};
   }
-
+  
   @media (max-width: ${BREAKPOINTS.small}) {
     padding: 0 10px;
     height: ${HEADER_HEIGHT.small};
@@ -60,22 +64,22 @@ const TextButton = styled.button`
   font-size: 28px;
   font-weight: 500;
   color: #333;
-
+  
   &:hover {
     background: rgba(255, 145, 164, 0.1);
     color: #ff91a4;
   }
-
+  
   @media (max-width: ${BREAKPOINTS.tablet}) {
     font-size: 15px;
     padding: 6px 10px;
   }
-
+  
   @media (max-width: ${BREAKPOINTS.mobile}) {
     font-size: 14px;
     padding: 6px 8px;
   }
-
+  
   @media (max-width: ${BREAKPOINTS.small}) {
     font-size: 13px;
     padding: 5px 6px;
@@ -85,8 +89,8 @@ const TextButton = styled.button`
 const MenuButton = styled(TextButton)``;
 
 const ProfileButton = styled(TextButton)`
-  color: ${props => props.isLoggedIn ? '#ff91a4' : '#666'};
-  font-weight: ${props => props.isLoggedIn ? '600' : '500'};
+  color: ${props => (props.isLoggedIn ? '#ff91a4' : '#666')};
+  font-weight: ${props => (props.isLoggedIn ? '600' : '500')};
   
   &:hover {
     background: ${props => (props.isLoggedIn ? 'rgba(255, 145, 164, 0.15)' : 'rgba(102, 102, 102, 0.1)')};
@@ -101,11 +105,11 @@ const Logo = styled.div`
   cursor: pointer;
   transition: transform 0.2s ease;
   margin-top: 8px;
-
+  
   &:hover {
     transform: translateY(-1px);
   }
-
+  
   &:active {
     transform: translateY(1px);
   }
@@ -137,27 +141,27 @@ const SubText = styled.p`
   transition: color 0.2s ease;
 `;
 
+// 컴포넌트
 const Header = memo(() => {
   const navigate = useNavigate();
   const [isSideBarOpen, setIsSideBarOpen] = useState(false);
-  
-  // 로그인 상태를 확인하는 함수 (실제 로직에 맞게 수정하세요)
-  const isLoggedIn = () => {
-    // 예시: localStorage에서 토큰 확인
-    return localStorage.getItem('authToken') !== null;
-    // 또는 다른 로그인 상태 확인 로직
-  };
-  
+
+  // ⬇️ 변경: "방향"이 아닌 "스크롤 진행률(%)" 기준으로 숨김
+  const [hideOnScroll, setHideOnScroll] = useState(false);
+  const ticking = useRef(false);
+
+  // 로그인 상태 예시
+  const isLoggedIn = () => localStorage.getItem('authToken') !== null;
   const loggedIn = isLoggedIn();
-  
+
   const handleLogoClick = useCallback(() => {
     navigate('/MainPage');
   }, [navigate]);
-
+  
   const handleMenuClick = useCallback(() => {
     setIsSideBarOpen(true);
   }, []);
-
+  
   const handleProfileClick = useCallback(() => {
     if (loggedIn) {
       navigate('/MyInformationPage');
@@ -165,21 +169,66 @@ const Header = memo(() => {
       navigate('/LoginPageOauth');
     }
   }, [navigate, loggedIn]);
-
+  
   const handleSideBarClose = useCallback(() => {
     setIsSideBarOpen(false);
   }, []);
-
+  
   const handleLogoKeyDown = useCallback((e) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       handleLogoClick();
     }
   }, [handleLogoClick]);
-  
+
+  useEffect(() => {
+    const HIDE_THRESHOLD_PERCENT = 15; // ⬅️ 5% 기준
+
+    const calcScrollable = () => {
+      const doc = document.documentElement;
+      return Math.max(0, doc.scrollHeight - window.innerHeight);
+    };
+
+    let maxScrollable = calcScrollable();
+
+    const update = () => {
+      const scrollY = window.scrollY || document.documentElement.scrollTop || 0;
+      // 스크롤 가능한 높이가 0이면(짧은 페이지) 항상 표시
+      if (maxScrollable <= 0) {
+        setHideOnScroll(false);
+        return;
+      }
+      const progress = (scrollY / maxScrollable) * 100;
+      setHideOnScroll(progress >= HIDE_THRESHOLD_PERCENT);
+    };
+
+    const onScrollOrResize = () => {
+      if (ticking.current) return;
+      ticking.current = true;
+      window.requestAnimationFrame(() => {
+        // 리사이즈 시 스크롤 가능 높이 재계산
+        maxScrollable = calcScrollable();
+        update();
+        ticking.current = false;
+      });
+    };
+
+    // 초기 계산
+    maxScrollable = calcScrollable();
+    update();
+
+    window.addEventListener('scroll', onScrollOrResize, { passive: true });
+    window.addEventListener('resize', onScrollOrResize);
+
+    return () => {
+      window.removeEventListener('scroll', onScrollOrResize);
+      window.removeEventListener('resize', onScrollOrResize);
+    };
+  }, []);
+
   return (
     <>
-      <HeaderWrapper role="banner">
+      <HeaderWrapper role="banner" $hidden={hideOnScroll}>
         <MenuButton 
           onClick={handleMenuClick}
           aria-label="메뉴 열기"
@@ -187,8 +236,8 @@ const Header = memo(() => {
         >
           Menu
         </MenuButton>
-
-        <Logo
+        
+        <Logo 
           onClick={handleLogoClick}
           onKeyDown={handleLogoKeyDown}
           tabIndex={0}
@@ -198,8 +247,8 @@ const Header = memo(() => {
           <MainText>EMOJOURNAL</MainText>
           <SubText>My Mood Diary</SubText>
         </Logo>
-
-        <ProfileButton
+        
+        <ProfileButton 
           onClick={handleProfileClick}
           aria-label={loggedIn ? '사용자 프로필' : '로그인'}
           type="button"
@@ -208,11 +257,11 @@ const Header = memo(() => {
           {loggedIn ? 'Profile' : 'Login'}
         </ProfileButton>
       </HeaderWrapper>
-
+      
       {isSideBarOpen && (
-        <SideBar
-          isOpen={isSideBarOpen}
-          onClose={handleSideBarClose}
+        <SideBar 
+          isOpen={isSideBarOpen} 
+          onClose={handleSideBarClose} 
         />
       )}
     </>

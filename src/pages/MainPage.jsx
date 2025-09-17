@@ -34,7 +34,6 @@ const Wrapper = styled.div`
 `;
 
 const CalendarContainer = styled.div`
-  position: relative;
   width: 95%;
   max-width: 1400px;
   flex: 1;
@@ -93,7 +92,7 @@ const DayName = styled.div`
   padding: 0.75rem 0;
   font-size: 1.5rem;
   font-weight: 600;
-  color: ${({ index }) => (index === 0 ? '#e57373' : index === 6 ? '#64b5f6' : '#444')};
+  color: ${({ $index }) => ($index === 0 ? '#e57373' : $index === 6 ? '#64b5f6' : '#444')};
 `;
 
 const DaysGrid = styled.div`
@@ -132,7 +131,7 @@ const DayCell = styled.div`
 const DayNumber = styled.div`
   font-weight: bold;
   font-size: 1.5rem;
-  color: ${({ isToday }) => (isToday ? '#e91e63' : '#333')};
+  color: ${({ $isToday }) => ($isToday ? '#e91e63' : '#333')};
   margin-bottom: 2px;
   flex-shrink: 0;
 
@@ -152,8 +151,8 @@ const EventTag = styled.div`
   padding: 1px 2px;
   border-radius: 3px;
   margin-bottom: 0px;
-  background-color: ${({ bg }) => bg || '#FF92D3'};
-  color: ${({ text }) => text || 'black'};
+  background-color: ${({ $bg }) => $bg || '#FF92D3'};
+  color: ${({ $text }) => $text || 'black'};
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -172,9 +171,8 @@ const EventTag = styled.div`
   }
 `;
 
-// 로그인 오버레이 스타일 - 캘린더 컨테이너 내부에만 적용
+// 로그인 오버레이 스타일
 const LoginOverlay = styled.div`
-  font-family: '온글잎 의연체', sans-serif;
   position: absolute;
   top: 0;
   left: 0;
@@ -187,27 +185,23 @@ const LoginOverlay = styled.div`
   background-color: rgba(255, 255, 255, 0.8);
   z-index: 10;
   backdrop-filter: blur(2px);
-  border-radius: 30px;
-  padding-bottom: 8%;
+  padding-bottom: 10%;
 
   @media (max-width: 768px) {
-    backdrop-filter: blur(1.5px);
-    padding-bottom: 6%;
+    padding-bottom: 8%;
   }
 
   @media (max-width: 480px) {
-    backdrop-filter: blur(1px);
-    padding-bottom: 4%;
+    padding-bottom: 5%;
   }
 `;
 
 const LoginPromptTitle = styled.h1`
   font-size: 3rem;
-  color: #333333;
+  color: #333;
   margin-bottom: 0.5rem;
   font-weight: bold;
   text-align: center;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
   @media (max-width: 768px) {
     font-size: 2.5rem;
@@ -220,39 +214,36 @@ const LoginPromptTitle = styled.h1`
 
 const LoginPromptSubtitle = styled.p`
   font-size: 1.2rem;
-  color: #666666;
-  margin-bottom: 2rem;
+  color: #666;
+  margin-bottom: 1rem;
   text-align: center;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 
   @media (max-width: 768px) {
     font-size: 1.1rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.8rem;
   }
 
   @media (max-width: 480px) {
     font-size: 1rem;
-    margin-bottom: 1.2rem;
+    margin-bottom: 0.8rem;
   }
 `;
 
 const LoginButton = styled.button`
-  padding: 0.6rem 2rem;
-  font-size: 1.1rem;
-  background: linear-gradient(135deg, #ff4081);
+  padding: 0.4rem 3rem;
+  font-size: 1.2rem;
+  background: #ff80ab;
   color: white;
   border: none;
-  border-radius: 15px;
+  border-radius: 25px;
   cursor: pointer;
   transition: all 0.3s;
   font-weight: 600;
-  box-shadow: 0 4px 15px rgba(255, 64, 129, 0.3);
-  width: 280px;
   
   &:hover {
-    background: linear-gradient(135deg, #e91e63);
+    background: #ff4081;
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(255, 64, 129, 0.5);
+    box-shadow: 0 8px 20px rgba(255, 64, 129, 0.4);
   }
 
   &:disabled {
@@ -262,15 +253,13 @@ const LoginButton = styled.button`
   }
 
   @media (max-width: 768px) {
-    padding: 0.5rem 1.5rem;
-    font-size: 1rem;
-    width: 240px;
+    padding: 0.8rem 2.5rem;
+    font-size: 1.1rem;
   }
 
   @media (max-width: 480px) {
-    padding: 0.5rem 1.2rem;
-    font-size: 0.9rem;
-    width: 200px;
+    padding: 0.7rem 2rem;
+    font-size: 1rem;
   }
 `;
 
@@ -289,7 +278,7 @@ const MainPage = () => {
 
   // API 호출 헬퍼 함수
   const apiCall = useCallback(async (endpoint, options = {}) => {
-    const token = localStorage.getItem('access_token');
+    const token = localStorage.getItem('accessToken');
     const url = `${apiConfig.baseURL}${endpoint}`;
     
     const defaultOptions = {
@@ -305,7 +294,7 @@ const MainPage = () => {
       const response = await fetch(url, defaultOptions);
       
       if (response.status === 401) {
-        localStorage.removeItem('access_token');
+        localStorage.removeItem('accessToken');
         setIsAuthenticated(false);
         throw new Error('Unauthorized');
       }
@@ -426,7 +415,10 @@ const MainPage = () => {
             body: JSON.stringify({ code })
           });
           
-          localStorage.setItem('access_token', data.access_token);
+          const receivedToken = data.accessToken || data.access_token;
+          if (receivedToken) {
+            localStorage.setItem('accessToken', receivedToken);
+          }
           setIsAuthenticated(true);
           
           // URL에서 code 파라미터 제거
@@ -434,14 +426,14 @@ const MainPage = () => {
           window.history.replaceState({}, document.title, newUrl);
         } else {
           // 기존 토큰 확인
-          const token = localStorage.getItem('access_token');
+          const token = localStorage.getItem('accessToken');
           if (token) {
             try {
               await apiCall('/api/auth/verify');
               setIsAuthenticated(true);
             } catch (error) {
               console.log('토큰 검증 실패:', error);
-              localStorage.removeItem('access_token');
+              localStorage.removeItem('accessToken');
               setIsAuthenticated(false);
             }
           }
@@ -512,9 +504,9 @@ const MainPage = () => {
       const dayEvents = getDayEvents(day);
       days.push(
         <DayCell key={day}>
-          <DayNumber isToday={isToday}>{day}</DayNumber>
+          <DayNumber $isToday={isToday}>{day}</DayNumber>
           {dayEvents.map((e) => (
-            <EventTag key={e.id} bg={e.color?.bg} text={e.color?.text}>
+            <EventTag key={e.id} $bg={e.color?.bg} $text={e.color?.text}>
               {e.summary}
             </EventTag>
           ))}
@@ -531,7 +523,7 @@ const MainPage = () => {
     <Wrapper>
       <Header />
       
-      <CalendarContainer>
+      <CalendarContainer style={{ position: 'relative' }}>
         <MonthHeader>
           <MonthTitle onClick={handleMonthClick}>
             &lt; {dateUtils.formatMonth(currentDate)} &gt;
@@ -546,7 +538,7 @@ const MainPage = () => {
 
         <WeekHeader>
           {dayNames.map((d, i) => (
-            <DayName key={d} index={i}>
+            <DayName key={d} $index={i}>
               {d}
             </DayName>
           ))}
@@ -554,7 +546,7 @@ const MainPage = () => {
         
         <DaysGrid>{calendarDays}</DaysGrid>
 
-        {/* 로그인하지 않았을 때 캘린더 컨테이너에만 오버레이 표시 */}
+        {/* 로그인하지 않았을 때 오버레이 표시 */}
         {!isAuthenticated && (
           <LoginOverlay>
             <LoginPromptTitle>EmoJournal 시작하기</LoginPromptTitle>
