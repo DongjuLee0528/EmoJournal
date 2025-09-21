@@ -93,7 +93,7 @@ const DayName = styled.div`
   padding: 0.75rem 0;
   font-size: 1.5rem;
   font-weight: 600;
-  color: ${({ $index }) => ($index === 0 ? '#e57373' : $index === 6 ? '#64b5f6' : '#444')};
+  color: ${({ index }) => (index === 0 ? '#e57373' : index === 6 ? '#64b5f6' : '#444')};
 `;
 
 const DaysGrid = styled.div`
@@ -132,7 +132,7 @@ const DayCell = styled.div`
 const DayNumber = styled.div`
   font-weight: bold;
   font-size: 1.5rem;
-  color: ${({ $isToday }) => ($isToday ? '#e91e63' : '#333')};
+  color: ${({ isToday }) => (isToday ? '#e91e63' : '#333')};
   margin-bottom: 2px;
   flex-shrink: 0;
 
@@ -152,8 +152,8 @@ const EventTag = styled.div`
   padding: 1px 2px;
   border-radius: 3px;
   margin-bottom: 0px;
-  background-color: ${({ $bg }) => $bg || '#FF92D3'};
-  color: ${({ $text }) => $text || 'black'};
+  background-color: ${({ bg }) => bg || '#FF92D3'};
+  color: ${({ text }) => text || 'black'};
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -495,57 +495,15 @@ const MainPage = () => {
   const [events, setEvents] = useState([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  // API 기본 설정
-  const apiConfig = useMemo(() => ({
-    baseURL: process.env.REACT_APP_API_BASE_URL || '',
-    timeout: 10000
-  }), []);
-
-  // API 호출 헬퍼 함수
-  const apiCall = useCallback(async (endpoint, options = {}) => {
-    const token = localStorage.getItem('access_token');
-    const url = `${apiConfig.baseURL}${endpoint}`;
-    
-    const defaultOptions = {
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token && { 'Authorization': `Bearer ${token}` })
-      },
-      credentials: 'include',
-      ...options
-    };
-
-    try {
-      const response = await fetch(url, defaultOptions);
-      
-      if (response.status === 401) {
-        localStorage.removeItem('access_token');
-        setIsAuthenticated(false);
-        throw new Error('Unauthorized');
-      }
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error(`API 호출 실패 (${endpoint}):`, error);
-      throw error;
-    }
-  }, [apiConfig.baseURL]);
-
-  // 백엔드에서 제공한 Google OAuth 설정
-  const config = useMemo(() => ({
-    CLIENT_ID: '639506784430-mvf0oth3lt0jc4nab5dbjq18ki7nggsv.apps.googleusercontent.com',
-    REDIRECT_URI: 'https://emojournal.djloghub.com/oauth/callback',
-    SCOPES: [
-      'https://www.googleapis.com/auth/calendar.readonly',
-      'https://www.googleapis.com/auth/userinfo.email',
-      'https://www.googleapis.com/auth/userinfo.profile'
-    ].join(' ')
-  }), []);
+  
+  // 팝업 관련 상태
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [showPopup, setShowPopup] = useState(false);
+  const [editedTitle, setEditedTitle] = useState('');
+  const [editedStartDate, setEditedStartDate] = useState('');
+  const [editedEndDate, setEditedEndDate] = useState('');
+  const [isAllDay, setIsAllDay] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   const colors = useMemo(() => [
     { bg: '#f8bbd0', text: '#880e4f' },
@@ -681,57 +639,6 @@ const MainPage = () => {
     }
   }, [isAuthenticated, currentDate, getRandomColor]);
 
-  // OAuth 콜백 처리 및 인증 상태 확인
-  useEffect(() => {
-    const checkAuthStatus = async () => {
-      try {
-        // URL에서 authorization code 확인
-        const urlParams = new URLSearchParams(window.location.search);
-        const code = urlParams.get('code');
-        const error = urlParams.get('error');
-
-        if (error) {
-          console.error('OAuth 에러:', error);
-          return;
-        }
-
-        if (code) {
-          // 백엔드에 authorization code 전송
-          const data = await apiCall('/api/oauth/callback', {
-            method: 'POST',
-            body: JSON.stringify({ code })
-          });
-          
-          localStorage.setItem('access_token', data.access_token);
-          setIsAuthenticated(true);
-          
-          // URL에서 code 파라미터 제거
-          const newUrl = window.location.pathname;
-          window.history.replaceState({}, document.title, newUrl);
-        } else {
-          // 기존 토큰 확인
-          const token = localStorage.getItem('access_token');
-          if (token) {
-            try {
-              await apiCall('/api/auth/verify');
-              setIsAuthenticated(true);
-            } catch (error) {
-              console.log('토큰 검증 실패:', error);
-              localStorage.removeItem('access_token');
-              setIsAuthenticated(false);
-            }
-          }
-        }
-      } catch (error) {
-        console.error('인증 상태 확인 실패:', error);
-        setIsAuthenticated(false);
-      }
-    };
-
-    checkAuthStatus();
-  }, [apiCall]);
-
-  // 인증 상태나 현재 날짜가 변경될 때 이벤트 로드
   useEffect(() => {
     if (isAuthenticated) {
       loadCalendarEvents();
@@ -801,9 +708,14 @@ const MainPage = () => {
       const dayEvents = getDayEvents(day);
       days.push(
         <DayCell key={day}>
-          <DayNumber $isToday={isToday}>{day}</DayNumber>
+          <DayNumber isToday={isToday}>{day}</DayNumber>
           {dayEvents.map((e) => (
-            <EventTag key={e.id} bg={e.color?.bg} text={e.color?.text}>
+            <EventTag 
+              key={e.id} 
+              bg={e.color?.bg} 
+              text={e.color?.text}
+              onClick={() => handleEventClick(e)}
+            >
               {e.summary}
             </EventTag>
           ))}
@@ -835,7 +747,7 @@ const MainPage = () => {
 
         <WeekHeader>
           {dayNames.map((d, i) => (
-            <DayName key={d} $index={i}>
+            <DayName key={d} index={i}>
               {d}
             </DayName>
           ))}
