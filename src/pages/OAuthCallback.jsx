@@ -6,164 +6,183 @@ import Footer from '../components/Footer';
 const OAuthCallback = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [progress, setProgress] = useState('인증 코드 확인 중...');
+  const [progress, setProgress] = useState('Verifying authentication code...');
 
+  // It's good practice to keep the API base URL in a central config or .env file
   const API_BASE_URL = 'https://emojournal.djloghub.com/api';
 
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-    const errorParam = urlParams.get('error');
-    const state = urlParams.get('state');
+    const processAuth = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+      const errorParam = urlParams.get('error');
+      const state = urlParams.get('state');
 
-    // 세션에 저장한 state 값 불러오기
-    const savedState = sessionStorage.getItem('oauth_state');
+      // It's cleaner to remove the used params from the URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+      
+      const savedState = sessionStorage.getItem('oauth_state');
+      // Clean up session storage after retrieving the state
+      sessionStorage.removeItem('oauth_state');
 
-    // OAuth 에러 처리
-    if (errorParam) {
-      console.error('OAuth 에러:', errorParam);
-      let errorMessage = 'Google 로그인 중 오류가 발생했습니다.';
-      if (errorParam === 'access_denied') {
-        errorMessage = '사용자가 Google 로그인 권한을 거부했습니다.';
-      } else if (errorParam === 'invalid_request') {
-        errorMessage = '잘못된 OAuth 요청입니다.';
-      } else if (errorParam === 'unauthorized_client') {
-        errorMessage = '인증되지 않은 클라이언트입니다.';
+      if (errorParam) {
+        handleAuthError(new Error(`OAuth Error: ${errorParam}. Please try logging in again.`));
+        return;
       }
-      setError(errorMessage);
-      setIsLoading(false);
-      return;
-    }
 
-    // State 검증 (세션에 저장한 값과 비교)
-    if (!state || state !== savedState) {
-      console.error('State 파라미터 불일치:', state, '저장된 값:', savedState);
-      setError('보안 검증 실패: 잘못된 요청입니다.');
-      setIsLoading(false);
-      return;
-    }
+      if (!state || state !== savedState) {
+        handleAuthError(new Error('Security validation failed (Invalid state). Please try logging in again.'));
+        return;
+      }
 
-    // Authorization Code 처리
-    if (code) {
-      handleAuthorizationCode(code);
-    } else {
-      setError('인증 코드를 받지 못했습니다.');
-      setIsLoading(false);
-    }
+      if (code) {
+        await handleAuthorizationCode(code);
+      } else {
+        handleAuthError(new Error('Authentication code was not received.'));
+      }
+    };
+
+    processAuth();
   }, []);
 
   const handleAuthorizationCode = async (code) => {
-    console.log('Authorization Code 처리 시작:', code);
+    console.log('Starting authorization code processing:', code);
     try {
-      setProgress('서버에 인증 정보 전송 중...');
+      setProgress('Sending authentication information to the server...');
+      
       const response = await fetch(`${API_BASE_URL}/login/oauth2/code/google`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
-        mode: 'cors',
+        // 'mode' and 'credentials' are often necessary for cross-origin requests that handle auth
+        mode: 'cors', 
         credentials: 'include',
-        body: JSON.stringify({ code })
+        // The backend likely expects the code within a JSON object
+        body: JSON.stringify({ code }),
       });
 
+      // The response is not OK, delegate to the error handler
       if (!response.ok) {
         await handleErrorResponse(response);
-        return;
+        return; // Important to stop execution here
       }
 
-      setProgress('사용자 정보 확인 중...');
+      setProgress('Verifying user information...');
       const data = await response.json();
-      console.log('✅ 서버 응답 성공:', data);
+      console.log('✅ Server response successful:', data);
 
-      if (response.status === 200 || data.success === true) {
-        setProgress('로그인 완료! 메인 페이지로 이동합니다...');
-        if (data.accessToken || data.token || data.jwt) {
-          const token = data.accessToken || data.token || data.jwt;
-          localStorage.setItem('accessToken', token);
-          console.log('✅ Access Token 저장 완료');
-        }
-        if (data.user || data.userInfo) {
-          const userInfo = data.user || data.userInfo;
-          localStorage.setItem('userInfo', JSON.stringify(userInfo));
-          console.log('✅ 사용자 정보 저장 완료');
-        }
+      // Check for a success flag or valid token in the response
+      if (data.success === true || data.accessToken || data.jwt) {
+        const token = data.accessToken || data.token || data.jwt;
+        const userInfo = data.user || data.userInfo;
+        
+        localStorage.setItem('accessToken', token);
+        localStorage.setItem('userInfo', JSON.stringify(userInfo));
+        console.log('✅ Access Token and User Info stored successfully.');
+        
+        setProgress('Login complete! Redirecting to the main page...');
         setTimeout(() => {
-          window.location.href = '/main';
+          window.location.href = '/MainPage';
         }, 1500);
       } else {
-        throw new Error(data.message || data.error || '로그인 처리 실패');
+        // If the server responds 200 OK but the operation failed logically
+        throw new Error(data.message || 'Login processing failed. The server response was invalid.');
       }
+
     } catch (error) {
-      console.error('❌ 인증 처리 오류:', error);
+      // Catch fetch errors (network issues) or errors thrown from our logic
+      console.error('❌ Authentication processing error:', error);
       handleAuthError(error);
     }
   };
-
+  
   const handleErrorResponse = async (response) => {
+    // This function now centralizes creating a detailed error to be thrown
     const status = response.status;
-    let errorText = '';
+    let serverMessage = '';
     try {
-      errorText = await response.text();
-      console.error(`서버 오류 [${status}]:`, errorText);
+      // Try to get more detailed error info from the server's response body
+      const errorData = await response.json();
+      serverMessage = errorData.message || errorData.error || JSON.stringify(errorData);
     } catch (e) {
-      console.error('응답 파싱 오류:', e);
+      serverMessage = await response.text(); // Fallback to plain text
     }
-    let errorMessage = '';
+
+    console.error(`Server Error [${status}]:`, serverMessage);
+
+    let userMessage = '';
     switch (status) {
       case 400:
-        errorMessage = '잘못된 요청: 인증 코드가 만료되었거나 유효하지 않습니다.';
+        userMessage = 'Invalid Request: The authentication code may be expired or invalid. Please try again.';
         break;
       case 401:
-        errorMessage = '인증 실패: Google OAuth 설정을 확인해주세요.';
+        userMessage = 'Authentication Failed: Please check your Google OAuth settings on the server.';
         break;
       case 403:
-        if (errorText.includes('CSRF') || errorText.includes('Invalid CSRF Token')) {
-          errorMessage = 'CSRF 보안 오류: 페이지를 새로고침한 후 다시 시도해주세요.';
-        } else {
-          errorMessage = '접근 권한이 없습니다. 서버 설정을 확인해주세요.';
-        }
+        userMessage = 'Forbidden: You do not have permission to perform this action.';
         break;
       case 404:
-        errorMessage = 'API 엔드포인트를 찾을 수 없습니다: /login/oauth2/code/google';
+        userMessage = 'API Not Found: The endpoint /login/oauth2/code/google could not be found.';
         break;
       case 500:
-        errorMessage = '서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+        userMessage = 'Internal Server Error: The server encountered a problem. Please contact support or try again later.';
         break;
       default:
-        errorMessage = `서버 오류 (${status}): ${errorText || response.statusText}`;
+        userMessage = `An unexpected server error occurred (${status}).`;
     }
-    throw new Error(errorMessage);
+    // Throw an error that will be caught by the catch block in handleAuthorizationCode
+    throw new Error(`${userMessage} (Server says: ${serverMessage})`);
   };
 
   const handleAuthError = (error) => {
-    let errorMessage = error.message || '알 수 없는 오류가 발생했습니다.';
+    let errorMessage = error.message || 'An unknown error occurred.';
+    
+    // Make network error messages more user-friendly
     if (error.message.includes('Failed to fetch')) {
-      errorMessage = '서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.';
-    } else if (error.message.includes('NetworkError')) {
-      errorMessage = '네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.';
+      errorMessage = 'Cannot connect to the server. Please check your network connection and if the server is running.';
     }
+    
     setError(errorMessage);
     setIsLoading(false);
   };
-
+  
   const handleRetryLogin = () => {
-    window.history.replaceState({}, document.title, window.location.pathname);
     window.location.href = '/';
   };
 
   return (
     <>
       <Header />
-      <div style={{
-        minHeight: '85vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontFamily: 'system-ui, -apple-system, sans-serif',
-      }}>
-        {/* 기존 로딩/성공/실패 UI는 동일 */}
-        {/* ... */}
+      <div style={{ minHeight: '85vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'system-ui, -apple-system, sans-serif', padding: '1rem' }}>
+        <div style={{ textAlign: 'center', maxWidth: '600px' }}>
+          {isLoading && (
+            <>
+              <div style={{ margin: '0 auto 20px', width: '40px', height: '40px', border: '4px solid #f3f3f3', borderTop: '4px solid #3498db', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+              <h1 style={{ fontSize: '1.5rem', color: '#374151' }}>Processing Login</h1>
+              <p style={{ color: '#6b7280' }}>{progress}</p>
+            </>
+          )}
+          {error && (
+            <div style={{ background: '#fee2e2', padding: '1.5rem', borderRadius: '16px', border: '1px solid #fecaca' }}>
+              <h1 style={{ fontSize: '1.5rem', color: '#b91c1c', margin: '0 0 1rem 0' }}>Login Failed</h1>
+              {/* Providing detailed error for easier debugging */}
+              <p style={{ color: '#dc2626', wordBreak: 'break-word', whiteSpace: 'pre-wrap', background: '#fff1f2', padding: '1rem', borderRadius: '8px', fontFamily: 'monospace', fontSize: '0.9rem' }}>
+                {error}
+              </p>
+              <button onClick={handleRetryLogin} style={{ marginTop: '1.5rem', background: '#dc2626', color: 'white', fontWeight: '600', padding: '0.75rem 1.5rem', borderRadius: '12px', border: 'none', cursor: 'pointer' }}>
+                Try Again
+              </button>
+            </div>
+          )}
+        </div>
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
       <Footer />
     </>
