@@ -59,6 +59,7 @@ public class GoogleApiClient implements OAuthApiClient{
         body.add("client_id", GOOGLE_CLIENT_ID);
         body.add("client_secret", GOOGLE_CLIENT_SECRET);
         body.add("redirect_uri", LOGIN_REDIRECT_URL); // 여기서 이 redirect_uri는 꼭 필요함
+        body.add("scope", "openid email profile https://www.googleapis.com/auth/calendar"); // 캘린더 권한 추가
 
         for (String key : body.keySet()) {
             log.info(key + " : " +  body.get(key).toString());

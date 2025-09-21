@@ -17,6 +17,7 @@ public class GoogleLoginParams implements OAuthLoginParams {
     private String authorizationCode; // code
     private String redirectUri;       // ✅ 추가
     private String codeVerifier;      // ✅ 추가
+    private String scope;             // ✅ 캘린더 권한 포함
 
     @Override
     public OAuthProvider oAuthProvider() {
@@ -30,6 +31,7 @@ public class GoogleLoginParams implements OAuthLoginParams {
         body.add("grant_type", "authorization_code");   // ✅ 필수
         if (redirectUri != null)   body.add("redirect_uri", redirectUri);     // ✅ 필수
         if (codeVerifier != null)  body.add("code_verifier", codeVerifier);   // ✅ PKCE
+        if (scope != null)  body.add("scope", scope);   // ✅ 캘린더 권한
         return body;
     }
 }
