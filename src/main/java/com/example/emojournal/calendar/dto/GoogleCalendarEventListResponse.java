@@ -11,4 +11,5 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class GoogleCalendarEventListResponse {
     private List<GoogleCalendarEventDto> items;
+    private String nextPageToken;
 }
