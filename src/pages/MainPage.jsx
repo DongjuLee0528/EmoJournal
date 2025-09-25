@@ -489,6 +489,21 @@ const LoginButton = styled.button`
   }
 `;
 
+// 디버그 패널 스타일 (개발용)
+const DebugPanel = styled.div`
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 10px;
+  border-radius: 5px;
+  font-size: 12px;
+  max-width: 300px;
+  z-index: 1000;
+  display: ${({ show }) => show ? 'block' : 'none'};
+`;
+
 const MainPage = () => {
   const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -505,6 +520,10 @@ const MainPage = () => {
   const [isAllDay, setIsAllDay] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
+  // 디버그용 상태
+  const [debugInfo, setDebugInfo] = useState('');
+  const [showDebug, setShowDebug] = useState(false);
+
   const colors = useMemo(() => [
     { bg: '#f8bbd0', text: '#880e4f' },
     { bg: '#ce93d8', text: '#4a148c' },
@@ -516,16 +535,27 @@ const MainPage = () => {
 
   const getRandomColor = useCallback((i) => colors[i % colors.length], [colors]);
 
+  // 날짜 포맷팅 함수 개선
+  const formatDateForComparison = useCallback((dateStr) => {
+    if (!dateStr) return null;
+    
+    // ISO 형식의 날짜에서 날짜 부분만 추출
+    if (dateStr.includes('T')) {
+      return dateStr.split('T')[0];
+    }
+    return dateStr;
+  }, []);
+
   // 이벤트 클릭 핸들러
   const handleEventClick = useCallback((event) => {
     setSelectedEvent(event);
     setEditedTitle(event.summary || '');
-    setEditedStartDate(event.start.date || event.start.dateTime?.split('T')[0] || '');
-    setEditedEndDate(event.end?.date || event.start.date || event.start.dateTime?.split('T')[0] || '');
+    setEditedStartDate(formatDateForComparison(event.start.date || event.start.dateTime) || '');
+    setEditedEndDate(formatDateForComparison(event.end?.date || event.end?.dateTime || event.start.date || event.start.dateTime) || '');
     setIsAllDay(!!event.start.date);
     setIsEditing(false);
     setShowPopup(true);
-  }, []);
+  }, [formatDateForComparison]);
 
   // 팝업 닫기
   const closePopup = useCallback(() => {
@@ -622,6 +652,10 @@ const MainPage = () => {
       const response = await api.get(`/api/calendar?timeMin=${timeMin}&timeMax=${timeMax}`);
 
       const calendarEvents = response.data || [];
+      
+      // 디버그 정보 업데이트
+      setDebugInfo(`API로부터 받은 이벤트: ${calendarEvents.length}개`);
+      
       const formatted = calendarEvents.map((e, i) => ({
         id: e.id,
         summary: e.summary,
@@ -629,11 +663,15 @@ const MainPage = () => {
         end: e.end,
         color: getRandomColor(i),
       }));
+      
       setEvents(formatted);
       console.log('캘린더 이벤트 로드 완료:', formatted.length, '개');
+      console.log('이벤트 상세:', formatted);
+      
     } catch (error) {
       console.error('캘린더 이벤트 불러오기 실패:', error);
       setEvents([]);
+      setDebugInfo('API 호출 실패');
     } finally {
       setIsLoading(false);
     }
@@ -662,14 +700,40 @@ const MainPage = () => {
     formatMonth: (date) => `${date.getFullYear()}년 ${date.getMonth() + 1}월`,
   }), []);
 
+  // 개선된 getDayEvents 함수
   const getDayEvents = useCallback((day) => {
     const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    return events.filter((event) => {
-      const start = event.start.date || event.start.dateTime?.split('T')[0];
-      const end = event.end?.date || start;
-      return dateStr >= start && dateStr < end;
+    
+    const dayEvents = events.filter((event) => {
+      const startDate = formatDateForComparison(event.start.date || event.start.dateTime);
+      const endDate = formatDateForComparison(event.end?.date || event.end?.dateTime || event.start.date || event.start.dateTime);
+      
+      if (!startDate) return false;
+      
+      // 종일 이벤트의 경우, end 날짜는 실제 종료일 다음날로 설정되므로 조정
+      let actualEndDate = endDate;
+      if (event.start.date && event.end?.date) {
+        // 종일 이벤트인 경우 end 날짜에서 하루를 빼줌
+        const endDateObj = new Date(endDate);
+        endDateObj.setDate(endDateObj.getDate() - 1);
+        actualEndDate = endDateObj.toISOString().split('T')[0];
+      }
+      
+      const isInRange = dateStr >= startDate && dateStr <= actualEndDate;
+      
+      // 디버그 로그 (개발 시에만 사용)
+      if (day === 1) { // 매월 1일에만 로그 출력
+        console.log(`Event: "${event.summary}"`);
+        console.log(`Start: ${startDate}, End: ${endDate}, Actual End: ${actualEndDate}`);
+        console.log(`Date: ${dateStr}, In Range: ${isInRange}`);
+        console.log('---');
+      }
+      
+      return isInRange;
     });
-  }, [events, currentDate]);
+    
+    return dayEvents;
+  }, [events, currentDate, formatDateForComparison]);
 
   const goToPreviousMonth = useCallback(() =>
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1)), [currentDate]);
@@ -694,6 +758,7 @@ const MainPage = () => {
     const firstDay = dateUtils.getFirstDayOfMonth(currentDate);
     const today = new Date();
     const days = [];
+    let totalEventsShown = 0;
 
     for (let i = 0; i < firstDay; i++) {
       days.push(<DayCell key={`empty-${i}`} />);
@@ -706,6 +771,8 @@ const MainPage = () => {
         today.getDate() === day;
 
       const dayEvents = getDayEvents(day);
+      totalEventsShown += dayEvents.length;
+      
       days.push(
         <DayCell key={day}>
           <DayNumber isToday={isToday}>{day}</DayNumber>
@@ -715,6 +782,7 @@ const MainPage = () => {
               bg={e.color?.bg} 
               text={e.color?.text}
               onClick={() => handleEventClick(e)}
+              title={e.summary} // 툴팁 추가
             >
               {e.summary}
             </EventTag>
@@ -723,14 +791,48 @@ const MainPage = () => {
       );
     }
 
+    // 디버그 정보 업데이트
+    setDebugInfo(prev => `${prev} | 화면에 표시된 이벤트: ${totalEventsShown}개`);
+
     return days;
   }, [currentDate, dateUtils, getDayEvents, handleEventClick]);
 
   const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
 
+  // 디버그 패널 토글 (개발용)
+  const toggleDebug = useCallback(() => {
+    setShowDebug(prev => !prev);
+  }, []);
+
   return (
     <Wrapper>
       <Header />
+      
+      {/* 개발용 디버그 버튼 */}
+      <button 
+        onClick={toggleDebug}
+        style={{
+          position: 'fixed',
+          top: '10px',
+          left: '10px',
+          zIndex: 1001,
+          padding: '5px 10px',
+          fontSize: '12px',
+          background: '#333',
+          color: 'white',
+          border: 'none',
+          borderRadius: '3px'
+        }}
+      >
+        Debug
+      </button>
+      
+      <DebugPanel show={showDebug}>
+        <div>현재 월: {dateUtils.formatMonth(currentDate)}</div>
+        <div>전체 이벤트 수: {events.length}</div>
+        <div>{debugInfo}</div>
+        <div>인증 상태: {isAuthenticated ? '로그인됨' : '로그인 필요'}</div>
+      </DebugPanel>
       
       <CalendarContainer>
         <MonthHeader>
