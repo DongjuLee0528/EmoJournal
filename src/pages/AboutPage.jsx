@@ -429,7 +429,7 @@ const AboutPage = () => {
     },
     {
       id: 'jwy',
-      name: "장원영",
+      name: "정원영",
       role: "Frontend Developer",
       description: "프론트 담당자 입니다.",
       avatar: profileSvg,
