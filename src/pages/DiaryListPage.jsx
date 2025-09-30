@@ -17,7 +17,6 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* [수정] 콘텐츠가 항상 상단에 위치하도록 변경 */
   justify-content: flex-start;
   
   padding-top: calc(${HEADER_DESKTOP_HEIGHT} + 2rem);
@@ -269,7 +268,7 @@ const LoginButton = styled.button`
   color: white;
   font-size: 18px;
   font-weight: 600;
-  padding: 0.8rem 2.5rem; /* [수정] 세로 padding 값을 줄여 높이 조절 */
+  padding: 0.8rem 2.5rem;
   border: none;
   border-radius: 1rem;
   cursor: pointer;
@@ -411,7 +410,8 @@ const DiaryListPage = () => {
   };
 
   const handleLoginRedirect = () => {
-    window.location.href = '/login';
+    // [수정] 로그인 페이지 경로를 '/LoginPageOauth'로 수정
+    window.location.href = '/LoginPageOauth';
   };
 
   const totalEntries = currentMonthEntries.length;
@@ -419,7 +419,6 @@ const DiaryListPage = () => {
   return (
     <>
       <Header />
-      {/* [수정] centered prop을 제거하여 항상 상단 정렬되도록 함 */}
       <Container>
         {!isLoggedIn ? (
           <ListWrapper>

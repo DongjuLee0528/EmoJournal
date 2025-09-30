@@ -5,6 +5,8 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import api from '../api/axiosInstance';
 
+import LYDC from '../image/LYDC.png';
+
 // 스타일 컴포넌트 정의
 const Wrapper = styled.div`
   display: flex;
@@ -397,6 +399,47 @@ const SaveButton = styled.button`
   }
 `;
 
+// =================== 왼쪽 하단 캐릭터
+const LYDCWrapper = styled.div`
+  position: fixed;
+  bottom: 20px;
+  left: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 2000;
+`;
+
+const SpeechBubble = styled.div`
+  position: relative;
+  background: #fff;
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: #333;
+  font-size: 14px;
+  font-family: "Noto Sans KR", sans-serif;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+
+  /* 꼬리 */
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -15px;     /* 말풍선 아래쪽에 배치 */
+    left: 50%;        /* 꼬리 시작 위치 (고양이 머리 쪽 맞추면 됨) */
+    border-width: 15px 10px 0 10px; /* 아래쪽 삼각형 */
+    border-style: solid;
+    border-color: #fff transparent transparent transparent;
+  }
+`;
+
+const LYDCImage = styled.img`
+  width: 250px;
+  height: auto;
+  cursor: pointer;
+  transform: scaleX(-1);
+  
+`;
+
 const MainPage = () => {
   const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -622,10 +665,19 @@ const MainPage = () => {
   const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
 
   const eventDetails = selectedEvent ? formatEventDate(selectedEvent) : null;
-
+  
+  const LYDImageClick = () => {
+    navigate('/DiaryWritingPage');
+  }
   return (
     <Wrapper>
-      <Header />
+      {/* <Header /> */}
+            {/* // =================== 왼쪽 하단 캐릭터 */}
+            <LYDCWrapper onClick={LYDImageClick}>
+      <SpeechBubble>냐옹~ 오늘도 좋은 하루야!</SpeechBubble>
+      <LYDCImage src={LYDC} alt="고양이" />
+    </LYDCWrapper>
+    {/* // =================== 왼쪽 하단 캐릭터 */}
       
       <CalendarContainer>
         <MonthHeader>
