@@ -4,3 +4,8 @@
 - 메인 페이지 캘린더 일정 수정/삭제 모달창 구현 완료
 - 구글 계정 로그인 후 일정 일부 안 뜨는 부분 확인해야 함
 - 모달창 디자인 확인해보기
+# 09/30
+- OAuthCallback.jsx 수정 완료
+- MainPage.jsx google calendar api 연동 완료
+- MainPage.jsx 일정 모달창 구현 완료
+- DiaryWritingPage.jsx 일부 수정 완료 (UI 디테일하게 수정하기)
