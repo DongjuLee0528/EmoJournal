@@ -1,47 +1,47 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import styled from 'styled-components';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
 
 const HEADER_DESKTOP_HEIGHT = '65px';
 const FOOTER_HEIGHT = '25px';
 
 const Container = styled.div`
   font-family: '온글잎 의연체', sans-serif;
-  width: 97%;
-  max-width: 1920px;
+  width: 100%; 
   margin: 0 auto;
 
-  height: 100vh;
+  min-height: 100vh;
   box-sizing: border-box;
-  overflow-y: auto;
 
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: ${props => (props.centered ? 'center' : 'flex-start')};
+  /* [수정] 콘텐츠가 항상 상단에 위치하도록 변경 */
+  justify-content: flex-start;
   
   padding-top: calc(${HEADER_DESKTOP_HEIGHT} + 2rem);
   padding-bottom: calc(${FOOTER_HEIGHT} + 2rem);
-  padding-left: 2rem;
-  padding-right: 2rem;
 `;
 
-const HeaderWrapper = styled.div`
+const PageHeaderWrapper = styled.div`
   width: 100%;
   max-width: 64rem;
   margin-bottom: 2rem;
+  padding: 0 2rem; 
+  box-sizing: border-box; 
 `;
 
-const HeaderContent = styled.div`
+const PageHeaderContent = styled.div`
   position: relative;
   z-index: 50;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(4px);
+  background: rgb(255, 255, 255); 
   border-radius: 1rem;
   padding: 1rem 2rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 `;
 
-const HeaderInner = styled.div`
+const PageHeaderInner = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -100,11 +100,12 @@ const CountText = styled.div`
 const ListWrapper = styled.div`
   width: 100%;
   max-width: 64rem;
+  padding: 0 2rem; 
+  box-sizing: border-box; 
 `;
 
 const ListContent = styled.div`
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(4px);
+  background: rgb(255, 255, 255);
   border-radius: 1rem;
   padding: 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -264,20 +265,19 @@ const LoginPromptText = styled.p`
 `;
 
 const LoginButton = styled.button`
-  background: linear-gradient(135deg,rgb(255, 173, 214),rgb(255, 173, 214));
+  background-color: #ec4899;
   color: white;
   font-size: 18px;
   font-weight: 600;
-  padding: 1rem 2.5rem;
+  padding: 0.8rem 2.5rem; /* [수정] 세로 padding 값을 줄여 높이 조절 */
   border: none;
   border-radius: 1rem;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 6px rgba(139, 92, 246, 0.3);
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(139, 92, 246, 0.4);
+    background-color: #d94682;
   }
 
   &:active {
@@ -416,113 +416,116 @@ const DiaryListPage = () => {
 
   const totalEntries = currentMonthEntries.length;
 
-  if (!isLoggedIn) {
-    return (
-      <Container>
-        <ListWrapper>
-          <ListContent>
-            <LoginPromptContainer>
-              <LoginPromptTitle>
-                내가 쓴 일기를 보고 싶으시다면<br />
-                로그인 후 이용해주세요
-              </LoginPromptTitle>
-              <LoginPromptText>
-                소중한 감정 기록들이<br />
-                여러분을 기다리고 있어요
-              </LoginPromptText>
-              <LoginButton onClick={handleLoginRedirect}>
-                지금 시작하기
-              </LoginButton>
-            </LoginPromptContainer>
-          </ListContent>
-        </ListWrapper>
-      </Container>
-    );
-  }
-
   return (
-    <Container>
-      <HeaderWrapper>
-        <HeaderContent>
-          <HeaderInner>
-            <NavButton onClick={handlePrevMonth}>
-              <NavIcon>◀</NavIcon>
-            </NavButton>
+    <>
+      <Header />
+      {/* [수정] centered prop을 제거하여 항상 상단 정렬되도록 함 */}
+      <Container>
+        {!isLoggedIn ? (
+          <ListWrapper>
+            <ListContent>
+              <LoginPromptContainer>
+                <LoginPromptTitle>
+                  내가 쓴 일기를 보고 싶으시다면<br />
+                  로그인 후 이용해주세요
+                </LoginPromptTitle>
+                <LoginPromptText>
+                  소중한 감정 기록들이<br />
+                  여러분을 기다리고 있어요
+                </LoginPromptText>
+                <LoginButton onClick={handleLoginRedirect}>
+                  지금 시작하기
+                </LoginButton>
+              </LoginPromptContainer>
+            </ListContent>
+          </ListWrapper>
+        ) : (
+          <>
+            <PageHeaderWrapper>
+              <PageHeaderContent>
+                <PageHeaderInner>
+                  <NavButton onClick={handlePrevMonth}>
+                    <NavIcon>◀</NavIcon>
+                  </NavButton>
 
-            <HeaderInfo>
-              <TitleText>내가 쓴 일기들</TitleText>
-              <div style={{ position: 'relative' }}>
-                <DateDisplay onClick={handleDateClick}>
-                  {currentDate.year}.{String(currentDate.month).padStart(2, '0')}
-                </DateDisplay>
-                {showMonthSelector && (
-                  <MonthSelector>
-                    {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
-                      <MonthButton
-                        key={month}
-                        selected={month === currentDate.month}
-                        onClick={() => handleMonthSelect(month)}
+                  <HeaderInfo>
+                    <TitleText>내가 쓴 일기들</TitleText>
+                    <div style={{ position: 'relative' }}>
+                      <DateDisplay onClick={handleDateClick}>
+                        {currentDate.year}.{String(currentDate.month).padStart(2, '0')}
+                      </DateDisplay>
+                      {showMonthSelector && (
+                        <MonthSelector>
+                          {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
+                            <MonthButton
+                              key={month}
+                              selected={month === currentDate.month}
+                              onClick={() => handleMonthSelect(month)}
+                            >
+                              <span className="num">{month}</span>
+                              <span className="unit">월</span>
+                            </MonthButton>
+                          ))}
+                        </MonthSelector>
+                      )}
+                    </div>
+                    <CountText>총 {totalEntries}개의 일기</CountText>
+                  </HeaderInfo>
+
+                  <NavButton onClick={handleNextMonth}>
+                    <NavIcon>▶</NavIcon>
+                  </NavButton>
+                </PageHeaderInner>
+              </PageHeaderContent>
+            </PageHeaderWrapper>
+
+            <ListWrapper>
+              <ListContent>
+                <FilterSection>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    {uniqueMoods.map(mood => (
+                      <FilterButton
+                        key={mood}
+                        active={selectedMoodFilter === mood}
+                        onClick={() => setSelectedMoodFilter(mood)}
                       >
-                        <span className="num">{month}</span>
-                        <span className="unit">월</span>
-                      </MonthButton>
+                        {mood}
+                      </FilterButton>
                     ))}
-                  </MonthSelector>
-                )}
-              </div>
-              <CountText>총 {totalEntries}개의 일기</CountText>
-            </HeaderInfo>
+                  </div>
+                  <SearchInput
+                    type="text"
+                    placeholder="날짜 또는 감정으로 검색..."
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                  />
+                </FilterSection>
 
-            <NavButton onClick={handleNextMonth}>
-              <NavIcon>▶</NavIcon>
-            </NavButton>
-          </HeaderInner>
-        </HeaderContent>
-      </HeaderWrapper>
-
-      <ListWrapper>
-        <ListContent>
-          <FilterSection>
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-              {uniqueMoods.map(mood => (
-                <FilterButton
-                  key={mood}
-                  active={selectedMoodFilter === mood}
-                  onClick={() => setSelectedMoodFilter(mood)}
-                >
-                  {mood}
-                </FilterButton>
-              ))}
-            </div>
-            <SearchInput
-              type="text"
-              placeholder="날짜 또는 감정으로 검색..."
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-            />
-          </FilterSection>
-
-          <ListContainer>
-            {filteredEntries.length > 0 ? (
-              filteredEntries.map((entry, index) => (
-                <DiaryItem key={index} onClick={() => handleDiaryClick(entry)}>
-                  <DiaryItemInner>
-                    <DiaryDate>{entry.date}</DiaryDate>
-                    <DiaryMood>{entry.mood}</DiaryMood>
-                  </DiaryItemInner>
-                </DiaryItem>
-              ))
-            ) : (
-              <NoEntriesMessage>
-                {currentMonthEntries.length === 0
-                  ? `${currentDate.year}년 ${currentDate.month}월에는 작성된 일기가 없습니다.`
-                  : '검색 조건에 맞는 일기가 없습니다.'}
-              </NoEntriesMessage>
-            )}
-          </ListContainer>
-        </ListContent>
-      </ListWrapper>
-    </Container>
+                <ListContainer>
+                  {filteredEntries.length > 0 ? (
+                    filteredEntries.map((entry, index) => (
+                      <DiaryItem key={index} onClick={() => handleDiaryClick(entry)}>
+                        <DiaryItemInner>
+                          <DiaryDate>{entry.date}</DiaryDate>
+                          <DiaryMood>{entry.mood}</DiaryMood>
+                        </DiaryItemInner>
+                      </DiaryItem>
+                    ))
+                  ) : (
+                    <NoEntriesMessage>
+                      {currentMonthEntries.length === 0
+                        ? `${currentDate.year}년 ${currentDate.month}월에는 작성된 일기가 없습니다.`
+                        : '검색 조건에 맞는 일기가 없습니다.'}
+                    </NoEntriesMessage>
+                  )}
+                </ListContainer>
+              </ListContent>
+            </ListWrapper>
+          </>
+        )}
+      </Container>
+      <Footer />
+    </>
   );
 };
 

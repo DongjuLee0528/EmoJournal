@@ -49,7 +49,10 @@ const OAuthCallback = () => {
     console.log('Starting authorization code processing:', code);
     try {
       setProgress('Sending authentication information to the server...');
-      
+
+      // ⬇️ PKCE code_verifier 추가
+      const codeVerifier = localStorage.getItem('pkce_verifier');
+
       const response = await fetch(`${API_BASE_URL}/login/oauth2/code/google`, {
         method: 'POST',
         headers: {
@@ -59,8 +62,11 @@ const OAuthCallback = () => {
         // 'mode' and 'credentials' are often necessary for cross-origin requests that handle auth
         mode: 'cors', 
         credentials: 'include',
-        // The backend likely expects the code within a JSON object
-        body: JSON.stringify({ code }),
+        // ⬇️ 백엔드가 codeVerifier를 기대하는 형태로 전송
+        // 만약 서버에서 필드명이 snake_case(`code_verifier`)라면 아래 줄을
+        // body: JSON.stringify({ code, code_verifier: codeVerifier })
+        // 로 바꿔주세요.
+        body: JSON.stringify({ code, codeVerifier }),
       });
 
       // The response is not OK, delegate to the error handler
@@ -78,13 +84,17 @@ const OAuthCallback = () => {
         const token = data.accessToken || data.token || data.jwt;
         const userInfo = data.user || data.userInfo;
         
-        localStorage.setItem('accessToken', token);
-        localStorage.setItem('userInfo', JSON.stringify(userInfo));
+        if (token) {
+          localStorage.setItem('accessToken', token);
+        }
+        if (userInfo) {
+          localStorage.setItem('userInfo', JSON.stringify(userInfo));
+        }
         console.log('✅ Access Token and User Info stored successfully.');
         
         setProgress('Login complete! Redirecting to the main page...');
         setTimeout(() => {
-          window.location.href = '/main';
+          window.location.href = '/MainPage';
         }, 1500);
       } else {
         // If the server responds 200 OK but the operation failed logically

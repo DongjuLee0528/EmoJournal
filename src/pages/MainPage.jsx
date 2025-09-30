@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import api from '../api/axiosInstance';
 
 // 스타일 컴포넌트 정의
 const Wrapper = styled.div`
@@ -274,21 +275,137 @@ const LoginButton = styled.button`
   }
 `;
 
+// 이벤트 상세 모달 스타일
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+`;
+
+const ModalContainer = styled.div`
+  background: linear-gradient(135deg, #e1bee7 0%, #f3e5f5 100%);
+  border-radius: 20px;
+  padding: 25px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  position: relative;
+`;
+
+const ModalHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+`;
+
+const ModalTitle = styled.h2`
+  font-size: 1.3rem;
+  color: #4a148c;
+  margin: 0;
+  font-weight: bold;
+`;
+
+const CloseButton = styled.button`
+  background: none;
+  border: none;
+  font-size: 1.8rem;
+  color: #4a148c;
+  cursor: pointer;
+  width: 35px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+  
+  &:hover {
+    background-color: rgba(74, 20, 140, 0.1);
+  }
+`;
+
+const ModalContent = styled.div`
+  margin-bottom: 20px;
+`;
+
+const DateRangeSection = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+  padding: 12px;
+  background-color: white;
+  border-radius: 10px;
+`;
+
+const DateText = styled.span`
+  font-size: 0.95rem;
+  color: #333;
+  font-weight: 500;
+`;
+
+const AllDayCheckbox = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 15px;
+`;
+
+const CheckboxIcon = styled.div`
+  width: 20px;
+  height: 20px;
+  background-color: #64b5f6;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.8rem;
+`;
+
+const CheckboxLabel = styled.span`
+  font-size: 0.95rem;
+  color: #333;
+`;
+
+const ModalFooter = styled.div`
+  display: flex;
+  justify-content: flex-end;
+`;
+
+const SaveButton = styled.button`
+  background-color: #b39ddb;
+  color: white;
+  border: none;
+  padding: 10px 30px;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  
+  &:hover {
+    background-color: #9575cd;
+  }
+`;
+
 const MainPage = () => {
   const navigate = useNavigate();
-  const [currentDate, setCurrentDate] = useState(new Date(2025, 5, 1));
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState([]);
-  const [isGoogleApiLoaded, setIsGoogleApiLoaded] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
-  const config = useMemo(() => ({
-    GOOGLE_API_KEY: process.env.REACT_APP_GOOGLE_API_KEY,
-    CLIENT_ID: process.env.REACT_APP_GOOGLE_CLIENT_ID,
-    CALENDAR_ID: 'primary',
-    DISCOVERY_DOC: 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest',
-    SCOPES: 'https://www.googleapis.com/auth/calendar.readonly'
-  }), []);
 
   const colors = useMemo(() => [
     { bg: '#f8bbd0', text: '#880e4f' },
@@ -306,33 +423,88 @@ const MainPage = () => {
     navigate('/LoginPageOauth');
   }, [navigate]);
 
+  // 이벤트 클릭 핸들러
+  const handleEventClick = useCallback((event) => {
+    setSelectedEvent(event);
+    setShowModal(true);
+  }, []);
+
+  // 모달 닫기 핸들러
+  const handleCloseModal = useCallback(() => {
+    setShowModal(false);
+    setSelectedEvent(null);
+  }, []);
+
+  // 날짜 포맷 함수
+  const formatEventDate = useCallback((event) => {
+    if (!event) return { startDate: '', endDate: '', isAllDay: false };
+
+    const isAllDay = !!event.start.date;
+    
+    if (isAllDay) {
+      const startDate = new Date(event.start.date);
+      const endDate = event.end?.date ? new Date(event.end.date) : startDate;
+      
+      // 종일 이벤트의 경우 end는 다음날을 가리키므로 1일 빼기
+      endDate.setDate(endDate.getDate() - 1);
+      
+      const formatDate = (date) => {
+        return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
+      };
+      
+      return {
+        startDate: formatDate(startDate),
+        endDate: formatDate(endDate),
+        isAllDay: true
+      };
+    } else {
+      const startDateTime = new Date(event.start.dateTime);
+      const endDateTime = event.end?.dateTime ? new Date(event.end.dateTime) : startDateTime;
+      
+      const formatDateTime = (date) => {
+        const year = date.getFullYear();
+        const month = date.getMonth() + 1;
+        const day = date.getDate();
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${year}년 ${month}월 ${day}일 ${hours}:${minutes}`;
+      };
+      
+      return {
+        startDate: formatDateTime(startDateTime),
+        endDate: formatDateTime(endDateTime),
+        isAllDay: false
+      };
+    }
+  }, []);
+
   // 샘플 이벤트 로드 함수
   const loadSampleEvents = useCallback(() => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+
     const sampleEvents = [
-      { id: '1', summary: '감정체크', start: { date: '2025-06-01' } },
-      { id: '2', summary: 'JAVA, SPRING', start: { date: '2025-06-02' }, end: { date: '2025-06-07' } },
-      { id: '3', summary: '오송역시, 약속', start: { date: '2025-06-02' } },
+      { id: '1', summary: '감정체크', start: { date: `${year}-${month}-01` } },
+      { id: '2', summary: 'JAVA, SPRING', start: { date: `${year}-${month}-02` }, end: { date: `${year}-${month}-07` } },
+      { id: '3', summary: '오송역시, 약속', start: { date: `${year}-${month}-02` } },
     ];
     setEvents(sampleEvents.map((e, i) => ({ ...e, color: getRandomColor(i) })));
   }, [getRandomColor]);
 
-  // 구글 캘린더 이벤트 로드 함수
-  const loadGoogleCalendarEvents = useCallback(async () => {
-    if (!isGoogleApiLoaded || !isAuthenticated) return;
+  // 백엔드 캘린더 이벤트 로드 함수
+  const loadCalendarEvents = useCallback(async () => {
+    if (!isAuthenticated) return;
 
     setIsLoading(true);
     try {
-      const response = await window.gapi.client.calendar.events.list({
-        calendarId: config.CALENDAR_ID,
-        timeMin: new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString(),
-        timeMax: new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString(),
-        showDeleted: false,
-        singleEvents: true,
-        orderBy: 'startTime',
-      });
+      const timeMin = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString();
+      const timeMax = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString();
 
-      const googleEvents = response.result.items || [];
-      const formatted = googleEvents.map((e, i) => ({
+      const response = await api.get(`/api/calendar?timeMin=${timeMin}&timeMax=${timeMax}`);
+
+      const calendarEvents = response.data || [];
+      const formatted = calendarEvents.map((e, i) => ({
         id: e.id,
         summary: e.summary,
         start: e.start,
@@ -340,76 +512,30 @@ const MainPage = () => {
         color: getRandomColor(i),
       }));
       setEvents(formatted);
-      console.log('구글 캘린더 이벤트 로드 완료:', formatted.length, '개');
+      console.log('캘린더 이벤트 로드 완료:', formatted.length, '개');
     } catch (error) {
-      console.error('이벤트 불러오기 실패:', error);
+      console.error('캘린더 이벤트 불러오기 실패:', error);
       loadSampleEvents();
     } finally {
       setIsLoading(false);
     }
-  }, [isGoogleApiLoaded, isAuthenticated, currentDate, config.CALENDAR_ID, getRandomColor, loadSampleEvents]);
+  }, [isAuthenticated, currentDate, getRandomColor, loadSampleEvents]);
 
   useEffect(() => {
-    if (isAuthenticated && isGoogleApiLoaded) {
-      loadGoogleCalendarEvents();
+    if (isAuthenticated) {
+      loadCalendarEvents();
     }
-  }, [currentDate, isAuthenticated, isGoogleApiLoaded, loadGoogleCalendarEvents]);
+  }, [currentDate, isAuthenticated, loadCalendarEvents]);
 
   useEffect(() => {
-    const initializeGapi = async () => {
-      if (!config.GOOGLE_API_KEY || !config.CLIENT_ID) {
-        console.warn('API 키 미설정. 샘플 데이터 사용.');
-        loadSampleEvents();
-        return;
-      }
-
-      if (window.gapi) {
-        window.gapi.load('client:auth2', async () => {
-          try {
-            await window.gapi.client.init({
-              apiKey: config.GOOGLE_API_KEY,
-              clientId: config.CLIENT_ID,
-              discoveryDocs: [config.DISCOVERY_DOC],
-              scope: config.SCOPES,
-            });
-
-            setIsGoogleApiLoaded(true);
-            const authInstance = window.gapi.auth2.getAuthInstance();
-            
-            authInstance.isSignedIn.listen((isSignedIn) => {
-              setIsAuthenticated(isSignedIn);
-              if (isSignedIn) {
-                loadGoogleCalendarEvents();
-              } else {
-                loadSampleEvents();
-              }
-            });
-
-            if (authInstance.isSignedIn.get()) {
-              setIsAuthenticated(true);
-              loadGoogleCalendarEvents();
-            } else {
-              loadSampleEvents();
-            }
-          } catch (error) {
-            console.error('GAPI 초기화 실패:', error);
-            loadSampleEvents();
-          }
-        });
-      } else {
-        loadSampleEvents();
-      }
-    };
-
-    if (!window.gapi && config.GOOGLE_API_KEY && config.CLIENT_ID) {
-      const script = document.createElement('script');
-      script.src = 'https://apis.google.com/js/api.js';
-      script.onload = initializeGapi;
-      document.body.appendChild(script);
-    } else {
-      initializeGapi();
-    }
-  }, [config, loadGoogleCalendarEvents, loadSampleEvents]);
+  const token = localStorage.getItem('accessToken');
+  if (token) {
+    setIsAuthenticated(true);  
+  } else {
+    setIsAuthenticated(false);
+    loadSampleEvents();
+  }
+}, []);
 
   const dateUtils = useMemo(() => ({
     getDaysInMonth: (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate(),
@@ -420,9 +546,17 @@ const MainPage = () => {
   const getDayEvents = useCallback((day) => {
     const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     return events.filter((event) => {
+      // 종일 이벤트는 start.date, 시간 지정 이벤트는 start.dateTime 사용
       const start = event.start.date || event.start.dateTime?.split('T')[0];
-      const end = event.end?.date || start;
-      return dateStr >= start && dateStr < end;
+      const end = event.end?.date || event.end?.dateTime?.split('T')[0] || start;
+      
+      // 종일 이벤트의 경우 end는 다음날을 가리키므로 조정
+      if (event.start.date && event.end?.date) {
+        return dateStr >= start && dateStr < end;
+      }
+      
+      // 시간 지정 이벤트의 경우 같은 날짜만 비교
+      return dateStr === start;
     });
   }, [events, currentDate]);
 
@@ -465,7 +599,16 @@ const MainPage = () => {
         <DayCell key={day}>
           <DayNumber isToday={isToday}>{day}</DayNumber>
           {dayEvents.map((e) => (
-            <EventTag key={e.id} bg={e.color?.bg} text={e.color?.text}>
+            <EventTag 
+              key={e.id} 
+              bg={e.color?.bg} 
+              text={e.color?.text}
+              onClick={(event) => {
+                event.stopPropagation();
+                handleEventClick(e);
+              }}
+              style={{ cursor: 'pointer' }}
+            >
               {e.summary}
             </EventTag>
           ))}
@@ -477,6 +620,8 @@ const MainPage = () => {
   }, [currentDate, dateUtils, getDayEvents]);
 
   const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+
+  const eventDetails = selectedEvent ? formatEventDate(selectedEvent) : null;
 
   return (
     <Wrapper>
@@ -516,6 +661,35 @@ const MainPage = () => {
           </LoginOverlay>
         )}
       </CalendarContainer>
+      
+      {/* 이벤트 상세 모달 */}
+      {showModal && selectedEvent && eventDetails && (
+        <ModalOverlay onClick={handleCloseModal}>
+          <ModalContainer onClick={(e) => e.stopPropagation()}>
+            <ModalHeader>
+              <ModalTitle>제목추가</ModalTitle>
+              <CloseButton onClick={handleCloseModal}>✕</CloseButton>
+            </ModalHeader>
+            
+            <ModalContent>
+              <DateRangeSection>
+                <DateText>{eventDetails.startDate}</DateText>
+                <DateText>→</DateText>
+                <DateText>{eventDetails.endDate}</DateText>
+              </DateRangeSection>
+              
+              <AllDayCheckbox>
+                <CheckboxIcon>{eventDetails.isAllDay ? '✓' : ''}</CheckboxIcon>
+                <CheckboxLabel>종일</CheckboxLabel>
+              </AllDayCheckbox>
+            </ModalContent>
+            
+            <ModalFooter>
+              <SaveButton onClick={handleCloseModal}>저장</SaveButton>
+            </ModalFooter>
+          </ModalContainer>
+        </ModalOverlay>
+      )}
       
       <Footer />
     </Wrapper>

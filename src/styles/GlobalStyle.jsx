@@ -28,10 +28,6 @@ const GlobalStyle = createGlobalStyle`
     overflow-y: scroll;
   }
 
-  /* [수정]
-    - 다른 페이지와의 레이아웃 충돌을 막기 위해 
-      main 태그에 적용되었던 padding-top을 제거했습니다.
-  */
 `;
 
 export default GlobalStyle;
