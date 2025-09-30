@@ -528,16 +528,14 @@ const MainPage = () => {
   }, [currentDate, isAuthenticated, loadCalendarEvents]);
 
   useEffect(() => {
-    // JWT 토큰 기반 인증 상태 확인
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      setIsAuthenticated(true);
-      loadCalendarEvents();
-    } else {
-      setIsAuthenticated(false);
-      loadSampleEvents();
-    }
-  }, [loadCalendarEvents, loadSampleEvents]);
+  const token = localStorage.getItem('accessToken');
+  if (token) {
+    setIsAuthenticated(true);  
+  } else {
+    setIsAuthenticated(false);
+    loadSampleEvents();
+  }
+}, []);
 
   const dateUtils = useMemo(() => ({
     getDaysInMonth: (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate(),
