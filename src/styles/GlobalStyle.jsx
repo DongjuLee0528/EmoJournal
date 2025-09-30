@@ -1,6 +1,6 @@
 import { createGlobalStyle } from 'styled-components';
 import bgImage from '../image/background.png';
-import OngleapFont from '../fonts/온글잎 의연체.ttf'; // 한글 이름 유지 가능
+import OngleapFont from '../fonts/온글잎 의연체.ttf';
 
 const GlobalStyle = createGlobalStyle`
   @import url('https://fonts.googleapis.com/css2?family=Cherry+Bomb+One&display=swap');
@@ -28,21 +28,10 @@ const GlobalStyle = createGlobalStyle`
     overflow-y: scroll;
   }
 
-  main {
-    padding-top: 60px;
-  }
-
-  @media (max-width: 480px) {
-    main {
-      padding-top: 55px;
-    }
-  }
-
-  @media (max-width: 320px) {
-    main {
-      padding-top: 50px;
-    }
-  }
+  /* [수정]
+    - 다른 페이지와의 레이아웃 충돌을 막기 위해 
+      main 태그에 적용되었던 padding-top을 제거했습니다.
+  */
 `;
 
 export default GlobalStyle;

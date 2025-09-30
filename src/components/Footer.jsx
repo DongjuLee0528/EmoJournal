@@ -3,7 +3,8 @@ import styled from 'styled-components';
 
 const FooterWrapper = styled.div`
   width: 100%;
-  background-color: #000000;
+  /* [수정] 배경색을 부드럽게 변경 */
+  background-color: #333;
   padding: 4px 20px;
   text-align: center;
   position: fixed;
@@ -14,7 +15,8 @@ const FooterWrapper = styled.div`
   
   p {
     color: #ffffff;
-    font-size: 10px;
+    /* [수정] 가독성을 위해 기본 폰트 크기 조정 */
+    font-size: 12px;
     margin: 0;
     padding: 0;
     line-height: 1.4;
@@ -27,7 +29,8 @@ const FooterWrapper = styled.div`
     padding: 4px 15px;
     
     p {
-      font-size: 9px;
+      /* [수정] 폰트 크기 조정 */
+      font-size: 11px;
     }
   }
   
@@ -36,7 +39,8 @@ const FooterWrapper = styled.div`
     padding: 3px 12px;
     
     p {
-      font-size: 8px;
+      /* [수정] 최소 폰트 크기를 10px로 유지 */
+      font-size: 10px;
       line-height: 1.5;
     }
   }
@@ -46,7 +50,8 @@ const FooterWrapper = styled.div`
     padding: 3px 10px;
     
     p {
-      font-size: 7px;
+      /* [수정] 최소 폰트 크기를 10px로 유지 */
+      font-size: 10px;
       line-height: 1.6;
     }
   }

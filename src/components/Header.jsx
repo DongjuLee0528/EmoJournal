@@ -30,6 +30,8 @@ const HeaderWrapper = styled.header`
   right: 0;
   z-index: 1000;
 
+  /* [수정] 배경색 및 블러 효과 제거 */
+
   /* 스크롤 비율 기준 숨김 애니메이션 */
   transform: translateY(${props => (props.$hidden ? '-100%' : '0')});
   transition: transform 220ms ease;
@@ -145,12 +147,9 @@ const SubText = styled.p`
 const Header = memo(() => {
   const navigate = useNavigate();
   const [isSideBarOpen, setIsSideBarOpen] = useState(false);
-
-  // ⬇️ 변경: "방향"이 아닌 "스크롤 진행률(%)" 기준으로 숨김
   const [hideOnScroll, setHideOnScroll] = useState(false);
   const ticking = useRef(false);
 
-  // 로그인 상태 예시
   const isLoggedIn = () => localStorage.getItem('authToken') !== null;
   const loggedIn = isLoggedIn();
 
@@ -182,7 +181,7 @@ const Header = memo(() => {
   }, [handleLogoClick]);
 
   useEffect(() => {
-    const HIDE_THRESHOLD_PERCENT = 15; // ⬅️ 5% 기준
+    const HIDE_THRESHOLD_PERCENT = 15;
 
     const calcScrollable = () => {
       const doc = document.documentElement;
@@ -193,7 +192,6 @@ const Header = memo(() => {
 
     const update = () => {
       const scrollY = window.scrollY || document.documentElement.scrollTop || 0;
-      // 스크롤 가능한 높이가 0이면(짧은 페이지) 항상 표시
       if (maxScrollable <= 0) {
         setHideOnScroll(false);
         return;
@@ -206,14 +204,12 @@ const Header = memo(() => {
       if (ticking.current) return;
       ticking.current = true;
       window.requestAnimationFrame(() => {
-        // 리사이즈 시 스크롤 가능 높이 재계산
         maxScrollable = calcScrollable();
         update();
         ticking.current = false;
       });
     };
-
-    // 초기 계산
+    
     maxScrollable = calcScrollable();
     update();
 
@@ -271,3 +267,4 @@ const Header = memo(() => {
 Header.displayName = 'Header';
 
 export default Header;
+
