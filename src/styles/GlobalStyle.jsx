@@ -25,6 +25,7 @@ const GlobalStyle = createGlobalStyle`
     background-repeat: no-repeat;
     background-position: center;
     min-height: 100vh;
+    overflow-y: scroll;
   }
 
   main {

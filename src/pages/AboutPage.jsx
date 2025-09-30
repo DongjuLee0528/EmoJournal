@@ -467,27 +467,6 @@ const AboutPage = () => {
           
         </Section>
 
-        <Section delay={0.9}>
-          <SectionTitle>🗓️ 로드맵 & 연혁</SectionTitle>
-          <Timeline>
-            <TimelineItem>
-              <TimelineDate>2024.06</TimelineDate>
-              <TimelineText>EmoJournal 아이디어 발굴 및 프로토타입 설계</TimelineText>
-            </TimelineItem>
-            <TimelineItem>
-              <TimelineDate>2024.09</TimelineDate>
-              <TimelineText>감정 분석 모델 PoC 및 기본 일기 작성 기능 완성</TimelineText>
-            </TimelineItem>
-            <TimelineItem>
-              <TimelineDate>2024.12</TimelineDate>
-              <TimelineText>베타 공개, 사용자 피드백 수집 및 UI/UX 개선</TimelineText>
-            </TimelineItem>
-            <TimelineItem>
-              <TimelineDate>2025.03</TimelineDate>
-              <TimelineText>감정 패턴 리포트, 주간/월간 통계 기능 출시</TimelineText>
-            </TimelineItem>
-          </Timeline>
-        </Section>
 
         <Section delay={0.4}>
           <SectionTitle>💝 만들게 된 이유</SectionTitle>
@@ -544,6 +523,28 @@ const AboutPage = () => {
               ))}
             </FrontendGrid>
           </TeamCategory>
+        </Section>
+
+        <Section delay={0.9}>
+          <SectionTitle>🗓️ 로드맵 & 연혁</SectionTitle>
+          <Timeline>
+            <TimelineItem>
+              <TimelineDate>2024.06</TimelineDate>
+              <TimelineText>EmoJournal 아이디어 발굴 및 프로토타입 설계</TimelineText>
+            </TimelineItem>
+            <TimelineItem>
+              <TimelineDate>2024.09</TimelineDate>
+              <TimelineText>감정 분석 모델 PoC 및 기본 일기 작성 기능 완성</TimelineText>
+            </TimelineItem>
+            <TimelineItem>
+              <TimelineDate>2024.12</TimelineDate>
+              <TimelineText>베타 공개, 사용자 피드백 수집 및 UI/UX 개선</TimelineText>
+            </TimelineItem>
+            <TimelineItem>
+              <TimelineDate>2025.03</TimelineDate>
+              <TimelineText>감정 패턴 리포트, 주간/월간 통계 기능 출시</TimelineText>
+            </TimelineItem>
+          </Timeline>
         </Section>
 
         <Section delay={1.2}>
