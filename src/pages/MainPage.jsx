@@ -5,7 +5,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import api from '../api/axiosInstance';
 
-// 기존 스타일 컴포넌트들
+// 스타일 컴포넌트 정의
 const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
@@ -16,6 +16,7 @@ const Wrapper = styled.div`
   padding-bottom: 40px;
   box-sizing: border-box;
   overflow: hidden;
+  
 
   @media (max-width: 768px) {
     padding-top: 80px;
@@ -160,12 +161,6 @@ const EventTag = styled.div`
   width: 100%;
   flex-shrink: 0;
   line-height: 0.85;
-  cursor: pointer;
-  transition: opacity 0.2s ease;
-
-  &:hover {
-    opacity: 0.8;
-  }
 
   @media (max-width: 768px) {
     font-size: 8px;
@@ -178,216 +173,7 @@ const EventTag = styled.div`
   }
 `;
 
-// 이벤트 수정 팝업 스타일
-const PopupOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.3);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-
-const PopupContainer = styled.div`
-  position: relative;
-  background: linear-gradient(135deg, #f8bbd9 0%, #e1bee7 100%);
-  border-radius: 20px;
-  padding: 30px;
-  min-width: 400px;
-  max-width: 500px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-  font-family: '온글잎 의연체', sans-serif;
-  animation: slideIn 0.3s ease-out;
-
-  @keyframes slideIn {
-    from {
-      transform: translateX(100px);
-      opacity: 0;
-    }
-    to {
-      transform: translateX(0);
-      opacity: 1;
-    }
-  }
-
-  @media (max-width: 768px) {
-    min-width: 300px;
-    max-width: 90vw;
-    padding: 25px;
-  }
-
-  @media (max-width: 480px) {
-    min-width: 280px;
-    padding: 20px;
-  }
-`;
-
-const PopupHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 25px;
-`;
-
-const PopupTitle = styled.h2`
-  font-size: 1.8rem;
-  font-weight: bold;
-  color: #333;
-  margin: 0;
-
-  @media (max-width: 768px) {
-    font-size: 1.5rem;
-  }
-`;
-
-const CloseButton = styled.button`
-  background: none;
-  border: none;
-  font-size: 2rem;
-  font-weight: bold;
-  color: #333;
-  cursor: pointer;
-  padding: 0;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: background-color 0.2s ease;
-
-  &:hover {
-    background-color: rgba(255, 255, 255, 0.3);
-  }
-`;
-
-const PopupContent = styled.div`
-  margin-bottom: 25px;
-`;
-
-const EventTitle = styled.input`
-  width: 100%;
-  padding: 12px;
-  border: none;
-  border-radius: 10px;
-  font-size: 1.1rem;
-  margin-bottom: 15px;
-  background-color: rgba(255, 255, 255, 0.8);
-  box-sizing: border-box;
-
-  &:focus {
-    outline: none;
-    background-color: rgba(255, 255, 255, 1);
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-  }
-`;
-
-const DateRange = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  margin-bottom: 20px;
-  font-size: 1rem;
-  color: #333;
-
-  @media (max-width: 480px) {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
-`;
-
-const DateInput = styled.input`
-  padding: 8px;
-  border: none;
-  border-radius: 8px;
-  background-color: rgba(255, 255, 255, 0.8);
-  font-size: 1rem;
-
-  &:focus {
-    outline: none;
-    background-color: rgba(255, 255, 255, 1);
-  }
-`;
-
-const CheckboxContainer = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 25px;
-`;
-
-const Checkbox = styled.input`
-  width: 18px;
-  height: 18px;
-  accent-color: #e91e63;
-`;
-
-const CheckboxLabel = styled.label`
-  font-size: 1rem;
-  color: #333;
-  cursor: pointer;
-`;
-
-const ButtonContainer = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  gap: 15px;
-`;
-
-const ActionButton = styled.button`
-  padding: 10px 20px;
-  border: none;
-  border-radius: 15px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  min-width: 80px;
-
-  &:hover {
-    transform: translateY(-2px);
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-  }
-`;
-
-const DeleteButton = styled(ActionButton)`
-  background: linear-gradient(135deg, #a8c8ec, #7fb3d3);
-  color: #1565c0;
-
-  &:hover:not(:disabled) {
-    background: linear-gradient(135deg, #90b4e8, #5a9bd4);
-  }
-`;
-
-const SaveButton = styled(ActionButton)`
-  background: linear-gradient(135deg, #81c784, #66bb6a);
-  color: white;
-
-  &:hover:not(:disabled) {
-    background: linear-gradient(135deg, #6fbf73, #4caf50);
-  }
-`;
-
-const ModifyButton = styled(ActionButton)`
-  background: linear-gradient(135deg, #a8c8ec, #7fb3d3);
-  color: #1565c0;
-
-  &:hover:not(:disabled) {
-    background: linear-gradient(135deg, #90b4e8, #5a9bd4);
-  }
-`;
-
-// 로그인 오버레이 스타일
+// 로그인 오버레이 스타일 - 캘린더 컨테이너 내부에만 적용
 const LoginOverlay = styled.div`
   font-family: '온글잎 의연체', sans-serif;
   position: absolute;
@@ -489,19 +275,126 @@ const LoginButton = styled.button`
   }
 `;
 
-// 디버그 패널 스타일 (개발용)
-const DebugPanel = styled.div`
+// 이벤트 상세 모달 스타일
+const ModalOverlay = styled.div`
   position: fixed;
-  top: 10px;
-  right: 10px;
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
-  padding: 10px;
-  border-radius: 5px;
-  font-size: 12px;
-  max-width: 300px;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   z-index: 1000;
-  display: ${({ show }) => show ? 'block' : 'none'};
+`;
+
+const ModalContainer = styled.div`
+  background: linear-gradient(135deg, #e1bee7 0%, #f3e5f5 100%);
+  border-radius: 20px;
+  padding: 25px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  position: relative;
+`;
+
+const ModalHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+`;
+
+const ModalTitle = styled.h2`
+  font-size: 1.3rem;
+  color: #4a148c;
+  margin: 0;
+  font-weight: bold;
+`;
+
+const CloseButton = styled.button`
+  background: none;
+  border: none;
+  font-size: 1.8rem;
+  color: #4a148c;
+  cursor: pointer;
+  width: 35px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+  
+  &:hover {
+    background-color: rgba(74, 20, 140, 0.1);
+  }
+`;
+
+const ModalContent = styled.div`
+  margin-bottom: 20px;
+`;
+
+const DateRangeSection = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+  padding: 12px;
+  background-color: white;
+  border-radius: 10px;
+`;
+
+const DateText = styled.span`
+  font-size: 0.95rem;
+  color: #333;
+  font-weight: 500;
+`;
+
+const AllDayCheckbox = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 15px;
+`;
+
+const CheckboxIcon = styled.div`
+  width: 20px;
+  height: 20px;
+  background-color: #64b5f6;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.8rem;
+`;
+
+const CheckboxLabel = styled.span`
+  font-size: 0.95rem;
+  color: #333;
+`;
+
+const ModalFooter = styled.div`
+  display: flex;
+  justify-content: flex-end;
+`;
+
+const SaveButton = styled.button`
+  background-color: #b39ddb;
+  color: white;
+  border: none;
+  padding: 10px 30px;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  
+  &:hover {
+    background-color: #9575cd;
+  }
 `;
 
 const MainPage = () => {
@@ -510,19 +403,9 @@ const MainPage = () => {
   const [events, setEvents] = useState([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
-  // 팝업 관련 상태
   const [selectedEvent, setSelectedEvent] = useState(null);
-  const [showPopup, setShowPopup] = useState(false);
-  const [editedTitle, setEditedTitle] = useState('');
-  const [editedStartDate, setEditedStartDate] = useState('');
-  const [editedEndDate, setEditedEndDate] = useState('');
-  const [isAllDay, setIsAllDay] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
-  // 디버그용 상태
-  const [debugInfo, setDebugInfo] = useState('');
-  const [showDebug, setShowDebug] = useState(false);
 
   const colors = useMemo(() => [
     { bg: '#f8bbd0', text: '#880e4f' },
@@ -535,112 +418,81 @@ const MainPage = () => {
 
   const getRandomColor = useCallback((i) => colors[i % colors.length], [colors]);
 
-  // 날짜 포맷팅 함수 개선
-  const formatDateForComparison = useCallback((dateStr) => {
-    if (!dateStr) return null;
-    
-    // ISO 형식의 날짜에서 날짜 부분만 추출
-    if (dateStr.includes('T')) {
-      return dateStr.split('T')[0];
-    }
-    return dateStr;
-  }, []);
-
-  // 이벤트 클릭 핸들러
-  const handleEventClick = useCallback((event) => {
-    setSelectedEvent(event);
-    setEditedTitle(event.summary || '');
-    setEditedStartDate(formatDateForComparison(event.start.date || event.start.dateTime) || '');
-    setEditedEndDate(formatDateForComparison(event.end?.date || event.end?.dateTime || event.start.date || event.start.dateTime) || '');
-    setIsAllDay(!!event.start.date);
-    setIsEditing(false);
-    setShowPopup(true);
-  }, [formatDateForComparison]);
-
-  // 팝업 닫기
-  const closePopup = useCallback(() => {
-    setShowPopup(false);
-    setSelectedEvent(null);
-    setIsEditing(false);
-  }, []);
-
-  // 이벤트 수정 시작
-  const startEditing = useCallback(() => {
-    setIsEditing(true);
-  }, []);
-
-  // 이벤트 저장
-  const saveEvent = useCallback(async () => {
-    if (!selectedEvent) return;
-
-    try {
-      setIsLoading(true);
-      
-      const updatedEvent = {
-        ...selectedEvent,
-        summary: editedTitle,
-        start: isAllDay 
-          ? { date: editedStartDate }
-          : { dateTime: `${editedStartDate}T00:00:00` },
-        end: isAllDay
-          ? { date: editedEndDate }
-          : { dateTime: `${editedEndDate}T23:59:59` }
-      };
-
-      // API 호출 (실제 구현에서는 적절한 엔드포인트 사용)
-      await api.put(`/api/calendar/${selectedEvent.id}`, updatedEvent);
-      
-      // 로컬 상태 업데이트
-      setEvents(prevEvents => 
-        prevEvents.map(event => 
-          event.id === selectedEvent.id ? updatedEvent : event
-        )
-      );
-
-      setIsEditing(false);
-      closePopup();
-      console.log('이벤트 수정 완료');
-    } catch (error) {
-      console.error('이벤트 수정 실패:', error);
-      alert('이벤트 수정에 실패했습니다.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [selectedEvent, editedTitle, editedStartDate, editedEndDate, isAllDay, closePopup]);
-
-  // 이벤트 삭제
-  const deleteEvent = useCallback(async () => {
-    if (!selectedEvent) return;
-
-    if (!window.confirm('이 일정을 삭제하시겠습니까?')) return;
-
-    try {
-      setIsLoading(true);
-      
-      // API 호출 (실제 구현에서는 적절한 엔드포인트 사용)
-      await api.delete(`/api/calendar/${selectedEvent.id}`);
-      
-      // 로컬 상태 업데이트
-      setEvents(prevEvents => 
-        prevEvents.filter(event => event.id !== selectedEvent.id)
-      );
-
-      closePopup();
-      console.log('이벤트 삭제 완료');
-    } catch (error) {
-      console.error('이벤트 삭제 실패:', error);
-      alert('이벤트 삭제에 실패했습니다.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [selectedEvent, closePopup]);
-
-  // 로그인 페이지로 이동
+  // 로그인 페이지로 이동하는 함수
   const handleLoginClick = useCallback(() => {
     navigate('/LoginPageOauth');
   }, [navigate]);
 
-  // 백엔드 캘린더 이벤트 로드
+  // 이벤트 클릭 핸들러
+  const handleEventClick = useCallback((event) => {
+    setSelectedEvent(event);
+    setShowModal(true);
+  }, []);
+
+  // 모달 닫기 핸들러
+  const handleCloseModal = useCallback(() => {
+    setShowModal(false);
+    setSelectedEvent(null);
+  }, []);
+
+  // 날짜 포맷 함수
+  const formatEventDate = useCallback((event) => {
+    if (!event) return { startDate: '', endDate: '', isAllDay: false };
+
+    const isAllDay = !!event.start.date;
+    
+    if (isAllDay) {
+      const startDate = new Date(event.start.date);
+      const endDate = event.end?.date ? new Date(event.end.date) : startDate;
+      
+      // 종일 이벤트의 경우 end는 다음날을 가리키므로 1일 빼기
+      endDate.setDate(endDate.getDate() - 1);
+      
+      const formatDate = (date) => {
+        return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
+      };
+      
+      return {
+        startDate: formatDate(startDate),
+        endDate: formatDate(endDate),
+        isAllDay: true
+      };
+    } else {
+      const startDateTime = new Date(event.start.dateTime);
+      const endDateTime = event.end?.dateTime ? new Date(event.end.dateTime) : startDateTime;
+      
+      const formatDateTime = (date) => {
+        const year = date.getFullYear();
+        const month = date.getMonth() + 1;
+        const day = date.getDate();
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${year}년 ${month}월 ${day}일 ${hours}:${minutes}`;
+      };
+      
+      return {
+        startDate: formatDateTime(startDateTime),
+        endDate: formatDateTime(endDateTime),
+        isAllDay: false
+      };
+    }
+  }, []);
+
+  // 샘플 이벤트 로드 함수
+  const loadSampleEvents = useCallback(() => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+
+    const sampleEvents = [
+      { id: '1', summary: '감정체크', start: { date: `${year}-${month}-01` } },
+      { id: '2', summary: 'JAVA, SPRING', start: { date: `${year}-${month}-02` }, end: { date: `${year}-${month}-07` } },
+      { id: '3', summary: '오송역시, 약속', start: { date: `${year}-${month}-02` } },
+    ];
+    setEvents(sampleEvents.map((e, i) => ({ ...e, color: getRandomColor(i) })));
+  }, [getRandomColor]);
+
+  // 백엔드 캘린더 이벤트 로드 함수
   const loadCalendarEvents = useCallback(async () => {
     if (!isAuthenticated) return;
 
@@ -652,10 +504,6 @@ const MainPage = () => {
       const response = await api.get(`/api/calendar?timeMin=${timeMin}&timeMax=${timeMax}`);
 
       const calendarEvents = response.data || [];
-      
-      // 디버그 정보 업데이트
-      setDebugInfo(`API로부터 받은 이벤트: ${calendarEvents.length}개`);
-      
       const formatted = calendarEvents.map((e, i) => ({
         id: e.id,
         summary: e.summary,
@@ -663,19 +511,15 @@ const MainPage = () => {
         end: e.end,
         color: getRandomColor(i),
       }));
-      
       setEvents(formatted);
       console.log('캘린더 이벤트 로드 완료:', formatted.length, '개');
-      console.log('이벤트 상세:', formatted);
-      
     } catch (error) {
       console.error('캘린더 이벤트 불러오기 실패:', error);
-      setEvents([]);
-      setDebugInfo('API 호출 실패');
+      loadSampleEvents();
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated, currentDate, getRandomColor]);
+  }, [isAuthenticated, currentDate, getRandomColor, loadSampleEvents]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -684,15 +528,16 @@ const MainPage = () => {
   }, [currentDate, isAuthenticated, loadCalendarEvents]);
 
   useEffect(() => {
+    // JWT 토큰 기반 인증 상태 확인
     const token = localStorage.getItem('accessToken');
     if (token) {
       setIsAuthenticated(true);
       loadCalendarEvents();
     } else {
       setIsAuthenticated(false);
-      setEvents([]);
+      loadSampleEvents();
     }
-  }, [loadCalendarEvents]);
+  }, [loadCalendarEvents, loadSampleEvents]);
 
   const dateUtils = useMemo(() => ({
     getDaysInMonth: (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate(),
@@ -700,40 +545,22 @@ const MainPage = () => {
     formatMonth: (date) => `${date.getFullYear()}년 ${date.getMonth() + 1}월`,
   }), []);
 
-  // 개선된 getDayEvents 함수
   const getDayEvents = useCallback((day) => {
     const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    
-    const dayEvents = events.filter((event) => {
-      const startDate = formatDateForComparison(event.start.date || event.start.dateTime);
-      const endDate = formatDateForComparison(event.end?.date || event.end?.dateTime || event.start.date || event.start.dateTime);
+    return events.filter((event) => {
+      // 종일 이벤트는 start.date, 시간 지정 이벤트는 start.dateTime 사용
+      const start = event.start.date || event.start.dateTime?.split('T')[0];
+      const end = event.end?.date || event.end?.dateTime?.split('T')[0] || start;
       
-      if (!startDate) return false;
-      
-      // 종일 이벤트의 경우, end 날짜는 실제 종료일 다음날로 설정되므로 조정
-      let actualEndDate = endDate;
+      // 종일 이벤트의 경우 end는 다음날을 가리키므로 조정
       if (event.start.date && event.end?.date) {
-        // 종일 이벤트인 경우 end 날짜에서 하루를 빼줌
-        const endDateObj = new Date(endDate);
-        endDateObj.setDate(endDateObj.getDate() - 1);
-        actualEndDate = endDateObj.toISOString().split('T')[0];
+        return dateStr >= start && dateStr < end;
       }
       
-      const isInRange = dateStr >= startDate && dateStr <= actualEndDate;
-      
-      // 디버그 로그 (개발 시에만 사용)
-      if (day === 1) { // 매월 1일에만 로그 출력
-        console.log(`Event: "${event.summary}"`);
-        console.log(`Start: ${startDate}, End: ${endDate}, Actual End: ${actualEndDate}`);
-        console.log(`Date: ${dateStr}, In Range: ${isInRange}`);
-        console.log('---');
-      }
-      
-      return isInRange;
+      // 시간 지정 이벤트의 경우 같은 날짜만 비교
+      return dateStr === start;
     });
-    
-    return dayEvents;
-  }, [events, currentDate, formatDateForComparison]);
+  }, [events, currentDate]);
 
   const goToPreviousMonth = useCallback(() =>
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1)), [currentDate]);
@@ -758,7 +585,6 @@ const MainPage = () => {
     const firstDay = dateUtils.getFirstDayOfMonth(currentDate);
     const today = new Date();
     const days = [];
-    let totalEventsShown = 0;
 
     for (let i = 0; i < firstDay; i++) {
       days.push(<DayCell key={`empty-${i}`} />);
@@ -771,8 +597,6 @@ const MainPage = () => {
         today.getDate() === day;
 
       const dayEvents = getDayEvents(day);
-      totalEventsShown += dayEvents.length;
-      
       days.push(
         <DayCell key={day}>
           <DayNumber isToday={isToday}>{day}</DayNumber>
@@ -781,8 +605,11 @@ const MainPage = () => {
               key={e.id} 
               bg={e.color?.bg} 
               text={e.color?.text}
-              onClick={() => handleEventClick(e)}
-              title={e.summary} // 툴팁 추가
+              onClick={(event) => {
+                event.stopPropagation();
+                handleEventClick(e);
+              }}
+              style={{ cursor: 'pointer' }}
             >
               {e.summary}
             </EventTag>
@@ -791,48 +618,16 @@ const MainPage = () => {
       );
     }
 
-    // 디버그 정보 업데이트
-    setDebugInfo(prev => `${prev} | 화면에 표시된 이벤트: ${totalEventsShown}개`);
-
     return days;
-  }, [currentDate, dateUtils, getDayEvents, handleEventClick]);
+  }, [currentDate, dateUtils, getDayEvents]);
 
   const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
 
-  // 디버그 패널 토글 (개발용)
-  const toggleDebug = useCallback(() => {
-    setShowDebug(prev => !prev);
-  }, []);
+  const eventDetails = selectedEvent ? formatEventDate(selectedEvent) : null;
 
   return (
     <Wrapper>
       <Header />
-      
-      {/* 개발용 디버그 버튼 */}
-      <button 
-        onClick={toggleDebug}
-        style={{
-          position: 'fixed',
-          top: '10px',
-          left: '10px',
-          zIndex: 1001,
-          padding: '5px 10px',
-          fontSize: '12px',
-          background: '#333',
-          color: 'white',
-          border: 'none',
-          borderRadius: '3px'
-        }}
-      >
-        Debug
-      </button>
-      
-      <DebugPanel show={showDebug}>
-        <div>현재 월: {dateUtils.formatMonth(currentDate)}</div>
-        <div>전체 이벤트 수: {events.length}</div>
-        <div>{debugInfo}</div>
-        <div>인증 상태: {isAuthenticated ? '로그인됨' : '로그인 필요'}</div>
-      </DebugPanel>
       
       <CalendarContainer>
         <MonthHeader>
@@ -841,7 +636,7 @@ const MainPage = () => {
           </MonthTitle>
         </MonthHeader>
 
-        {isLoading && !showPopup && (
+        {isLoading && (
           <div style={{ textAlign: 'center', margin: '1rem 0' }}>
             캘린더 데이터를 불러오는 중...
           </div>
@@ -857,6 +652,7 @@ const MainPage = () => {
         
         <DaysGrid>{calendarDays}</DaysGrid>
 
+        {/* 로그인하지 않았을 때 캘린더 컨테이너에만 오버레이 표시 */}
         {!isAuthenticated && (
           <LoginOverlay>
             <LoginPromptTitle>EmoJournal 시작하기</LoginPromptTitle>
@@ -868,67 +664,33 @@ const MainPage = () => {
         )}
       </CalendarContainer>
       
-      {/* 이벤트 수정/삭제 팝업 */}
-      {showPopup && selectedEvent && (
-        <PopupOverlay onClick={closePopup}>
-          <PopupContainer onClick={e => e.stopPropagation()}>
-            <PopupHeader>
-              <PopupTitle>제목수정</PopupTitle>
-              <CloseButton onClick={closePopup}>×</CloseButton>
-            </PopupHeader>
-
-            <PopupContent>
-              <EventTitle
-                value={editedTitle}
-                onChange={(e) => setEditedTitle(e.target.value)}
-                disabled={!isEditing}
-                placeholder="일정 제목"
-              />
-
-              <DateRange>
-                <DateInput
-                  type="date"
-                  value={editedStartDate}
-                  onChange={(e) => setEditedStartDate(e.target.value)}
-                  disabled={!isEditing}
-                />
-                <span>—</span>
-                <DateInput
-                  type="date"
-                  value={editedEndDate}
-                  onChange={(e) => setEditedEndDate(e.target.value)}
-                  disabled={!isEditing}
-                />
-              </DateRange>
-
-              <CheckboxContainer>
-                <Checkbox
-                  type="checkbox"
-                  id="allDay"
-                  checked={isAllDay}
-                  onChange={(e) => setIsAllDay(e.target.checked)}
-                  disabled={!isEditing}
-                />
-                <CheckboxLabel htmlFor="allDay">종일</CheckboxLabel>
-              </CheckboxContainer>
-            </PopupContent>
-
-            <ButtonContainer>
-              <DeleteButton onClick={deleteEvent} disabled={isLoading}>
-                삭제
-              </DeleteButton>
-              {!isEditing ? (
-                <ModifyButton onClick={startEditing} disabled={isLoading}>
-                  수정
-                </ModifyButton>
-              ) : (
-                <SaveButton onClick={saveEvent} disabled={isLoading}>
-                  저장
-                </SaveButton>
-              )}
-            </ButtonContainer>
-          </PopupContainer>
-        </PopupOverlay>
+      {/* 이벤트 상세 모달 */}
+      {showModal && selectedEvent && eventDetails && (
+        <ModalOverlay onClick={handleCloseModal}>
+          <ModalContainer onClick={(e) => e.stopPropagation()}>
+            <ModalHeader>
+              <ModalTitle>제목추가</ModalTitle>
+              <CloseButton onClick={handleCloseModal}>✕</CloseButton>
+            </ModalHeader>
+            
+            <ModalContent>
+              <DateRangeSection>
+                <DateText>{eventDetails.startDate}</DateText>
+                <DateText>→</DateText>
+                <DateText>{eventDetails.endDate}</DateText>
+              </DateRangeSection>
+              
+              <AllDayCheckbox>
+                <CheckboxIcon>{eventDetails.isAllDay ? '✓' : ''}</CheckboxIcon>
+                <CheckboxLabel>종일</CheckboxLabel>
+              </AllDayCheckbox>
+            </ModalContent>
+            
+            <ModalFooter>
+              <SaveButton onClick={handleCloseModal}>저장</SaveButton>
+            </ModalFooter>
+          </ModalContainer>
+        </ModalOverlay>
       )}
       
       <Footer />
