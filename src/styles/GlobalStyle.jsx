@@ -8,6 +8,7 @@ const GlobalStyle = createGlobalStyle`
   @font-face {
     font-family: '온글잎 의연체';
     src: url('${OngleapFont}') format('truetype');
+    font-display: block;
     font-weight: normal;
     font-style: normal;
   }
@@ -26,6 +27,11 @@ const GlobalStyle = createGlobalStyle`
     background-position: center;
     min-height: 100vh;
     overflow-y: scroll;
+    visibility: hidden; /* 폰트 로딩 중 숨김 */
+  }
+
+  body.font-loaded {
+    visibility: visible; /* 폰트 로딩 완료 시 표시 */
   }
 
 `;

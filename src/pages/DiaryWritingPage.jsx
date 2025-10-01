@@ -4,25 +4,78 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
-
-const Container = styled.div`
+// --- DiaryListPage와 동일한 로그인 안내창 스타일 ---
+const ListWrapper = styled.div`
   width: 100%;
-  max-width: 1320px;
-  margin: 0 auto;
-  padding-top: 80px;
-  padding-bottom: 40px;
-  min-height: 100vh;
+  max-width: 64rem;
+  padding: 0 2rem; 
+  box-sizing: border-box; 
+`;
+
+const ListContent = styled.div`
+  background: rgb(255, 255, 255);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+`;
+
+const LoginPromptContainer = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* [수정] centered prop을 제거하고 항상 상단 정렬로 고정 */
-  justify-content: flex-start;
-  gap: 30px;
-  font-family: '온글잎 의연체', sans-serif;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+`;
 
-  @media (max-width: 768px) {
-    padding: 40px 20px 40px;
+const LoginPromptTitle = styled.h2`
+  font-size: 36px;
+  color: #374151;
+  margin-bottom: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+`;
+
+const LoginPromptText = styled.p`
+  font-size: 20px;
+  color: #6b7280;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+`;
+
+const LoginButton = styled.button`
+  background-color: #ec4899;
+  color: white;
+  font-size: 18px;
+  font-weight: 600;
+  padding: 0.8rem 2.5rem;
+  border: none;
+  border-radius: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    background-color: #d94682;
   }
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
+const Container = styled.div`
+  font-family: '온글잎 의연체', sans-serif;
+  width: 100%; 
+  margin: 0 auto;
+  min-height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: calc(65px + 2rem);
+  padding-bottom: calc(25px + 2rem);
 `;
 
 // --- 이하 기존 스타일 컴포넌트는 변경사항 없음 ---
@@ -167,6 +220,9 @@ const WordCount = styled.div`
   font-size: 30px;
   color: #848383ff;
   user-select: none;
+  margin-top: -20px; 
+  width: 100%;
+  text-align: right;
 `;
 
 const ModalOverlay = styled.div`
@@ -362,87 +418,113 @@ const DiaryWritingPage = () => {
 
   return (
     <>
-    <Header />
-    <Container>
-      <DiaryMessageBox>
-        {isSaved ? (
-          <>
-            {emojiUrl && (
-              <EmojiImage
-                src={emojiUrl}
-                alt="emotion emoji"
-                onClick={handleEmojiClick}
-              />
-            )}
-            <HashtagText>{hashtag || ''}</HashtagText>
-          </>
+      <Header />
+      {/* [수정] centered prop을 제거하여 항상 상단에 정렬되도록 함 */}
+      <Container>
+        {!isAuthenticated ? (
+          <ListWrapper>
+            <ListContent>
+              <LoginPromptContainer>
+                <LoginPromptTitle>
+                  나만의 감정 일기를 쓰고 싶다면<br />
+                  로그인 후 이용해주세요
+                </LoginPromptTitle>
+                <LoginPromptText>
+                  사진과 글로 오늘의 감정을 기록하고<br />
+                  AI의 감정 분석도 받아보세요.
+                </LoginPromptText>
+                {/* [수정] 버튼 텍스트 변경 */}
+                <LoginButton onClick={handleLoginClick}>
+                  지금 시작하기
+                </LoginButton>
+              </LoginPromptContainer>
+            </ListContent>
+          </ListWrapper>
         ) : (
-          <LoadingText>
-            AI가 열심히 작성 중이에요... 조금만 기다려주실래요? 곧 예쁜 결과물로 돌아올게요!
-          </LoadingText>
+          <ListWrapper>
+            <ListContent>
+              <DiaryMessageBox>
+                {isSaved ? (
+                  <>
+                    {emojiUrl && (
+                      <EmojiImage
+                        src={emojiUrl}
+                        alt="emotion emoji"
+                        onClick={handleEmojiClick}
+                      />
+                    )}
+                    <HashtagText>{hashtag || ''}</HashtagText>
+                  </>
+                ) : (
+                  <LoadingText>
+                    AI가 열심히 작성 중이에요... 조금만 기다려주실래요? 곧 예쁜 결과물로 돌아올게요!
+                  </LoadingText>
+                )}
+              </DiaryMessageBox>
+
+              <UploadBox 
+                hasImage={!!imageUrl} 
+                showText={!!showInterpretation}
+                disabled={isSaved}
+              >
+                <UploadInput
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  disabled={isSaved}
+                />
+                {showInterpretation ? (
+                  <EmotionAnalyze> 
+                    <EmotionAnalyzeText>
+                      💬 감정 해석<br/>{emotionAnalyzeText}
+                    </EmotionAnalyzeText>
+                  </EmotionAnalyze>
+                ) : imageUrl ? (
+                  <PreviewImage src={imageUrl} alt="preview" onClick={handleImageClick} />
+                ) : (
+                  <UploadText>사진을 업로드하려면 클릭하세요</UploadText>
+                )}
+              </UploadBox>
+
+              <DiaryBox>
+                <DateBox>{getTodayDate()}</DateBox>
+                <DiaryTextarea
+                  value={diaryText}
+                  onChange={(e) => setDiaryText(e.target.value)}
+                  placeholder="여기에 오늘의 일기를 입력하세요..."
+                  readOnly={isSaved}
+                />
+              </DiaryBox>
+              
+              <WordCount>{diaryText.length}자</WordCount>
+              
+              <ButtonGroup>
+                {!isSaved ? (
+                  <Button onClick={handleSave}>
+                    <ButtonText>저장</ButtonText>
+                  </Button>
+                ) : (
+                  <>
+                    <Button onClick={handleEdit}>
+                      <ButtonText>수정</ButtonText>
+                    </Button>
+                    <Button onClick={handleDelete}>
+                      <ButtonText>삭제</ButtonText>
+                    </Button>
+                  </>
+                )}
+              </ButtonGroup>
+
+              {isModalOpen && (
+                <ModalOverlay onClick={closeModal}>
+                  <ModalImage src={imageUrl} alt="Full Preview" />
+                </ModalOverlay>
+              )}
+            </ListContent>
+          </ListWrapper>
         )}
-      </DiaryMessageBox>
-
-      <UploadBox 
-        hasImage={!!imageUrl} 
-        showText={!!showInterpretation}
-        disabled={isSaved}
-      >
-        <UploadInput
-          type="file"
-          accept="image/*"
-          onChange={handleImageChange}
-          disabled={isSaved}
-        />
-        {showInterpretation ? (
-          <EmotionAnalyze> 
-            <EmotionAnalyzeText>
-              💬 감정 해석<br/>{emotionAnalyzeText}
-            </EmotionAnalyzeText>
-          </EmotionAnalyze>
-        ) : imageUrl ? (
-          <PreviewImage src={imageUrl} alt="preview" onClick={handleImageClick} />
-        ) : (
-          <UploadText>사진을 업로드하려면 클릭하세요</UploadText>
-        )}
-      </UploadBox>
-
-      <DiaryBox>
-        <DateBox>{getTodayDate()}</DateBox>
-        <DiaryTextarea
-          value={diaryText}
-          onChange={(e) => setDiaryText(e.target.value)}
-          placeholder="여기에 오늘의 일기를 입력하세요..."
-          readOnly={isSaved}
-        />
-      </DiaryBox>
-
-      <WordCount>{diaryText.length}자</WordCount>
-
-      <ButtonGroup>
-        {!isSaved ? (
-          <Button onClick={handleSave}>
-            <ButtonText>저장</ButtonText>
-          </Button>
-        ) : (
-          <>
-            <Button onClick={handleEdit}>
-              <ButtonText>수정</ButtonText>
-            </Button>
-            <Button onClick={handleDelete}>
-              <ButtonText>삭제</ButtonText>
-            </Button>
-          </>
-        )}
-      </ButtonGroup>
-
-      {isModalOpen && (
-        <ModalOverlay onCliccdk={closeModal}>
-          <ModalImage src={imageUrl} alt="Full Preview" />
-        </ModalOverlay>
-      )}
-    </Container>
-    <Footer />
+      </Container>
+      <Footer />
     </>
   );
 };

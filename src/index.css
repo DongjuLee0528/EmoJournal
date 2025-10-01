@@ -1,6 +1,24 @@
+/* 폰트 정의 및 로딩 최적화 */
+@font-face {
+  font-family: '온글잎 의연체';
+  src: url('./fonts/온글잎 의연체.ttf') format('truetype');
+  font-display: block; /* 폰트 로딩 완료까지 기다림 */
+  font-weight: normal;
+  font-style: normal;
+}
+
+/* 폰트 로딩 중 숨김 처리 */
+.font-loading {
+  visibility: hidden;
+}
+
+.font-loaded {
+  visibility: visible;
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+  font-family: '온글잎 의연체', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;

@@ -293,13 +293,8 @@ const DiaryListPage = () => {
 
   // 로그인 상태 확인
   useEffect(() => {
-    const token = sessionStorage.getItem('access_token');
-    const userEmail = sessionStorage.getItem('user_email');
-    if (token && userEmail) {
-      setIsLoggedIn(true);
-    } else {
-      setIsLoggedIn(false);
-    }
+    const token = localStorage.getItem('accessToken');
+    setIsLoggedIn(!!token);
   }, []);
 
   const allDiaryEntries = [
@@ -410,7 +405,6 @@ const DiaryListPage = () => {
   };
 
   const handleLoginRedirect = () => {
-    // [수정] 로그인 페이지 경로를 '/LoginPageOauth'로 수정
     window.location.href = '/LoginPageOauth';
   };
 
