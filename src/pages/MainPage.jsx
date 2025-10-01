@@ -5,6 +5,8 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import api from '../api/axiosInstance';
 
+import LYDC from '../image/LYDC.png';
+
 // 스타일 컴포넌트 정의
 const Wrapper = styled.div`
   display: flex;
@@ -16,7 +18,6 @@ const Wrapper = styled.div`
   padding-bottom: 40px;
   box-sizing: border-box;
   overflow: hidden;
-  
 
   @media (max-width: 768px) {
     padding-top: 80px;
@@ -97,36 +98,39 @@ const DayName = styled.div`
   color: ${({ index }) => (index === 0 ? '#e57373' : index === 6 ? '#64b5f6' : '#444')};
 `;
 
-const DaysGrid = styled.div`
+const CalendarGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  flex: 1;
+  grid-auto-rows: minmax(80px, 1fr);
   gap: 1px;
+  background-color: #eee;
+  border: 1px solid #eee;
+  flex: 1;
   overflow: hidden;
 
   @media (max-width: 768px) {
-    gap: 1px;
+    grid-auto-rows: minmax(60px, 1fr);
+  }
+
+  @media (max-width: 480px) {
+    grid-auto-rows: minmax(50px, 1fr);
   }
 `;
 
 const DayCell = styled.div`
-  border: 1px solid #eee;
-  padding: 3px;
-  font-size: 11px;
+  background-color: white;
+  padding: 8px;
+  position: relative;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
   overflow: hidden;
-  min-height: 0;
 
   @media (max-width: 768px) {
-    padding: 2px;
-    font-size: 10px;
+    padding: 5px;
   }
 
   @media (max-width: 480px) {
-    padding: 2px;
-    font-size: 9px;
+    padding: 3px;
   }
 `;
 
@@ -134,46 +138,98 @@ const DayNumber = styled.div`
   font-weight: bold;
   font-size: 1.5rem;
   color: ${({ isToday }) => (isToday ? '#e91e63' : '#333')};
-  margin-bottom: 2px;
-  flex-shrink: 0;
+  margin-bottom: 5px;
+  position: relative;
+  z-index: 1;
 
   @media (max-width: 768px) {
-    font-size: 0.8rem;
-    margin-bottom: 1px;
+    font-size: 1rem;
+    margin-bottom: 3px;
   }
 
   @media (max-width: 480px) {
-    font-size: 0.7rem;
-    margin-bottom: 1px;
+    font-size: 0.8rem;
+    margin-bottom: 2px;
   }
 `;
 
-const EventTag = styled.div`
-  font-size: 18px;
-  padding: 1px 2px;
-  border-radius: 3px;
-  margin-bottom: 0px;
+const EventsContainer = styled.div`
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: 26px;
+  gap: 1px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  padding: 45px 21px 21px 21px;
+
+  @media (max-width: 768px) {
+    grid-auto-rows: 21px;
+    padding: 38px 16px 16px 16px;
+  }
+
+  @media (max-width: 480px) {
+    grid-auto-rows: 17px;
+    padding: 33px 13px 13px 13px;
+  }
+
+  @media (max-width: 320px) {
+    grid-auto-rows: 15px;
+    padding: 31px 11px 11px 11px;
+  }
+`;
+
+const EventBar = styled.div`
+  grid-column: ${({ startCol, span }) => `${startCol} / span ${span}`};
+  grid-row: ${({ row }) => row};
   background-color: ${({ bg }) => bg || '#FF92D3'};
   color: ${({ text }) => text || 'black'};
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  margin: 1px 0;
+  cursor: pointer;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  width: 100%;
-  flex-shrink: 0;
-  line-height: 0.85;
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  pointer-events: auto;
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+  
+  &:hover {
+    opacity: 0.9;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    z-index: 3;
+  }
 
   @media (max-width: 768px) {
-    font-size: 8px;
-    padding: 1px 2px;
+    font-size: 11px;
+    padding: 3px 6px;
+    min-height: 20px;
   }
 
   @media (max-width: 480px) {
-    font-size: 7px;
-    padding: 1px 2px;
+    font-size: 9px;
+    padding: 2px 4px;
+    min-height: 16px;
+  }
+
+  @media (max-width: 320px) {
+    font-size: 8px;
+    padding: 2px 3px;
+    min-height: 14px;
   }
 `;
 
-// 로그인 오버레이 스타일 - 캘린더 컨테이너 내부에만 적용
+// 로그인 오버레이 스타일
 const LoginOverlay = styled.div`
   font-family: '온글잎 의연체', sans-serif;
   position: absolute;
@@ -397,6 +453,45 @@ const SaveButton = styled.button`
   }
 `;
 
+// 왼쪽 하단 캐릭터
+const LYDCWrapper = styled.div`
+  position: fixed;
+  bottom: 20px;
+  left: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 2000;
+`;
+
+const SpeechBubble = styled.div`
+  position: relative;
+  background: #fff;
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: #333;
+  font-size: 14px;
+  font-family: "Noto Sans KR", sans-serif;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -15px;
+    left: 50%;
+    border-width: 15px 10px 0 10px;
+    border-style: solid;
+    border-color: #fff transparent transparent transparent;
+  }
+`;
+
+const LYDCImage = styled.img`
+  width: 250px;
+  height: auto;
+  cursor: pointer;
+  transform: scaleX(-1);
+`;
+
 const MainPage = () => {
   const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -405,7 +500,10 @@ const MainPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showModal, setShowModal] = useState(false);
-
+  const [editTitle, setEditTitle] = useState('');
+  const [editAllDay, setEditAllDay] = useState(false);
+  const [editStart, setEditStart] = useState('');
+  const [editEnd, setEditEnd] = useState('');
 
   const colors = useMemo(() => [
     { bg: '#f8bbd0', text: '#880e4f' },
@@ -418,24 +516,53 @@ const MainPage = () => {
 
   const getRandomColor = useCallback((i) => colors[i % colors.length], [colors]);
 
-  // 로그인 페이지로 이동하는 함수
   const handleLoginClick = useCallback(() => {
     navigate('/LoginPageOauth');
   }, [navigate]);
 
-  // 이벤트 클릭 핸들러
   const handleEventClick = useCallback((event) => {
     setSelectedEvent(event);
     setShowModal(true);
+    // 초기 편집 값 설정
+    const isAllDay = !!event.start?.date;
+    setEditTitle(event.summary || '');
+    setEditAllDay(isAllDay);
+    if (isAllDay) {
+      // all-day: date 형식
+      const start = event.start?.date || '';
+      const endRaw = event.end?.date || start;
+      // 구글 캘린더 all-day end는 다음날을 가리키므로 저장 시 -1일 표시를 위해 모달에는 실제 기간의 마지막 날을 보여줌
+      const endDate = new Date(endRaw);
+      endDate.setDate(endDate.getDate() - 1);
+      const end = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, '0')}-${String(endDate.getDate()).padStart(2, '0')}`;
+      setEditStart(start);
+      setEditEnd(end);
+    } else {
+      // timed: datetime-local 형식
+      const toLocal = (iso) => {
+        if (!iso) return '';
+        const d = new Date(iso);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        const hh = String(d.getHours()).padStart(2, '0');
+        const min = String(d.getMinutes()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+      };
+      setEditStart(toLocal(event.start?.dateTime));
+      setEditEnd(toLocal(event.end?.dateTime));
+    }
   }, []);
 
-  // 모달 닫기 핸들러
   const handleCloseModal = useCallback(() => {
     setShowModal(false);
     setSelectedEvent(null);
+    setEditTitle('');
+    setEditAllDay(false);
+    setEditStart('');
+    setEditEnd('');
   }, []);
 
-  // 날짜 포맷 함수
   const formatEventDate = useCallback((event) => {
     if (!event) return { startDate: '', endDate: '', isAllDay: false };
 
@@ -444,8 +571,6 @@ const MainPage = () => {
     if (isAllDay) {
       const startDate = new Date(event.start.date);
       const endDate = event.end?.date ? new Date(event.end.date) : startDate;
-      
-      // 종일 이벤트의 경우 end는 다음날을 가리키므로 1일 빼기
       endDate.setDate(endDate.getDate() - 1);
       
       const formatDate = (date) => {
@@ -478,7 +603,6 @@ const MainPage = () => {
     }
   }, []);
 
-  // 샘플 이벤트 로드 함수
   const loadSampleEvents = useCallback(() => {
     const today = new Date();
     const year = today.getFullYear();
@@ -492,7 +616,6 @@ const MainPage = () => {
     setEvents(sampleEvents.map((e, i) => ({ ...e, color: getRandomColor(i) })));
   }, [getRandomColor]);
 
-  // 백엔드 캘린더 이벤트 로드 함수
   const loadCalendarEvents = useCallback(async () => {
     if (!isAuthenticated) return;
 
@@ -528,14 +651,14 @@ const MainPage = () => {
   }, [currentDate, isAuthenticated, loadCalendarEvents]);
 
   useEffect(() => {
-  const token = localStorage.getItem('accessToken');
-  if (token) {
-    setIsAuthenticated(true);  
-  } else {
-    setIsAuthenticated(false);
-    loadSampleEvents();
-  }
-}, []);
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      setIsAuthenticated(true);  
+    } else {
+      setIsAuthenticated(false);
+      loadSampleEvents();
+    }
+  }, [loadSampleEvents]);
 
   const dateUtils = useMemo(() => ({
     getDaysInMonth: (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate(),
@@ -543,22 +666,67 @@ const MainPage = () => {
     formatMonth: (date) => `${date.getFullYear()}년 ${date.getMonth() + 1}월`,
   }), []);
 
-  const getDayEvents = useCallback((day) => {
-    const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    return events.filter((event) => {
-      // 종일 이벤트는 start.date, 시간 지정 이벤트는 start.dateTime 사용
-      const start = event.start.date || event.start.dateTime?.split('T')[0];
-      const end = event.end?.date || event.end?.dateTime?.split('T')[0] || start;
-      
-      // 종일 이벤트의 경우 end는 다음날을 가리키므로 조정
-      if (event.start.date && event.end?.date) {
-        return dateStr >= start && dateStr < end;
+  const applyLocalUpdate = useCallback((updatedEvent) => {
+    setEvents((prev) => prev.map((e) => (e.id === updatedEvent.id ? { ...e, ...updatedEvent } : e)));
+  }, []);
+
+  const applyLocalDelete = useCallback((eventId) => {
+    setEvents((prev) => prev.filter((e) => e.id !== eventId));
+  }, []);
+
+  const handleSaveEvent = useCallback(async () => {
+    if (!selectedEvent) return;
+
+    try {
+      const payload = { summary: editTitle };
+      if (editAllDay) {
+        // all-day: end는 다음날 날짜로 전송
+        const startDate = new Date(editStart);
+        const endDate = new Date(editEnd);
+        endDate.setDate(endDate.getDate() + 1);
+        const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        payload.start = { date: fmt(startDate) };
+        payload.end = { date: fmt(endDate) };
+      } else {
+        // timed: ISO로 전송
+        const toISO = (s) => (s ? new Date(s).toISOString() : undefined);
+        payload.start = { dateTime: toISO(editStart) };
+        payload.end = { dateTime: toISO(editEnd) };
       }
-      
-      // 시간 지정 이벤트의 경우 같은 날짜만 비교
-      return dateStr === start;
-    });
-  }, [events, currentDate]);
+
+      if (isAuthenticated) {
+        await api.put(`/api/calendar/${selectedEvent.id}`, payload);
+      }
+
+      const updated = {
+        ...selectedEvent,
+        summary: payload.summary,
+        start: payload.start,
+        end: payload.end,
+      };
+      applyLocalUpdate(updated);
+      handleCloseModal();
+    } catch (err) {
+      console.error('이벤트 수정 실패:', err);
+      alert('이벤트 수정에 실패했습니다.');
+    }
+  }, [selectedEvent, editTitle, editAllDay, editStart, editEnd, isAuthenticated, applyLocalUpdate, handleCloseModal]);
+
+  const handleDeleteEvent = useCallback(async () => {
+    if (!selectedEvent) return;
+    const confirmed = window.confirm('이 일정을 삭제하시겠습니까?');
+    if (!confirmed) return;
+    try {
+      if (isAuthenticated) {
+        await api.delete(`/api/calendar/${selectedEvent.id}`);
+      }
+      applyLocalDelete(selectedEvent.id);
+      handleCloseModal();
+    } catch (err) {
+      console.error('이벤트 삭제 실패:', err);
+      alert('이벤트 삭제에 실패했습니다.');
+    }
+  }, [selectedEvent, isAuthenticated, applyLocalDelete, handleCloseModal]);
 
   const goToPreviousMonth = useCallback(() =>
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1)), [currentDate]);
@@ -578,6 +746,88 @@ const MainPage = () => {
     }
   }, [goToPreviousMonth, goToNextMonth]);
 
+  // 연결된 이벤트 바로 처리
+  const processedEvents = useMemo(() => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const daysInMonth = dateUtils.getDaysInMonth(currentDate);
+    const firstDay = dateUtils.getFirstDayOfMonth(currentDate);
+    
+    const eventSegments = [];
+    
+    events.forEach(event => {
+      const startDate = event.start.date || event.start.dateTime?.split('T')[0];
+      const endDate = event.end?.date || event.end?.dateTime?.split('T')[0] || startDate;
+      
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      
+      // 종일 이벤트의 경우 end는 다음날을 가리키므로 1일 빼기
+      if (event.start.date && event.end?.date) {
+        end.setDate(end.getDate() - 1);
+      }
+      
+      // 이번 달에 해당하는 일정만 처리
+      if (start.getFullYear() === year && start.getMonth() === month) {
+        const startDay = start.getDate();
+        const endDay = Math.min(end.getDate(), daysInMonth);
+        
+        let currentDay = startDay;
+        
+        while (currentDay <= endDay) {
+          const dayIndex = currentDay - 1 + firstDay;
+          const startCol = (dayIndex % 7) + 1;
+          const weekRow = Math.floor(dayIndex / 7);
+          
+          const daysLeftInWeek = 7 - startCol + 1;
+          const daysLeftInEvent = endDay - currentDay + 1;
+          const span = Math.min(daysLeftInWeek, daysLeftInEvent);
+          
+          eventSegments.push({
+            ...event,
+            startCol,
+            span,
+            row: weekRow + 2,
+            segmentStart: currentDay,
+            segmentEnd: currentDay + span - 1,
+          });
+          
+          currentDay += span;
+        }
+      }
+    });
+    
+    // 겹치는 이벤트 처리
+    const rowMap = {};
+    eventSegments.forEach(segment => {
+      const weekKey = segment.row;
+      if (!rowMap[weekKey]) {
+        rowMap[weekKey] = [];
+      }
+      
+      let availableRow = segment.row;
+      let foundSlot = false;
+      
+      while (!foundSlot) {
+        const overlaps = rowMap[weekKey].some(existingSegment => 
+          existingSegment.row === availableRow &&
+          !(segment.startCol > existingSegment.startCol + existingSegment.span - 1 ||
+            segment.startCol + segment.span - 1 < existingSegment.startCol)
+        );
+        
+        if (!overlaps) {
+          foundSlot = true;
+          segment.row = availableRow;
+          rowMap[weekKey].push(segment);
+        } else {
+          availableRow++;
+        }
+      }
+    });
+    
+    return eventSegments;
+  }, [events, currentDate, dateUtils]);
+
   const calendarDays = useMemo(() => {
     const daysInMonth = dateUtils.getDaysInMonth(currentDate);
     const firstDay = dateUtils.getFirstDayOfMonth(currentDate);
@@ -594,38 +844,29 @@ const MainPage = () => {
         today.getMonth() === currentDate.getMonth() &&
         today.getDate() === day;
 
-      const dayEvents = getDayEvents(day);
       days.push(
         <DayCell key={day}>
           <DayNumber isToday={isToday}>{day}</DayNumber>
-          {dayEvents.map((e) => (
-            <EventTag 
-              key={e.id} 
-              bg={e.color?.bg} 
-              text={e.color?.text}
-              onClick={(event) => {
-                event.stopPropagation();
-                handleEventClick(e);
-              }}
-              style={{ cursor: 'pointer' }}
-            >
-              {e.summary}
-            </EventTag>
-          ))}
         </DayCell>
       );
     }
 
     return days;
-  }, [currentDate, dateUtils, getDayEvents]);
+  }, [currentDate, dateUtils]);
 
   const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
-
   const eventDetails = selectedEvent ? formatEventDate(selectedEvent) : null;
+  
+  const LYDImageClick = () => {
+    navigate('/DiaryWritingPage');
+  }
 
   return (
     <Wrapper>
-      <Header />
+      <LYDCWrapper onClick={LYDImageClick}>
+        <SpeechBubble>냐옹~ 오늘도 좋은 하루야!</SpeechBubble>
+        <LYDCImage src={LYDC} alt="고양이" />
+      </LYDCWrapper>
       
       <CalendarContainer>
         <MonthHeader>
@@ -648,9 +889,26 @@ const MainPage = () => {
           ))}
         </WeekHeader>
         
-        <DaysGrid>{calendarDays}</DaysGrid>
+        <div style={{ position: 'relative', flex: 1, overflow: 'hidden' }}>
+          <CalendarGrid>{calendarDays}</CalendarGrid>
+          
+          <EventsContainer>
+            {processedEvents.map((event, idx) => (
+              <EventBar
+                key={`${event.id}-${idx}`}
+                startCol={event.startCol}
+                span={event.span}
+                row={event.row}
+                bg={event.color?.bg}
+                text={event.color?.text}
+                onClick={() => handleEventClick(event)}
+              >
+                {event.summary}
+              </EventBar>
+            ))}
+          </EventsContainer>
+        </div>
 
-        {/* 로그인하지 않았을 때 캘린더 컨테이너에만 오버레이 표시 */}
         {!isAuthenticated && (
           <LoginOverlay>
             <LoginPromptTitle>EmoJournal 시작하기</LoginPromptTitle>
@@ -662,7 +920,6 @@ const MainPage = () => {
         )}
       </CalendarContainer>
       
-      {/* 이벤트 상세 모달 */}
       {showModal && selectedEvent && eventDetails && (
         <ModalOverlay onClick={handleCloseModal}>
           <ModalContainer onClick={(e) => e.stopPropagation()}>
@@ -672,20 +929,77 @@ const MainPage = () => {
             </ModalHeader>
             
             <ModalContent>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '12px' }}>
+                <label style={{ fontSize: '0.95rem', color: '#4a148c', fontWeight: 600 }}>제목</label>
+                <input
+                  type="text"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  style={{ padding: '10px 12px', borderRadius: '8px', border: '1px solid #ddd' }}
+                />
+              </div>
               <DateRangeSection>
-                <DateText>{eventDetails.startDate}</DateText>
-                <DateText>→</DateText>
-                <DateText>{eventDetails.endDate}</DateText>
+              {editAllDay ? (
+                <>
+                  <input
+                    type="date"
+                    value={editStart}
+                    onChange={(e) => setEditStart(e.target.value)}
+                    style={{ padding: '8px', borderRadius: '8px', border: '1px solid #ddd' }}
+                  />
+                  <DateText>→</DateText>
+                  <input
+                    type="date"
+                    value={editEnd}
+                    onChange={(e) => setEditEnd(e.target.value)}
+                    style={{ padding: '8px', borderRadius: '8px', border: '1px solid #ddd' }}
+                  />
+                </>
+              ) : (
+                <>
+                  <input
+                    type="datetime-local"
+                    value={editStart}
+                    onChange={(e) => setEditStart(e.target.value)}
+                    style={{ padding: '8px', borderRadius: '8px', border: '1px solid #ddd' }}
+                  />
+                  <DateText>→</DateText>
+                  <input
+                    type="datetime-local"
+                    value={editEnd}
+                    onChange={(e) => setEditEnd(e.target.value)}
+                    style={{ padding: '8px', borderRadius: '8px', border: '1px solid #ddd' }}
+                  />
+                </>
+              )}
               </DateRangeSection>
               
               <AllDayCheckbox>
-                <CheckboxIcon>{eventDetails.isAllDay ? '✓' : ''}</CheckboxIcon>
+              <div onClick={() => setEditAllDay(!editAllDay)} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                <CheckboxIcon>{editAllDay ? '✓' : ''}</CheckboxIcon>
                 <CheckboxLabel>종일</CheckboxLabel>
+              </div>
               </AllDayCheckbox>
             </ModalContent>
             
             <ModalFooter>
-              <SaveButton onClick={handleCloseModal}>저장</SaveButton>
+              <button
+                onClick={handleDeleteEvent}
+                style={{
+                  backgroundColor: '#ef9a9a',
+                  color: 'white',
+                  border: 'none',
+                  padding: '10px 18px',
+                  borderRadius: '10px',
+                  fontSize: '1rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  marginRight: '10px'
+                }}
+              >
+                삭제
+              </button>
+              <SaveButton onClick={handleSaveEvent}>저장</SaveButton>
             </ModalFooter>
           </ModalContainer>
         </ModalOverlay>
