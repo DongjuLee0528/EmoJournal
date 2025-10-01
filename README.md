@@ -12,3 +12,6 @@
 # 10/01
 - DiaryListPage.jsx , DiaryWritingPage.jsx 로그인 전 화면 UI 통일 완료
 - 사이트 처음 실행 시 생기는 폰트 딜레마 수정 완료
+# 10/02
+- MainPage.jsx 구글 캘린더처럼 여러 날에 걸친 일정을 하나의 긴 바(bar)로 연결해서 표시 구현 완료
+- MainPage.jsx 모달창 일부 수정 완료
