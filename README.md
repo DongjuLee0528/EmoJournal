@@ -8,4 +8,7 @@
 - OAuthCallback.jsx 수정 완료
 - MainPage.jsx google calendar api 연동 완료
 - MainPage.jsx 일정 모달창 구현 완료
-- DiaryWritingPage.jsx 일부 수정 완료 (UI 디테일하게 수정하기)
+- DiaryWritingPage.jsx 수정완료
+# 10/01
+- DiaryListPage.jsx , DiaryWritingPage.jsx 로그인 전 화면 UI 통일 완료
+- 사이트 처음 실행 시 생기는 폰트 딜레마 수정 완료
