@@ -3,7 +3,6 @@ import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import api from '../api/axiosInstance';
 
 // 스타일 컴포넌트 정의
 const Wrapper = styled.div`
@@ -275,128 +274,6 @@ const LoginButton = styled.button`
   }
 `;
 
-// 이벤트 상세 모달 스타일
-const ModalOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-`;
-
-const ModalContainer = styled.div`
-  background: linear-gradient(135deg, #e1bee7 0%, #f3e5f5 100%);
-  border-radius: 20px;
-  padding: 25px;
-  width: 90%;
-  max-width: 400px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-  position: relative;
-`;
-
-const ModalHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-`;
-
-const ModalTitle = styled.h2`
-  font-size: 1.3rem;
-  color: #4a148c;
-  margin: 0;
-  font-weight: bold;
-`;
-
-const CloseButton = styled.button`
-  background: none;
-  border: none;
-  font-size: 1.8rem;
-  color: #4a148c;
-  cursor: pointer;
-  width: 35px;
-  height: 35px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: background-color 0.2s;
-  
-  &:hover {
-    background-color: rgba(74, 20, 140, 0.1);
-  }
-`;
-
-const ModalContent = styled.div`
-  margin-bottom: 20px;
-`;
-
-const DateRangeSection = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 15px;
-  padding: 12px;
-  background-color: white;
-  border-radius: 10px;
-`;
-
-const DateText = styled.span`
-  font-size: 0.95rem;
-  color: #333;
-  font-weight: 500;
-`;
-
-const AllDayCheckbox = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 15px;
-`;
-
-const CheckboxIcon = styled.div`
-  width: 20px;
-  height: 20px;
-  background-color: #64b5f6;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 0.8rem;
-`;
-
-const CheckboxLabel = styled.span`
-  font-size: 0.95rem;
-  color: #333;
-`;
-
-const ModalFooter = styled.div`
-  display: flex;
-  justify-content: flex-end;
-`;
-
-const SaveButton = styled.button`
-  background-color: #b39ddb;
-  color: white;
-  border: none;
-  padding: 10px 30px;
-  border-radius: 10px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  
-  &:hover {
-    background-color: #9575cd;
-  }
-`;
-
 const MainPage = () => {
   const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -623,9 +500,20 @@ const MainPage = () => {
 
   const eventDetails = selectedEvent ? formatEventDate(selectedEvent) : null;
 
+  const eventDetails = selectedEvent ? formatEventDate(selectedEvent) : null;
+  
+  const LYDImageClick = () => {
+    navigate('/DiaryWritingPage');
+  }
   return (
     <Wrapper>
-      <Header />
+      {/* <Header /> */}
+            {/* // =================== 왼쪽 하단 캐릭터 */}
+            <LYDCWrapper onClick={LYDImageClick}>
+      <SpeechBubble>냐옹~ 오늘도 좋은 하루야!</SpeechBubble>
+      <LYDCImage src={LYDC} alt="고양이" />
+    </LYDCWrapper>
+    {/* // =================== 왼쪽 하단 캐릭터 */}
       
       <CalendarContainer>
         <MonthHeader>

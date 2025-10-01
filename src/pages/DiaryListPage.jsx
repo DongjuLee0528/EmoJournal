@@ -1,37 +1,46 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import styled from 'styled-components';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
+const HEADER_DESKTOP_HEIGHT = '65px';
+const FOOTER_HEIGHT = '25px';
+
 const Container = styled.div`
   font-family: '온글잎 의연체', sans-serif;
-  width: 97%;
+  width: 100%; 
+  margin: 0 auto;
+
   min-height: 100vh;
+  box-sizing: border-box;
+
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding: 2rem;
-  max-width: 1920px;
+  
+  padding-top: calc(${HEADER_DESKTOP_HEIGHT} + 2rem);
+  padding-bottom: calc(${FOOTER_HEIGHT} + 2rem);
 `;
 
-const HeaderWrapper = styled.div`
+const PageHeaderWrapper = styled.div`
   width: 100%;
   max-width: 64rem;
   margin-bottom: 2rem;
+  padding: 0 2rem; 
+  box-sizing: border-box; 
 `;
 
-const HeaderContent = styled.div`
+const PageHeaderContent = styled.div`
   position: relative;
   z-index: 50;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(4px);
+  background: rgb(255, 255, 255); 
   border-radius: 1rem;
   padding: 1rem 2rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 `;
 
-const HeaderInner = styled.div`
+const PageHeaderInner = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -90,11 +99,12 @@ const CountText = styled.div`
 const ListWrapper = styled.div`
   width: 100%;
   max-width: 64rem;
+  padding: 0 2rem; 
+  box-sizing: border-box; 
 `;
 
 const ListContent = styled.div`
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(4px);
+  background: rgb(255, 255, 255);
   border-radius: 1rem;
   padding: 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -177,10 +187,6 @@ const DiaryMood = styled.div`
   justify-content: center;
 `;
 
-const HeaderPadding = styled.div`
-  padding-top: 60px;
-`;
-
 const NoEntriesMessage = styled.div`
   text-align: center;
   color: #6b7280;
@@ -233,11 +239,68 @@ const MonthButton = styled.button`
   }
 `;
 
+const LoginPromptContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+`;
+
+const LoginPromptTitle = styled.h2`
+  font-size: 36px;
+  color: #374151;
+  margin-bottom: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+`;
+
+const LoginPromptText = styled.p`
+  font-size: 20px;
+  color: #6b7280;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+`;
+
+const LoginButton = styled.button`
+  background-color: #ec4899;
+  color: white;
+  font-size: 18px;
+  font-weight: 600;
+  padding: 0.8rem 2.5rem;
+  border: none;
+  border-radius: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    background-color: #d94682;
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
 const DiaryListPage = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentDate, setCurrentDate] = useState({ year: 2025, month: 6 });
   const [selectedMoodFilter, setSelectedMoodFilter] = useState('전체');
   const [searchTerm, setSearchTerm] = useState('');
   const [showMonthSelector, setShowMonthSelector] = useState(false);
+
+  // 로그인 상태 확인
+  useEffect(() => {
+    const token = sessionStorage.getItem('access_token');
+    const userEmail = sessionStorage.getItem('user_email');
+    if (token && userEmail) {
+      setIsLoggedIn(true);
+    } else {
+      setIsLoggedIn(false);
+    }
+  }, []);
 
   const allDiaryEntries = [
     { date: '2025.06.30', mood: '기쁨' },
@@ -258,6 +321,7 @@ const DiaryListPage = () => {
   ];
 
   const currentMonthEntries = useMemo(() => {
+    if (!isLoggedIn) return [];
     return allDiaryEntries.filter(entry => {
       const entryDate = new Date(entry.date.replace(/\./g, '-'));
       return (
@@ -265,9 +329,10 @@ const DiaryListPage = () => {
         entryDate.getMonth() + 1 === currentDate.month
       );
     });
-  }, [allDiaryEntries, currentDate]);
+  }, [allDiaryEntries, currentDate, isLoggedIn]);
 
   const filteredEntries = useMemo(() => {
+    if (!isLoggedIn) return [];
     let filtered = currentMonthEntries;
 
     if (selectedMoodFilter !== '전체') {
@@ -281,7 +346,7 @@ const DiaryListPage = () => {
     }
 
     return filtered;
-  }, [currentMonthEntries, selectedMoodFilter, searchTerm]);
+  }, [currentMonthEntries, selectedMoodFilter, searchTerm, isLoggedIn]);
 
   const basicEmotions = [
     '전체',
@@ -296,6 +361,7 @@ const DiaryListPage = () => {
   ];
 
   const uniqueMoods = useMemo(() => {
+    if (!isLoggedIn) return ['전체'];
     const moodsFromData = [...new Set(allDiaryEntries.map(entry => entry.mood))];
     const orderedMoods = ['전체'];
 
@@ -312,7 +378,7 @@ const DiaryListPage = () => {
     });
 
     return orderedMoods;
-  }, [allDiaryEntries]);
+  }, [allDiaryEntries, isLoggedIn]);
 
   const handlePrevMonth = () => {
     if (currentDate.month === 1) {
@@ -343,100 +409,124 @@ const DiaryListPage = () => {
     console.log('일기 클릭:', entry);
   };
 
+  const handleLoginRedirect = () => {
+    // [수정] 로그인 페이지 경로를 '/LoginPageOauth'로 수정
+    window.location.href = '/LoginPageOauth';
+  };
+
   const totalEntries = currentMonthEntries.length;
 
   return (
     <>
       <Header />
-      <HeaderPadding>
-        <Container>
-          <HeaderWrapper>
-            <HeaderContent>
-              <HeaderInner>
-                {/* ◀ 버튼 */}
-                <NavButton onClick={handlePrevMonth}>
-                  <NavIcon>◀</NavIcon>
-                </NavButton>
-
-                <HeaderInfo>
-                  <TitleText>내가 쓴 일기들</TitleText>
-                  <div style={{ position: 'relative' }}>
-                    <DateDisplay onClick={handleDateClick}>
-                      {currentDate.year}.{String(currentDate.month).padStart(2, '0')}
-                    </DateDisplay>
-                    {showMonthSelector && (
-                      <MonthSelector>
-                        {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
-                          <MonthButton
-                            key={month}
-                            selected={month === currentDate.month}
-                            onClick={() => handleMonthSelect(month)}
-                          >
-                            <span className="num">{month}</span>
-                            <span className="unit">월</span>
-                          </MonthButton>
-                        ))}
-                      </MonthSelector>
-                    )}
-                  </div>
-                  <CountText>총 {totalEntries}개의 일기</CountText>
-                </HeaderInfo>
-
-                {/* ▶ 버튼 */}
-                <NavButton onClick={handleNextMonth}>
-                  <NavIcon>▶</NavIcon>
-                </NavButton>
-              </HeaderInner>
-            </HeaderContent>
-          </HeaderWrapper>
-
+      <Container>
+        {!isLoggedIn ? (
           <ListWrapper>
             <ListContent>
-              <FilterSection>
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  {uniqueMoods.map(mood => (
-                    <FilterButton
-                      key={mood}
-                      active={selectedMoodFilter === mood}
-                      onClick={() => setSelectedMoodFilter(mood)}
-                    >
-                      {mood}
-                    </FilterButton>
-                  ))}
-                </div>
-                <SearchInput
-                  type="text"
-                  placeholder="날짜 또는 감정으로 검색..."
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                />
-              </FilterSection>
-
-              <ListContainer>
-                {filteredEntries.length > 0 ? (
-                  filteredEntries.map((entry, index) => (
-                    <DiaryItem key={index} onClick={() => handleDiaryClick(entry)}>
-                      <DiaryItemInner>
-                        <DiaryDate>{entry.date}</DiaryDate>
-                        <DiaryMood>{entry.mood}</DiaryMood>
-                      </DiaryItemInner>
-                    </DiaryItem>
-                  ))
-                ) : (
-                  <NoEntriesMessage>
-                    {currentMonthEntries.length === 0
-                      ? `${currentDate.year}년 ${currentDate.month}월에는 작성된 일기가 없습니다.`
-                      : '검색 조건에 맞는 일기가 없습니다.'}
-                  </NoEntriesMessage>
-                )}
-              </ListContainer>
+              <LoginPromptContainer>
+                <LoginPromptTitle>
+                  내가 쓴 일기를 보고 싶으시다면<br />
+                  로그인 후 이용해주세요
+                </LoginPromptTitle>
+                <LoginPromptText>
+                  소중한 감정 기록들이<br />
+                  여러분을 기다리고 있어요
+                </LoginPromptText>
+                <LoginButton onClick={handleLoginRedirect}>
+                  지금 시작하기
+                </LoginButton>
+              </LoginPromptContainer>
             </ListContent>
           </ListWrapper>
-        </Container>
-      </HeaderPadding>
+        ) : (
+          <>
+            <PageHeaderWrapper>
+              <PageHeaderContent>
+                <PageHeaderInner>
+                  <NavButton onClick={handlePrevMonth}>
+                    <NavIcon>◀</NavIcon>
+                  </NavButton>
+
+                  <HeaderInfo>
+                    <TitleText>내가 쓴 일기들</TitleText>
+                    <div style={{ position: 'relative' }}>
+                      <DateDisplay onClick={handleDateClick}>
+                        {currentDate.year}.{String(currentDate.month).padStart(2, '0')}
+                      </DateDisplay>
+                      {showMonthSelector && (
+                        <MonthSelector>
+                          {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
+                            <MonthButton
+                              key={month}
+                              selected={month === currentDate.month}
+                              onClick={() => handleMonthSelect(month)}
+                            >
+                              <span className="num">{month}</span>
+                              <span className="unit">월</span>
+                            </MonthButton>
+                          ))}
+                        </MonthSelector>
+                      )}
+                    </div>
+                    <CountText>총 {totalEntries}개의 일기</CountText>
+                  </HeaderInfo>
+
+                  <NavButton onClick={handleNextMonth}>
+                    <NavIcon>▶</NavIcon>
+                  </NavButton>
+                </PageHeaderInner>
+              </PageHeaderContent>
+            </PageHeaderWrapper>
+
+            <ListWrapper>
+              <ListContent>
+                <FilterSection>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    {uniqueMoods.map(mood => (
+                      <FilterButton
+                        key={mood}
+                        active={selectedMoodFilter === mood}
+                        onClick={() => setSelectedMoodFilter(mood)}
+                      >
+                        {mood}
+                      </FilterButton>
+                    ))}
+                  </div>
+                  <SearchInput
+                    type="text"
+                    placeholder="날짜 또는 감정으로 검색..."
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                  />
+                </FilterSection>
+
+                <ListContainer>
+                  {filteredEntries.length > 0 ? (
+                    filteredEntries.map((entry, index) => (
+                      <DiaryItem key={index} onClick={() => handleDiaryClick(entry)}>
+                        <DiaryItemInner>
+                          <DiaryDate>{entry.date}</DiaryDate>
+                          <DiaryMood>{entry.mood}</DiaryMood>
+                        </DiaryItemInner>
+                      </DiaryItem>
+                    ))
+                  ) : (
+                    <NoEntriesMessage>
+                      {currentMonthEntries.length === 0
+                        ? `${currentDate.year}년 ${currentDate.month}월에는 작성된 일기가 없습니다.`
+                        : '검색 조건에 맞는 일기가 없습니다.'}
+                    </NoEntriesMessage>
+                  )}
+                </ListContainer>
+              </ListContent>
+            </ListWrapper>
+          </>
+        )}
+      </Container>
       <Footer />
     </>
   );
 };
 
 export default DiaryListPage;
+

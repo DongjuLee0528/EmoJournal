@@ -1,6 +1,6 @@
 import { createGlobalStyle } from 'styled-components';
 import bgImage from '../image/background.png';
-import OngleapFont from '../fonts/온글잎 의연체.ttf'; // 한글 이름 유지 가능
+import OngleapFont from '../fonts/온글잎 의연체.ttf';
 
 const GlobalStyle = createGlobalStyle`
   @import url('https://fonts.googleapis.com/css2?family=Cherry+Bomb+One&display=swap');
@@ -25,23 +25,9 @@ const GlobalStyle = createGlobalStyle`
     background-repeat: no-repeat;
     background-position: center;
     min-height: 100vh;
+    overflow-y: scroll;
   }
 
-  main {
-    padding-top: 60px;
-  }
-
-  @media (max-width: 480px) {
-    main {
-      padding-top: 55px;
-    }
-  }
-
-  @media (max-width: 320px) {
-    main {
-      padding-top: 50px;
-    }
-  }
 `;
 
 export default GlobalStyle;

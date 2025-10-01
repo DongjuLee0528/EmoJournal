@@ -4,66 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
-// 1. 콘텐츠를 감싸고 오버레이의 기준점이 될 Wrapper를 추가합니다.
-const ContentWrapper = styled.div`
-  position: relative; /* 자식 요소인 LoginOverlay의 position: absolute 기준이 됩니다. */
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 30px; /* 기존 Container의 gap을 그대로 가져옵니다. */
-`;
-
-// 2. 로그인 오버레이 스타일을 수정합니다.
-const LoginOverlay = styled.div`
-  position: absolute; /* ContentWrapper를 기준으로 위치를 잡습니다. */
-  top: 0;
-  left: -20px; /* 좌우로 20px씩 확장 */
-  right: -20px; /* 좌우로 20px씩 확장 */
-  bottom: 0;
-  background-color: rgba(255, 255, 255, 0.92); /* 배경을 조금 더 불투명하게 조정 */
-  backdrop-filter: blur(px); /* 블러 효과를 살짝 조정 */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-  gap: 25px;
-  border-radius: 12px; /* ★★★ 모서리를 둥글게 만듭니다. ★★★ */
-  padding: 4rem 2rem;
-  text-align: center;
-`;
-
-const LoginPromptTitle = styled.h1`
-  font-size: 2.2rem; /* 폰트 크기를 살짝 키워 주목도를 높입니다. */
-  color: #333333;
-  margin: 0;
-  font-weight: bold;
-  line-height: 1.4; /* 줄 간격 추가 */
-
-  @media (max-width: 768px) {
-    font-size: 2rem;
-  }
-`;
-
-const LoginButton = styled.button`
-  padding: 0.8rem 2.5rem;
-  font-size: 1.2rem;
-  background: linear-gradient(135deg, #ff4081, #f50057);
-  color: white;
-  border: none;
-  border-radius: 15px;
-  cursor: pointer;
-  transition: all 0.3s;
-  font-weight: 600;
-  box-shadow: 0 4px 15px rgba(255, 64, 129, 0.3);
-  font-family: inherit;
-  
-  &:hover {
-    background: linear-gradient(135deg, #e91e63, #c51162);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(255, 64, 129, 0.5);
-  }
-`;
 
 const Container = styled.div`
   width: 100%;
@@ -74,10 +14,11 @@ const Container = styled.div`
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  /* [수정] centered prop을 제거하고 항상 상단 정렬로 고정 */
+  justify-content: flex-start;
   gap: 30px;
   font-family: '온글잎 의연체', sans-serif;
-  
-  /* Container 자체는 position: relative가 더 이상 필요 없습니다. */
 
   @media (max-width: 768px) {
     padding: 40px 20px 40px;
@@ -133,6 +74,7 @@ const UploadText = styled.div`
 `;
 
 const DiaryMessageBox = styled.div`
+  width: 100%;
   background-color: white;
   display: flex;
   flex-direction: column;
@@ -145,14 +87,17 @@ const DiaryMessageBox = styled.div`
   gap: 8px;
   text-align: center;
   min-height: 80px;
+  box-sizing: border-box;
 `;
 
 const DiaryBox = styled.div`
+  width: 100%;
   height: 390px;
   background-color: white;
   border-radius: 17px;
   box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
   position: relative;
+  box-sizing: border-box;
 `;
 
 const DiaryTextarea = styled.textarea`
@@ -182,6 +127,8 @@ const ButtonGroup = styled.div`
   display: flex;
   gap: 10px;
   align-self: flex-end;
+  width: 100%;
+  justify-content: flex-end;
 `;
 
 const Button = styled.button`
@@ -220,8 +167,6 @@ const WordCount = styled.div`
   font-size: 30px;
   color: #848383ff;
   user-select: none;
-  /* WordCount는 ButtonGroup과 가까이 있도록 margin-top을 조정할 수 있습니다. */
-  margin-top: -20px; 
 `;
 
 const ModalOverlay = styled.div`
@@ -419,77 +364,61 @@ const DiaryWritingPage = () => {
     <>
     <Header />
     <Container>
-      {/* 3. JSX 구조를 변경합니다. */}
-      <ContentWrapper>
-        {/* 로그인하지 않았을 때 오버레이를 ContentWrapper 내부에 표시 */}
-        {!isAuthenticated && (
-          <LoginOverlay>
-            <LoginPromptTitle>
-              <br />로그인이 필요한 서비스입니다
-            </LoginPromptTitle>
-            <LoginButton onClick={handleLoginClick}>
-              로그인하러 가기
-            </LoginButton>
-          </LoginOverlay>
+      <DiaryMessageBox>
+        {isSaved ? (
+          <>
+            {emojiUrl && (
+              <EmojiImage
+                src={emojiUrl}
+                alt="emotion emoji"
+                onClick={handleEmojiClick}
+              />
+            )}
+            <HashtagText>{hashtag || ''}</HashtagText>
+          </>
+        ) : (
+          <LoadingText>
+            AI가 열심히 작성 중이에요... 조금만 기다려주실래요? 곧 예쁜 결과물로 돌아올게요!
+          </LoadingText>
         )}
+      </DiaryMessageBox>
 
-        <DiaryMessageBox>
-          {isSaved ? (
-            <>
-              {emojiUrl && (
-                <EmojiImage
-                  src={emojiUrl}
-                  alt="emotion emoji"
-                  onClick={handleEmojiClick}
-                />
-              )}
-              <HashtagText>{hashtag || ''}</HashtagText>
-            </>
-          ) : (
-            <LoadingText>
-              AI가 열심히 작성 중이에요... 조금만 기다려주실래요? 곧 예쁜 결과물로 돌아올게요!
-            </LoadingText>
-          )}
-        </DiaryMessageBox>
-
-        <UploadBox 
-          hasImage={!!imageUrl} 
-          showText={!!showInterpretation}
+      <UploadBox 
+        hasImage={!!imageUrl} 
+        showText={!!showInterpretation}
+        disabled={isSaved}
+      >
+        <UploadInput
+          type="file"
+          accept="image/*"
+          onChange={handleImageChange}
           disabled={isSaved}
-        >
-          <UploadInput
-            type="file"
-            accept="image/*"
-            onChange={handleImageChange}
-            disabled={isSaved}
-          />
-          {showInterpretation ? (
-            <EmotionAnalyze> 
-              <EmotionAnalyzeText>
-                💬 감정 해석<br/>{emotionAnalyzeText}
-              </EmotionAnalyzeText>
-            </EmotionAnalyze>
-          ) : imageUrl ? (
-            <PreviewImage src={imageUrl} alt="preview" onClick={handleImageClick} />
-          ) : (
-            <UploadText>사진을 업로드하려면 클릭하세요</UploadText>
-          )}
-        </UploadBox>
+        />
+        {showInterpretation ? (
+          <EmotionAnalyze> 
+            <EmotionAnalyzeText>
+              💬 감정 해석<br/>{emotionAnalyzeText}
+            </EmotionAnalyzeText>
+          </EmotionAnalyze>
+        ) : imageUrl ? (
+          <PreviewImage src={imageUrl} alt="preview" onClick={handleImageClick} />
+        ) : (
+          <UploadText>사진을 업로드하려면 클릭하세요</UploadText>
+        )}
+      </UploadBox>
 
-        <DiaryBox>
-          <DateBox>{getTodayDate()}</DateBox>
-          <DiaryTextarea
-            value={diaryText}
-            onChange={(e) => setDiaryText(e.target.value)}
-            placeholder="여기에 오늘의 일기를 입력하세요..."
-            readOnly={isSaved}
-          />
-        </DiaryBox>
+      <DiaryBox>
+        <DateBox>{getTodayDate()}</DateBox>
+        <DiaryTextarea
+          value={diaryText}
+          onChange={(e) => setDiaryText(e.target.value)}
+          placeholder="여기에 오늘의 일기를 입력하세요..."
+          readOnly={isSaved}
+        />
+      </DiaryBox>
 
-        <WordCount>{diaryText.length}자</WordCount>
-      </ContentWrapper>
-      
-      {/* ButtonGroup은 ContentWrapper 바깥으로 빼서 오버레이에 가려지지 않게 합니다. */}
+      <WordCount>{diaryText.length}자</WordCount>
+
       <ButtonGroup>
         {!isSaved ? (
           <Button onClick={handleSave}>
@@ -508,7 +437,7 @@ const DiaryWritingPage = () => {
       </ButtonGroup>
 
       {isModalOpen && (
-        <ModalOverlay onClick={closeModal}>
+        <ModalOverlay onCliccdk={closeModal}>
           <ModalImage src={imageUrl} alt="Full Preview" />
         </ModalOverlay>
       )}
