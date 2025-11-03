@@ -25,7 +25,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/diary")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class DiaryController {
 
     private final DiaryService diaryService;
@@ -34,10 +33,16 @@ public class DiaryController {
     // JWT 필터에서 설정한 memberId → userId로 가공
     private String getUserIdFromRequest(HttpServletRequest request) {
         Object attr = request.getAttribute("memberId");
+        log.debug("[AUTH] 요청에서 추출한 memberId: {}", attr);
+
         if (attr == null) {
-            throw new RuntimeException("인증되지 않은 사용자입니다.");
+            log.error("[AUTH] 인증 실패 - memberId가 request attribute에 없음");
+            throw new SecurityException("인증되지 않은 사용자입니다.");
         }
-        return "member_" + attr;
+
+        String userId = "member_" + attr;
+        log.debug("[AUTH] userId 생성 완료: {}", userId);
+        return userId;
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -46,9 +51,42 @@ public class DiaryController {
             @RequestParam(value = "image", required = false) MultipartFile imageFile,
             HttpServletRequest httpRequest) {
 
-        String userId = getUserIdFromRequest(httpRequest);
-        request.setUserId(userId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(diaryService.createDiary(request, imageFile));
+        log.info("[DIARY_CREATE_MULTIPART] API 진입 - URI: {}, Method: {}", httpRequest.getRequestURI(), httpRequest.getMethod());
+
+        try {
+            String userId = getUserIdFromRequest(httpRequest);
+            request.setUserId(userId);
+
+            // 상세 요청 정보 로깅
+            log.info("[DIARY_CREATE_MULTIPART] 요청 상세 - 사용자: {}, 제목: [{}], 내용길이: {}, 작성날짜: {}, 공개여부: {}",
+                    userId, request.getTitle(),
+                    request.getContent() != null ? request.getContent().length() : 0,
+                    request.getDiaryDate(), request.getIsPublic());
+
+            // 파일 정보 로깅
+            if (imageFile != null && !imageFile.isEmpty()) {
+                log.info("[DIARY_CREATE_MULTIPART] 이미지 파일 - 원본명: [{}], 크기: {}bytes, ContentType: {}",
+                        imageFile.getOriginalFilename(), imageFile.getSize(), imageFile.getContentType());
+            } else {
+                log.info("[DIARY_CREATE_MULTIPART] 이미지 파일 없음");
+            }
+
+            DiaryResponse response = diaryService.createDiary(request, imageFile);
+
+            log.info("[DIARY_CREATE_MULTIPART] 일기 생성 완료 - 일기 ID: {}, 감정: {}", response.getId(), response.getAnalyzedEmotion());
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+
+        } catch (IllegalArgumentException e) {
+            log.error("[DIARY_CREATE_MULTIPART] 유효성 검증 실패 - 사용자: {}, 오류: {}", request.getUserId(), e.getMessage());
+            throw e;
+        } catch (SecurityException e) {
+            log.error("[DIARY_CREATE_MULTIPART] 인증/권한 오류 - 오류: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("[DIARY_CREATE_MULTIPART] 일기 생성 실패 - 사용자: {}, 오류: {}", request.getUserId(), e.getMessage(), e);
+            throw new RuntimeException("일기 생성에 실패했습니다", e);
+        }
     }
 
     @PostMapping("/simple")
@@ -56,9 +94,34 @@ public class DiaryController {
             @Valid @RequestBody DiaryCreateRequest request,
             HttpServletRequest httpRequest) {
 
-        String userId = getUserIdFromRequest(httpRequest);
-        request.setUserId(userId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(diaryService.createDiary(request, null));
+        log.info("[DIARY_CREATE_SIMPLE] API 진입 - URI: {}, Method: {}", httpRequest.getRequestURI(), httpRequest.getMethod());
+
+        try {
+            String userId = getUserIdFromRequest(httpRequest);
+            request.setUserId(userId);
+
+            // 상세 요청 정보 로깅
+            log.info("[DIARY_CREATE_SIMPLE] 요청 상세 - 사용자: {}, 제목: [{}], 내용길이: {}, 작성날짜: {}, 공개여부: {}",
+                    userId, request.getTitle(),
+                    request.getContent() != null ? request.getContent().length() : 0,
+                    request.getDiaryDate(), request.getIsPublic());
+
+            DiaryResponse response = diaryService.createDiary(request, null);
+
+            log.info("[DIARY_CREATE_SIMPLE] 일기 생성 완료 - 일기 ID: {}, 감정: {}", response.getId(), response.getAnalyzedEmotion());
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+
+        } catch (IllegalArgumentException e) {
+            log.error("[DIARY_CREATE_SIMPLE] 유효성 검증 실패 - 사용자: {}, 오류: {}", request.getUserId(), e.getMessage());
+            throw e;
+        } catch (SecurityException e) {
+            log.error("[DIARY_CREATE_SIMPLE] 인증/권한 오류 - 오류: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("[DIARY_CREATE_SIMPLE] 일기 생성 실패 - 사용자: {}, 오류: {}", request.getUserId(), e.getMessage(), e);
+            throw new RuntimeException("일기 생성에 실패했습니다", e);
+        }
     }
 
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

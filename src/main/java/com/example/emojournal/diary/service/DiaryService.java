@@ -49,21 +49,48 @@ public class DiaryService {
                     .build();
 
             if (imageFile != null && !imageFile.isEmpty()) {
-                String uploadedFileName = fileUploadService.uploadFile(imageFile);
-                diary.setImagePath(uploadedFileName);
-                diary.setOriginalImageName(imageFile.getOriginalFilename());
-                log.info("이미지 업로드 완료: {}", uploadedFileName);
+                try {
+                    String uploadedFileName = fileUploadService.uploadFile(imageFile);
+                    diary.setImagePath(uploadedFileName);
+                    diary.setOriginalImageName(imageFile.getOriginalFilename());
+                    log.info("[DIARY_SERVICE] 이미지 업로드 완료 - 원본명: [{}], 저장명: [{}], 크기: {}bytes",
+                            imageFile.getOriginalFilename(), uploadedFileName, imageFile.getSize());
+                } catch (Exception e) {
+                    log.error("[DIARY_SERVICE] 이미지 업로드 실패 - 원본명: [{}], 크기: {}bytes, 오류: {}",
+                            imageFile.getOriginalFilename(), imageFile.getSize(), e.getMessage());
+                    throw new RuntimeException("이미지 업로드에 실패했습니다: " + e.getMessage(), e);
+                }
+            } else {
+                log.debug("[DIARY_SERVICE] 이미지 파일이 없어 텍스트 전용 일기로 생성");
             }
 
             diary = diaryRepository.save(diary);
-            performEmotionAnalysis(diary);
-            diary = diaryRepository.save(diary);
+            log.info("[DIARY_SERVICE] 일기 초기 저장 완료 - ID: {}", diary.getId());
 
-            log.info("일기 생성 완료 - ID: {}, 감정: {}", diary.getId(), diary.getAnalyzedEmotion());
+            // 감정 분석 수행
+            try {
+                performEmotionAnalysis(diary);
+                diary = diaryRepository.save(diary);
+                log.info("[DIARY_SERVICE] 감정 분석 및 최종 저장 완료 - ID: {}, 감정: {}", diary.getId(), diary.getAnalyzedEmotion());
+            } catch (Exception e) {
+                log.warn("[DIARY_SERVICE] 감정 분석 실패, 기본값 설정 - ID: {}, 오류: {}", diary.getId(), e.getMessage());
+                // 감정 분석 실패 시에도 일기 생성은 성공으로 처리
+            }
+
+            log.info("[DIARY_SERVICE] 일기 생성 완료 - ID: {}, 감정: {}", diary.getId(), diary.getAnalyzedEmotion());
             return DiaryResponse.from(diary);
 
+        } catch (IllegalArgumentException e) {
+            log.error("[DIARY_SERVICE] 유효성 검증 오류 - 사용자: {}, 오류: {}", request.getUserId(), e.getMessage());
+            throw e;
+        } catch (SecurityException e) {
+            log.error("[DIARY_SERVICE] 보안 오류 - 사용자: {}, 오류: {}", request.getUserId(), e.getMessage());
+            throw e;
+        } catch (RuntimeException e) {
+            log.error("[DIARY_SERVICE] 런타임 오류 - 사용자: {}, 오류: {}", request.getUserId(), e.getMessage(), e);
+            throw e;
         } catch (Exception e) {
-            log.error("일기 생성 중 오류 발생", e);
+            log.error("[DIARY_SERVICE] 일기 생성 중 예상치 못한 오류 - 사용자: {}", request.getUserId(), e);
             throw new RuntimeException("일기 생성에 실패했습니다: " + e.getMessage(), e);
         }
     }
@@ -229,7 +256,7 @@ public class DiaryService {
      */
     private void performEmotionAnalysis(Diary diary) {
         try {
-            log.debug("감정 분석 시작 - 일기 ID: {}", diary.getId());
+            log.info("[EMOTION_ANALYSIS] 감정 분석 시작 - 일기 ID: {}, 내용 길이: {}", diary.getId(), diary.getContent().length());
 
             EmotionAnalysisRequest request = new EmotionAnalysisRequest();
             request.setDiaryText(diary.getContent());
@@ -244,14 +271,16 @@ public class DiaryService {
                 diary.setEmotionInterpretation(response.getMessage());  // getInterpretation() → getMessage()
                 diary.setEmotionImageFile(response.getMainEmoji());     // getImageFileName() → getMainEmoji()
 
-                log.debug("감정 분석 성공 - 메인 태그: {}, 전체 태그: {}", response.getMainTag(), response.getEmotionTags());
+                log.info("[EMOTION_ANALYSIS] 감정 분석 성공 - 일기 ID: {}, 메인 태그: [{}], 전체 태그: [{}], 이모지: {}",
+                        diary.getId(), response.getMainTag(), response.getEmotionTags(), response.getMainEmoji());
             } else {
-                log.warn("감정 분석 실패 - ID: {}, 메시지: {}", diary.getId(), response.getMessage());
+                log.warn("[EMOTION_ANALYSIS] 감정 분석 API 실패 - 일기 ID: {}, 메시지: {}", diary.getId(), response.getMessage());
                 setDefaultEmotion(diary);
             }
 
         } catch (Exception e) {
-            log.error("감정 분석 오류 - ID: {}", diary.getId(), e);
+            log.error("[EMOTION_ANALYSIS] 감정 분석 중 예외 발생 - 일기 ID: {}, 오류 타입: {}, 메시지: {}",
+                    diary.getId(), e.getClass().getSimpleName(), e.getMessage());
             setDefaultEmotion(diary);
         }
     }
@@ -265,5 +294,6 @@ public class DiaryService {
         diary.setDiaryKeywordsList(List.of("일반"));
         diary.setEmotionInterpretation("오늘도 소중한 하루였습니다.");
         diary.setEmotionImageFile("😊");
+        log.info("[EMOTION_ANALYSIS] 기본 감정 설정 완료 - 일기 ID: {}", diary.getId());
     }
 }
