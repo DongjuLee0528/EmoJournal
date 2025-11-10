@@ -21,8 +21,12 @@ import java.util.UUID;
 public class FileUploadService {
 
     // 업로드 디렉토리 (application.properties에서 설정)
-    @Value("${file.upload.path:uploads/diary-images}")
+    @Value("${file.upload.path:/home/uploads/diary-images}")
     private String uploadPath;
+
+    // 애플리케이션 기본 URL
+    @Value("${app.base-url:http://localhost:8080}")
+    private String baseUrl;
 
     // 허용된 파일 확장자
     private static final List<String> ALLOWED_EXTENSIONS = Arrays.asList(
@@ -58,7 +62,8 @@ public class FileUploadService {
             log.info("[FILE_UPLOAD] 파일 업로드 완료 - 원본: [{}], 저장: [{}], 크기: {}bytes, 경로: {}",
                     file.getOriginalFilename(), uniqueFileName, file.getSize(), filePath.toString());
 
-            return uniqueFileName;
+            // 웹 경로 반환 (DB 저장용)
+            return "/uploads/" + uniqueFileName;
 
         } catch (IOException e) {
             log.error("[FILE_UPLOAD] 파일 업로드 실패 - 원본명: [{}], 오류: {}",
@@ -70,11 +75,15 @@ public class FileUploadService {
     /**
      * 파일 삭제
      */
-    public boolean deleteFile(String fileName) {
+    public boolean deleteFile(String webPath) {
         try {
-            if (fileName == null || fileName.trim().isEmpty()) {
+            if (webPath == null || webPath.trim().isEmpty()) {
                 return false;
             }
+
+            // 웹 경로에서 파일명 추출 (/uploads/filename -> filename)
+            String fileName = webPath.startsWith("/uploads/") ?
+                webPath.substring("/uploads/".length()) : webPath;
 
             Path filePath = Paths.get(uploadPath, fileName);
             boolean deleted = Files.deleteIfExists(filePath);
@@ -87,7 +96,7 @@ public class FileUploadService {
 
             return deleted;
         } catch (IOException e) {
-            log.error("파일 삭제 중 오류 발생: {}", fileName, e);
+            log.error("파일 삭제 중 오류 발생: {}", webPath, e);
             return false;
         }
     }
@@ -95,22 +104,49 @@ public class FileUploadService {
     /**
      * 파일 존재 여부 확인
      */
-    public boolean fileExists(String fileName) {
-        if (fileName == null || fileName.trim().isEmpty()) {
+    public boolean fileExists(String webPath) {
+        if (webPath == null || webPath.trim().isEmpty()) {
             return false;
         }
+
+        // 웹 경로에서 파일명 추출 (/uploads/filename -> filename)
+        String fileName = webPath.startsWith("/uploads/") ?
+            webPath.substring("/uploads/".length()) : webPath;
+
         Path filePath = Paths.get(uploadPath, fileName);
         return Files.exists(filePath);
     }
 
     /**
-     * 파일의 웹 접근 URL 생성
+     * 파일의 절대 URL 생성
      */
-    public String getFileUrl(String fileName) {
-        if (fileName == null || fileName.trim().isEmpty()) {
+    public String getFileUrl(String webPath) {
+        if (webPath == null || webPath.trim().isEmpty()) {
             return null;
         }
-        return "/uploads/diary-images/" + fileName;
+
+        // 이미 절대 URL인 경우 그대로 반환
+        if (webPath.startsWith("http")) {
+            return webPath;
+        }
+
+        // 웹 경로를 절대 URL로 변환
+        return baseUrl + webPath;
+    }
+
+    /**
+     * 실제 파일 경로 반환 (파일 서빙용)
+     */
+    public Path getActualFilePath(String webPath) {
+        if (webPath == null || webPath.trim().isEmpty()) {
+            return null;
+        }
+
+        // 웹 경로에서 파일명 추출
+        String fileName = webPath.startsWith("/uploads/") ?
+            webPath.substring("/uploads/".length()) : webPath;
+
+        return Paths.get(uploadPath, fileName);
     }
 
     /**

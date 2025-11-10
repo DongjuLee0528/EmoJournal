@@ -5,6 +5,7 @@ import com.example.emojournal.diary.dto.DiaryResponse;
 import com.example.emojournal.diary.dto.DiaryUpdateRequest;
 import com.example.emojournal.diary.service.DiaryService;
 import com.example.emojournal.diary.service.FileUploadService;
+import com.example.emojournal.auth.jwt.utils.AuthenticationContextHolder;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -30,17 +32,17 @@ public class DiaryController {
     private final DiaryService diaryService;
     private final FileUploadService fileUploadService;
 
-    // JWT 필터에서 설정한 memberId → userId로 가공
-    private String getUserIdFromRequest(HttpServletRequest request) {
-        Object attr = request.getAttribute("memberId");
-        log.debug("[AUTH] 요청에서 추출한 memberId: {}", attr);
+    // AuthenticationContextHolder에서 인증된 사용자 ID 추출
+    private String getUserIdFromContext() {
+        Long memberId = AuthenticationContextHolder.getContext();
+        log.debug("[AUTH] AuthenticationContextHolder에서 추출한 memberId: {}", memberId);
 
-        if (attr == null) {
-            log.error("[AUTH] 인증 실패 - memberId가 request attribute에 없음");
+        if (memberId == null) {
+            log.error("[AUTH] 인증 실패 - AuthenticationContextHolder에 memberId가 없음");
             throw new SecurityException("인증되지 않은 사용자입니다.");
         }
 
-        String userId = "member_" + attr;
+        String userId = "member_" + memberId;
         log.debug("[AUTH] userId 생성 완료: {}", userId);
         return userId;
     }
@@ -54,7 +56,7 @@ public class DiaryController {
         log.info("[DIARY_CREATE_MULTIPART] API 진입 - URI: {}, Method: {}", httpRequest.getRequestURI(), httpRequest.getMethod());
 
         try {
-            String userId = getUserIdFromRequest(httpRequest);
+            String userId = getUserIdFromContext();
             request.setUserId(userId);
 
             // 상세 요청 정보 로깅
@@ -73,7 +75,7 @@ public class DiaryController {
 
             DiaryResponse response = diaryService.createDiary(request, imageFile);
 
-            log.info("[DIARY_CREATE_MULTIPART] 일기 생성 완료 - 일기 ID: {}, 감정: {}", response.getId(), response.getAnalyzedEmotion());
+            log.info("[DIARY_CREATE_MULTIPART] 일기 생성 완료 - 일기 ID: {}, 감정: {}", response.getId(), response.getEmotionKeyword());
 
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
 
@@ -97,7 +99,7 @@ public class DiaryController {
         log.info("[DIARY_CREATE_SIMPLE] API 진입 - URI: {}, Method: {}", httpRequest.getRequestURI(), httpRequest.getMethod());
 
         try {
-            String userId = getUserIdFromRequest(httpRequest);
+            String userId = getUserIdFromContext();
             request.setUserId(userId);
 
             // 상세 요청 정보 로깅
@@ -108,7 +110,7 @@ public class DiaryController {
 
             DiaryResponse response = diaryService.createDiary(request, null);
 
-            log.info("[DIARY_CREATE_SIMPLE] 일기 생성 완료 - 일기 ID: {}, 감정: {}", response.getId(), response.getAnalyzedEmotion());
+            log.info("[DIARY_CREATE_SIMPLE] 일기 생성 완료 - 일기 ID: {}, 감정: {}", response.getId(), response.getEmotionKeyword());
 
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
 
@@ -131,13 +133,13 @@ public class DiaryController {
             @RequestParam(value = "image", required = false) MultipartFile imageFile,
             HttpServletRequest httpRequest) {
 
-        String userId = getUserIdFromRequest(httpRequest);
+        String userId = getUserIdFromContext();
         return ResponseEntity.ok(diaryService.updateDiary(id, userId, request, imageFile));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<DiaryResponse> getDiary(@PathVariable Long id, HttpServletRequest httpRequest) {
-        String userId = getUserIdFromRequest(httpRequest);
+        String userId = getUserIdFromContext();
         return ResponseEntity.ok(diaryService.getDiary(id, userId));
     }
 
@@ -147,26 +149,26 @@ public class DiaryController {
             @RequestParam(defaultValue = "10") int size,
             HttpServletRequest httpRequest) {
 
-        String userId = getUserIdFromRequest(httpRequest);
-        Pageable pageable = PageRequest.of(page, size);
+        String userId = getUserIdFromContext();
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "diaryDate"));
         return ResponseEntity.ok(diaryService.getDiaries(userId, pageable));
     }
 
     @GetMapping("/all")
     public ResponseEntity<List<DiaryResponse>> getAllDiaries(HttpServletRequest request) {
-        String userId = getUserIdFromRequest(request);
+        String userId = getUserIdFromContext();
         return ResponseEntity.ok(diaryService.getAllDiaries(userId));
     }
 
     @GetMapping("/one-year-ago")
     public ResponseEntity<DiaryResponse> getOneYearAgoDiary(HttpServletRequest request) {
-        String userId = getUserIdFromRequest(request);
+        String userId = getUserIdFromContext();
         return ResponseEntity.ok(diaryService.getOneYearAgoDiary(userId));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteDiary(@PathVariable Long id, HttpServletRequest request) {
-        String userId = getUserIdFromRequest(request);
+        String userId = getUserIdFromContext();
         diaryService.deleteDiary(id, userId);
         return ResponseEntity.noContent().build();
     }
@@ -175,7 +177,7 @@ public class DiaryController {
     public ResponseEntity<List<DiaryResponse>> searchDiaries(
             @RequestParam String keyword,
             HttpServletRequest request) {
-        String userId = getUserIdFromRequest(request);
+        String userId = getUserIdFromContext();
         return ResponseEntity.ok(diaryService.searchDiaries(userId, keyword));
     }
 
@@ -183,13 +185,13 @@ public class DiaryController {
     public ResponseEntity<List<DiaryResponse>> getDiariesByEmotion(
             @PathVariable String emotion,
             HttpServletRequest request) {
-        String userId = getUserIdFromRequest(request);
+        String userId = getUserIdFromContext();
         return ResponseEntity.ok(diaryService.getDiariesByEmotion(userId, emotion));
     }
 
     @GetMapping("/statistics/emotion")
     public ResponseEntity<Map<String, Object>> getEmotionStatistics(HttpServletRequest request) {
-        String userId = getUserIdFromRequest(request);
+        String userId = getUserIdFromContext();
         Map<String, Long> stats = diaryService.getEmotionStatistics(userId);
         return ResponseEntity.ok(Map.of(
                 "userId", userId,

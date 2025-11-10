@@ -42,12 +42,25 @@ public class EmotionAnalysisController {
             log.info("감정 분석 API 호출 - 사용자: {}, 텍스트 길이: {}",
                     userId, request.getDiaryText().length());
 
-            EmotionAnalysisResponse response = emotionAnalysisService.analyzeEmotion(request);
+            EmotionAnalysisService.EmotionAnalysisResult result = emotionAnalysisService.analyzeEmotion(request.getDiaryText());
+
+            EmotionAnalysisResponse response;
+            if (result != null) {
+                response = EmotionAnalysisResponse.success(
+                    request.getDiaryText(),
+                    result.getMainTag(),
+                    result.getSubTags(),
+                    result.getMainTag(),
+                    result.getSubTags(),
+                    result.getEmoji()
+                );
+            } else {
+                response = EmotionAnalysisResponse.failure(request.getDiaryText(), "감정 분석에 실패했습니다.");
+            }
 
             if (response.isSuccess()) {
                 // 수정된 부분: 존재하는 메서드들로 변경
-                log.info("감정 분석 성공 - 메인 태그: {}, 전체 태그: {}, 이모지: {}",
-                        response.getMainTag(), response.getEmotionTags(), response.getMainEmoji());
+                log.info("감정 분석 성공 - 메인 태그: {}", result.getMainTag());
                 return ResponseEntity.ok(response);
             } else {
                 log.warn("감정 분석 실패: {}", response.getMessage());

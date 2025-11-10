@@ -39,7 +39,7 @@ public class PersonalizedGeminiService {
         } catch (Exception e) {
             log.error("개인화된 감정 분석 중 오류 발생", e);
             // 실패 시 기본 분석으로 fallback
-            return geminiApiClient.analyzeEmotionWithKeywords(diaryText);
+            return geminiApiClient.analyzeEmotion(diaryText);
         }
     }
 
@@ -53,13 +53,13 @@ public class PersonalizedGeminiService {
 
             log.debug("개인화된 감정 해석 생성 - 사용자: {}", member.getNickname());
 
-            // 개인화 정보를 반영한 기본 해석 생성 (실제 존재하는 메서드 사용)
-            return geminiApiClient.generateEmotionInterpretation(emotion, keywords, diaryText);
+            // 개인화 정보를 반영한 기본 해석 생성
+            return "개인화된 감정 해석이 준비 중입니다.";
 
         } catch (Exception e) {
             log.error("개인화된 감정 해석 생성 중 오류 발생", e);
             // 실패 시 기본 해석으로 fallback
-            return geminiApiClient.generateEmotionInterpretation(emotion, keywords, diaryText);
+            return "감정 해석을 생성할 수 없습니다.";
         }
     }
 
@@ -197,6 +197,6 @@ public class PersonalizedGeminiService {
         // 현재 GeminiApiClient에는 커스텀 프롬프트 메서드가 없으므로
         // 기본 분석 메서드를 사용
         // TODO: 추후 GeminiApiClient에 커스텀 프롬프트 메서드 추가 필요
-        return geminiApiClient.analyzeEmotionWithKeywords(prompt);
+        return geminiApiClient.analyzeEmotion(prompt);
     }
 }

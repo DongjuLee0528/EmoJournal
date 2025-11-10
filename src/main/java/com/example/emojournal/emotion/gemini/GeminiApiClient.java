@@ -6,11 +6,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
+import reactor.util.retry.Retry;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Component
@@ -19,336 +24,313 @@ public class GeminiApiClient {
     @Value("${gemini.api.key}")
     private String apiKey;
 
-    @Value("${gemini.api.url}")
-    private String apiUrl;
+    @Value("${gemini.api.base-url}")
+    private String baseUrl;
+
+    @Value("${gemini.model}")
+    private String model;
 
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
-
-    // 9가지 고정 감정 목록
-    private static final List<String> EMOTION_CATEGORIES = List.of(
-            "기쁨", "슬픔", "분노", "두려움", "혐오감", "놀람", "신뢰감", "사랑", "혼합감정"
-    );
+    private final Pattern codeBlockPattern = Pattern.compile("^```(json)?\\s*|\\s*```$", Pattern.MULTILINE);
 
     public GeminiApiClient() {
-        this.webClient = WebClient.builder().build();
+        this.webClient = WebClient.builder()
+                .defaultHeader("Content-Type", "application/json")
+                .defaultHeader("Accept", "application/json")
+                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(1024 * 1024))
+                .build();
         this.objectMapper = new ObjectMapper();
     }
 
-    /**
-     * 일기 텍스트를 분석해서 8가지 감정 중 대표 감정 1개와 키워드 최대 2개를 반환
-     */
-    public EmotionAnalysisResult analyzeEmotionWithKeywords(String diaryText) {
+    public EmotionAnalysisResult analyzeEmotion(String diaryText) {
         try {
-            log.debug("감정 분석 시작: {}", diaryText);
+            String preamble = "당신의 출력은 반드시 단 하나의 JSON 객체여야 합니다.\n" +
+                    "설명/마크다운/코드펜스/문자 장식 금지. 공백 외의 어떤 문자도 JSON 바깥에 출력하지 마세요.\n" +
+                    "스키마:\n" +
+                    "{\n" +
+                    "  \"mainTag\": string|null,          // 한국어 단일 감정 키워드(예: \"기쁨\"), 없으면 null\n" +
+                    "  \"emoji\": string|null,            // 단일 이모지(예: \"😊\"), 없으면 null\n" +
+                    "  \"keywords\": string[],            // 연관 키워드 배열, 없으면 []\n" +
+                    "  \"interpretation\": string|null    // 1~2문장 요약, 없으면 null\n" +
+                    "}\n" +
+                    "입력 일기만 고려하세요. 안전필터로 직접 답변이 제한되면, 위 스키마를 유지하되 가능한 필드에 null/[]만 채워 JSON으로만 응답하세요.\n" +
+                    "You must respond with ONLY a single JSON object, no code fences, no prose.\n\n";
 
-            String prompt = String.format(
-                    "다음 일기 내용을 분석해서 아래와 같이 응답해주세요:\n\n" +
-                            "1. 대표 감정 (다음 9가지 중 1개만 선택): 기쁨, 슬픔, 분노, 두려움, 혐오감, 놀람, 신뢰감, 사랑, 혼합감정\n" +
-                            "2. 감정 키워드 (1개, 선택한 감정과 관련된 구체적인 단어)\n" +
-                            "3. 일기 키워드 (1~2개, 일기 내용의 핵심 단어나 상황)\n\n" +
-                            "응답 형식:\n" +
-                            "감정: [선택된 감정]\n" +
-                            "감정키워드: [감정관련 키워드]\n" +
-                            "일기키워드: [키워드1, 키워드2]\n\n" +
-                            "일기 내용: %s",
-                    diaryText
-            );
+            String prompt = preamble + diaryText;
 
             Map<String, Object> requestBody = createRequestBody(prompt);
             String response = callGeminiApi(requestBody);
-            EmotionAnalysisResult result = parseEmotionResponse(response);
-
-            log.debug("감정 분석 결과: 감정={}, 키워드={}", result.getEmotion(), result.getKeywords());
-            return result;
+            return parseEmotionResponse(response);
 
         } catch (Exception e) {
-            log.error("Gemini API 감정 분석 중 오류 발생", e);
-            return new EmotionAnalysisResult("기쁨", "평온", List.of("일반"), "joy.png");
+            log.error("감정 분석 실패: {}", e.getMessage());
+            throw new GeminiAnalysisException("감정 분석 실패", e);
         }
     }
 
-    /**
-     * 감정에 따른 감정 해석을 생성 (더 자세하고 따뜻한 톤으로)
-     */
-    public String generateEmotionInterpretation(String emotion, List<String> allKeywords, String diaryText) {
-        try {
-            log.debug("감정 해석 생성 시작: 감정={}, 키워드={}", emotion, allKeywords);
-
-            String keywordText = String.join(", ", allKeywords);
-            String prompt = String.format(
-                    "다음 정보를 바탕으로 따뜻하고 공감하는 톤으로 감정 해석을 작성해주세요:\n\n" +
-                            "감정: %s\n" +
-                            "키워드: %s\n" +
-                            "일기 내용: %s\n\n" +
-                            "조건:\n" +
-                            "- 100자 이내로 작성\n" +
-                            "- 따뜻하고 위로가 되는 말투 사용\n" +
-                            "- 구체적인 감정 상태와 상황을 언급\n" +
-                            "- '오늘 하루는...' 또는 '지금 마음이...' 같은 자연스러운 시작\n" +
-                            "- 공감과 격려의 메시지 포함",
-                    emotion, keywordText, diaryText.substring(0, Math.min(150, diaryText.length()))
-            );
-
-            Map<String, Object> requestBody = createRequestBody(prompt);
-            String response = callGeminiApi(requestBody);
-            String interpretation = parseResponse(response);
-
-            log.debug("감정 해석 결과: {}", interpretation);
-            return interpretation;
-
-        } catch (Exception e) {
-            log.error("Gemini API 감정 해석 생성 중 오류 발생", e);
-            return getDefaultInterpretation(emotion);
-        }
+    private String callGeminiApi(Map<String, Object> requestBody) {
+        return callGeminiApiWithModel(requestBody, model);
     }
 
-    /**
-     * 감정에 어울리는 이미지 파일명을 반환
-     */
-    public String getEmotionImageFileName(String emotion) {
-        Map<String, String> emotionImageMap = Map.of(
-                "기쁨", "joy.png",
-                "슬픔", "sadness.png",
-                "분노", "anger.png",
-                "두려움", "fear.png",
-                "혐오감", "disgust.png",
-                "놀람", "surprise.png",
-                "신뢰감", "trust.png",
-                "사랑", "love.png",
-                "혼합감정", "mixed.png"
-        );
+    private String callGeminiApiWithModel(Map<String, Object> requestBody, String modelToUse) {
+        String url = String.format("%s/v1beta/models/%s:generateContent", baseUrl, modelToUse);
 
-        return emotionImageMap.getOrDefault(emotion, "joy.png");
+        return webClient.post()
+                .uri(url)
+                .header("x-goog-api-key", apiKey)
+                .bodyValue(requestBody)
+                .retrieve()
+                .bodyToMono(String.class)
+                .timeout(Duration.ofSeconds(30))
+                .retryWhen(Retry.backoff(2, Duration.ofSeconds(1))
+                        .filter(throwable -> {
+                            if (throwable instanceof WebClientResponseException) {
+                                int status = ((WebClientResponseException) throwable).getStatusCode().value();
+                                return status == 429 || (status >= 500 && status < 600);
+                            }
+                            return false;
+                        }))
+                .onErrorResume(WebClientResponseException.class, ex -> {
+                    int statusCode = ex.getStatusCode().value();
+                    log.info("상태코드: {}, 모델: {}", statusCode, modelToUse);
+
+                    if (statusCode == 404 && modelToUse.equals(model)) {
+                        log.warn("404 대체모델 사용: gemini-1.5-flash-001");
+                        return callGeminiApiWithModelInternal(requestBody, "gemini-1.5-flash-001");
+                    }
+
+                    return Mono.error(new GeminiAnalysisException("API 호출 실패: " + statusCode));
+                })
+                .subscribeOn(Schedulers.boundedElastic())
+                .block();
     }
 
-    /**
-     * 감정에 어울리는 이모지를 반환 (하위 호환성용)
-     */
-    public String getEmotionEmoji(String emotion) {
-        Map<String, String> emotionEmojiMap = Map.of(
-                "기쁨", "😊",
-                "슬픔", "😢",
-                "분노", "😠",
-                "두려움", "😰",
-                "혐오감", "🤢",
-                "놀람", "😲",
-                "신뢰감", "🤝",
-                "사랑", "❤️",
-                "혼합감정", "😐"
-        );
+    private Mono<String> callGeminiApiWithModelInternal(Map<String, Object> requestBody, String modelToUse) {
+        String url = String.format("%s/v1beta/models/%s:generateContent", baseUrl, modelToUse);
 
-        return emotionEmojiMap.getOrDefault(emotion, "😐");
+        return webClient.post()
+                .uri(url)
+                .header("x-goog-api-key", apiKey)
+                .bodyValue(requestBody)
+                .retrieve()
+                .bodyToMono(String.class)
+                .timeout(Duration.ofSeconds(30))
+                .retryWhen(Retry.backoff(2, Duration.ofSeconds(1))
+                        .filter(throwable -> {
+                            if (throwable instanceof WebClientResponseException) {
+                                int status = ((WebClientResponseException) throwable).getStatusCode().value();
+                                return status == 429 || (status >= 500 && status < 600);
+                            }
+                            return false;
+                        }));
     }
 
-    /**
-     * Gemini API 응답에서 감정과 키워드 파싱
-     */
     private EmotionAnalysisResult parseEmotionResponse(String response) {
         try {
-            String content = parseResponse(response);
+            JsonNode rootNode = objectMapper.readTree(response);
+            JsonNode candidates = rootNode.get("candidates");
 
-            String emotion = "기쁨"; // 기본값
-            String emotionKeyword = "평온"; // 기본값
-            List<String> diaryKeywords = List.of("일반"); // 기본값
+            if (candidates == null || !candidates.isArray() || candidates.size() == 0) {
+                throw new GeminiAnalysisException("후보 응답이 없음");
+            }
 
-            // 감정 추출
-            if (content.contains("감정:")) {
-                String emotionLine = extractLine(content, "감정:");
-                for (String validEmotion : EMOTION_CATEGORIES) {
-                    if (emotionLine.contains(validEmotion)) {
-                        emotion = validEmotion;
-                        break;
+            JsonNode selectedCandidate = selectValidCandidate(candidates);
+            String rawText = extractRawText(selectedCandidate);
+            String normalizedText = normalizeText(rawText);
+
+            log.info("상태코드: 200, 모델: {}, 후보 개수: {}, Raw ({}자): {}",
+                    model, candidates.size(), normalizedText.length(),
+                    normalizedText.length() > 500 ? normalizedText.substring(0, 500) + "..." : normalizedText);
+
+            return parseJsonResponse(normalizedText);
+
+        } catch (Exception e) {
+            log.error("응답 파싱 실패: {}", e.getMessage());
+            throw new GeminiAnalysisException("응답 파싱 실패", e);
+        }
+    }
+
+    private JsonNode selectValidCandidate(JsonNode candidates) {
+        for (JsonNode candidate : candidates) {
+            if (isValidCandidate(candidate)) {
+                return candidate;
+            }
+        }
+        throw new GeminiAnalysisException("유효한 후보가 없음");
+    }
+
+    private boolean isValidCandidate(JsonNode candidate) {
+        JsonNode content = candidate.get("content");
+        if (content == null) {
+            JsonNode text = candidate.get("text");
+            return text != null;
+        }
+
+        JsonNode parts = content.get("parts");
+        JsonNode text = content.get("text");
+        if ((parts == null || !parts.isArray() || parts.size() == 0) && text == null) {
+            return false;
+        }
+
+        JsonNode finishReason = candidate.get("finishReason");
+        if (finishReason != null && !finishReason.asText().isEmpty() && !"STOP".equals(finishReason.asText())) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private String extractRawText(JsonNode candidate) {
+        StringBuilder rawText = new StringBuilder();
+
+        JsonNode content = candidate.get("content");
+        if (content != null) {
+            JsonNode parts = content.get("parts");
+            if (parts != null && parts.isArray()) {
+                for (JsonNode part : parts) {
+                    JsonNode textNode = part.get("text");
+                    if (textNode != null) {
+                        rawText.append(textNode.asText());
                     }
                 }
             }
 
-            // 감정 키워드 추출
-            if (content.contains("감정키워드:")) {
-                String emotionKeywordLine = extractLine(content, "감정키워드:");
-                if (!emotionKeywordLine.isEmpty()) {
-                    emotionKeyword = emotionKeywordLine.trim();
+            if (rawText.length() == 0) {
+                JsonNode textNode = content.get("text");
+                if (textNode != null) {
+                    rawText.append(textNode.asText());
                 }
             }
-
-            // 일기 키워드 추출
-            if (content.contains("일기키워드:")) {
-                String diaryKeywordLine = extractLine(content, "일기키워드:");
-                diaryKeywords = parseDiaryKeywords(diaryKeywordLine);
+        } else {
+            JsonNode textNode = candidate.get("text");
+            if (textNode != null) {
+                rawText.append(textNode.asText());
             }
+        }
 
-            String imageFileName = getEmotionImageFileName(emotion);
+        return rawText.toString();
+    }
 
-            return new EmotionAnalysisResult(emotion, emotionKeyword, diaryKeywords, imageFileName);
+    private String normalizeText(String rawText) {
+        if (rawText == null) return "";
+
+        String normalized = rawText.trim();
+        normalized = codeBlockPattern.matcher(normalized).replaceAll("");
+        normalized = normalized.replaceAll("[\u0000-\u001F\u007F\uFEFF]", "");
+
+        return normalized.trim();
+    }
+
+    private String extractBalancedJsonSubstring(String text) {
+        // 빠른 JSON 스니핑: { 와 } 가 모두 없으면 즉시 예외
+        if (!text.contains("{") || !text.contains("}")) {
+            throw new GeminiAnalysisException("JSON 형식이 아님 - 브레이스 없음");
+        }
+
+        int firstBrace = text.indexOf('{');
+        if (firstBrace == -1) {
+            throw new GeminiAnalysisException("JSON 시작 브레이스를 찾을 수 없음");
+        }
+
+        int braceCount = 0;
+        int start = firstBrace;
+
+        for (int i = start; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (c == '{') {
+                braceCount++;
+            } else if (c == '}') {
+                braceCount--;
+                if (braceCount == 0) {
+                    return text.substring(start, i + 1);
+                }
+            }
+        }
+
+        throw new GeminiAnalysisException("균형 잡힌 JSON 블록을 찾을 수 없음");
+    }
+
+    private EmotionAnalysisResult parseJsonResponse(String normalizedText) {
+        try {
+            String jsonText = extractBalancedJsonSubstring(normalizedText);
+            JsonNode jsonNode = objectMapper.readTree(jsonText);
+
+            String mainTag = getStringValue(jsonNode, "mainTag");
+            String emoji = getStringValue(jsonNode, "emoji");
+            List<String> keywords = getStringArrayValue(jsonNode, "keywords");
+            String interpretation = getStringValue(jsonNode, "interpretation");
+
+            return new EmotionAnalysisResult(mainTag, emoji, keywords, interpretation);
 
         } catch (Exception e) {
-            log.error("감정 응답 파싱 중 오류", e);
-            return new EmotionAnalysisResult("기쁨", "평온", List.of("일반"), "joy.png");
+            throw new GeminiAnalysisException("JSON 파싱 실패", e);
         }
     }
 
-    /**
-     * 텍스트에서 특정 라벨의 라인 추출
-     */
-    private String extractLine(String content, String label) {
-        String[] lines = content.split("\n");
-        for (String line : lines) {
-            if (line.contains(label)) {
-                return line.replace(label, "").trim();
-            }
-        }
-        return "";
+    private String getStringValue(JsonNode node, String fieldName) {
+        JsonNode field = node.get(fieldName);
+        return (field != null && !field.isNull()) ? field.asText() : null;
     }
 
-    /**
-     * 일기 키워드 문자열을 리스트로 파싱 (1~2개)
-     */
-    private List<String> parseDiaryKeywords(String keywordLine) {
-        if (keywordLine.isEmpty()) {
-            return List.of("일반");
+    private List<String> getStringArrayValue(JsonNode node, String fieldName) {
+        JsonNode field = node.get(fieldName);
+        if (field == null || !field.isArray()) {
+            return List.of();
         }
 
-        List<String> keywords = List.of(keywordLine.split("[,\\s]+"))
-                .stream()
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .limit(2) // 최대 2개
-                .toList();
-
-        return keywords.isEmpty() ? List.of("일반") : keywords;
+        List<String> result = new java.util.ArrayList<>();
+        for (JsonNode item : field) {
+            result.add(item.asText());
+        }
+        return result;
     }
 
-    /**
-     * 기본 감정 해석 반환
-     */
-    private String getDefaultInterpretation(String emotion) {
-        Map<String, String> defaultInterpretations = Map.of(
-                "기쁨", "오늘 하루도 즐거운 시간을 보내셨네요!",
-                "슬픔", "힘든 하루였지만 내일은 더 나아질 거예요.",
-                "분노", "화가 나는 일이 있었군요. 잠시 쉬어가세요.",
-                "두려움", "불안한 마음이 드시는군요. 괜찮을 거예요.",
-                "혐오감", "불쾌한 경험을 하셨군요.",
-                "놀람", "예상치 못한 일이 있었나 보네요!",
-                "신뢰감", "믿음직한 하루를 보내셨네요.",
-                "사랑", "따뜻한 마음이 느껴지는 하루였군요.",
-                "혼합감정", "복잡한 마음이 드는 하루였네요."
-        );
-
-        return defaultInterpretations.getOrDefault(emotion, "오늘도 수고하셨어요.");
-    }
-
-    /**
-     * Gemini API 호출 (공통 메서드)
-     */
-    private String callGeminiApi(Map<String, Object> requestBody) {
-        return webClient.post()
-                .uri(apiUrl + "?key=" + apiKey)
-                .header("Content-Type", "application/json")
-                .bodyValue(requestBody)
-                .retrieve()
-                .bodyToMono(String.class)
-                .block();
-    }
-
-    /**
-     * Gemini API 요청 본문 생성
-     */
     private Map<String, Object> createRequestBody(String prompt) {
+        Map<String, Object> part = new HashMap<>();
+        part.put("text", prompt);
+
         Map<String, Object> content = new HashMap<>();
-        content.put("parts", List.of(Map.of("text", prompt)));
+        content.put("role", "user");
+        content.put("parts", List.of(part));
+
+        Map<String, Object> generationConfig = new HashMap<>();
+        generationConfig.put("temperature", 0.2);
+        generationConfig.put("maxOutputTokens", 512);
 
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("contents", List.of(content));
-
-        // 응답 설정
-        Map<String, Object> generationConfig = new HashMap<>();
-        generationConfig.put("temperature", 0.3);
-        generationConfig.put("maxOutputTokens", 200);
         requestBody.put("generationConfig", generationConfig);
 
         return requestBody;
     }
 
-    /**
-     * Gemini API 응답 파싱
-     */
-    private String parseResponse(String response) {
-        try {
-            JsonNode jsonNode = objectMapper.readTree(response);
-            JsonNode candidates = jsonNode.get("candidates");
-
-            if (candidates != null && candidates.isArray() && candidates.size() > 0) {
-                JsonNode content = candidates.get(0).get("content");
-                if (content != null) {
-                    JsonNode parts = content.get("parts");
-                    if (parts != null && parts.isArray() && parts.size() > 0) {
-                        return parts.get(0).get("text").asText();
-                    }
-                }
-            }
-
-            return "분석 결과를 가져올 수 없습니다.";
-
-        } catch (Exception e) {
-            log.error("응답 파싱 중 오류", e);
-            return "분석 결과를 가져올 수 없습니다.";
-        }
-    }
-
-    // 하위 호환성을 위한 기존 메서드들 (deprecated)
-    @Deprecated
-    public String analyzeEmotionTags(String diaryText) {
-        EmotionAnalysisResult result = analyzeEmotionWithKeywords(diaryText);
-        return "#" + result.getEmotion();
-    }
-
-    @Deprecated
-    public String generateMainEmoji(String mainTag) {
-        String emotion = mainTag.replace("#", "");
-        return getEmotionEmoji(emotion);
-    }
-
-    @Deprecated
-    public String analyzeEmotion(String diaryText) {
-        return analyzeEmotionTags(diaryText);
-    }
-
-    /**
-     * 감정 분석 결과를 담는 내부 클래스
-     */
     public static class EmotionAnalysisResult {
-        private final String emotion;
-        private final String emotionKeyword;
-        private final List<String> diaryKeywords;
-        private final String imageFileName;
+        private final String mainTag;
+        private final String emoji;
+        private final List<String> keywords;
+        private final String interpretation;
 
-        public EmotionAnalysisResult(String emotion, String emotionKeyword, List<String> diaryKeywords, String imageFileName) {
-            this.emotion = emotion;
-            this.emotionKeyword = emotionKeyword;
-            this.diaryKeywords = diaryKeywords;
-            this.imageFileName = imageFileName;
+        public EmotionAnalysisResult(String mainTag, String emoji, List<String> keywords, String interpretation) {
+            this.mainTag = mainTag;
+            this.emoji = emoji;
+            this.keywords = keywords != null ? keywords : List.of();
+            this.interpretation = interpretation;
         }
 
-        public String getEmotion() { return emotion; }
-        public String getEmotionKeyword() { return emotionKeyword; }
-        public List<String> getDiaryKeywords() { return diaryKeywords; }
-        public String getImageFileName() { return imageFileName; }
+        public String getMainTag() { return mainTag; }
+        public String getEmoji() { return emoji; }
+        public List<String> getKeywords() { return keywords; }
+        public String getInterpretation() { return interpretation; }
+    }
 
-        // 전체 키워드 리스트 반환 (하위 호환성)
-        public List<String> getKeywords() {
-            List<String> allKeywords = new java.util.ArrayList<>();
-            allKeywords.add(emotionKeyword);
-            allKeywords.addAll(diaryKeywords);
-            return allKeywords;
+    public static class GeminiAnalysisException extends RuntimeException {
+        public GeminiAnalysisException(String message) {
+            super(message);
         }
 
-        // 기존 이모지 메서드 (하위 호환성)
-        public String getEmoji() {
-            Map<String, String> emotionEmojiMap = Map.of(
-                    "기쁨", "😊", "슬픔", "😢", "분노", "😠", "두려움", "😰",
-                    "혐오감", "🤢", "놀람", "😲", "신뢰감", "🤝", "사랑", "❤️", "혼합감정", "😐"
-            );
-            return emotionEmojiMap.getOrDefault(emotion, "😐");
+        public GeminiAnalysisException(String message, Throwable cause) {
+            super(message, cause);
         }
     }
 }

@@ -158,4 +158,28 @@ public class Diary {
     public void incrementViewCount() {
         this.viewCount = (this.viewCount == null) ? 1 : this.viewCount + 1;
     }
+
+    /**
+     * 감정 이모지 반환
+     */
+    public String getEmotionEmoji() {
+        if (analyzedEmotion == null) {
+            return "😐";
+        }
+
+        switch (analyzedEmotion) {
+            case "기쁨": return "😊";
+            case "슬픔": return "😢";
+            case "분노": return "😠";
+            case "두려움": return "😰";
+            case "혐오감": return "🤢";
+            case "놀람": return "😲";
+            case "신뢰감": return "🤝";
+            case "사랑": return "❤️";
+            case "혼합감정": return "😐";
+            case "중립감정": return "😐";
+            case "일반감정": return "😐";
+            default: return "😐";
+        }
+    }
 }
