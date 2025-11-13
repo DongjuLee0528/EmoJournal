@@ -53,7 +53,7 @@ const OAuthCallback = () => {
       // ⬇️ PKCE code_verifier 추가
       const codeVerifier = localStorage.getItem('pkce_verifier');
 
-      const response = await fetch(`${API_BASE_URL}/login/oauth2/code/google`, {
+      const response = await fetch(`${API_BASE_URL.replace('/api', '')}/login/oauth2/code/google`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

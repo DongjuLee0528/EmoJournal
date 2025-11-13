@@ -54,4 +54,3 @@ const LicensesPage = () => {
 
 export default LicensesPage;
 
-

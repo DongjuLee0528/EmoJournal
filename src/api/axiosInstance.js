@@ -31,7 +31,7 @@ api.interceptors.response.use(
 
             try {
                 // access token 재발급 요청
-                const res = await api.post("/auth/reissue");
+                const res = await api.post("/api/auth/reissue");
                 
                 // 서버에서 보내준 토큰 가져오기
                 const newToken = res.data.accessToken;

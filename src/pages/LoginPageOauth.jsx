@@ -10,15 +10,53 @@ const LoginPage = () => {
   // Google OAuth 2.0 설정
   const clientId = "639506784430-mvf0oth3lt0jc4nab5dbjq18ki7nggsv.apps.googleusercontent.com";
   const redirectUri = "https://emojournal.djloghub.com/oauth/callback";
-  const scope = "https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/calendar";
+  const scope = "openid email profile https://www.googleapis.com/auth/calendar";
   const responseType = "code";
 
+  // PKCE 헬퍼 함수들
+  const generateCodeVerifier = () => {
+    const array = new Uint8Array(32);
+    crypto.getRandomValues(array);
+    return btoa(String.fromCharCode.apply(null, array))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=/g, '');
+  };
+
+  const generateCodeChallenge = async (verifier) => {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(verifier);
+    const digest = await crypto.subtle.digest('SHA-256', data);
+    return btoa(String.fromCharCode.apply(null, new Uint8Array(digest)))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=/g, '');
+  };
+
+  const generateState = () => {
+    const array = new Uint8Array(16);
+    crypto.getRandomValues(array);
+    return btoa(String.fromCharCode.apply(null, array))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=/g, '');
+  };
+
   // Google OAuth 로그인 시작
-  const handleGoogleLogin = () => {
+  const handleGoogleLogin = async () => {
     setIsLoading(true);
     setError('');
-    
+
     try {
+      // PKCE 코드 생성
+      const codeVerifier = generateCodeVerifier();
+      const codeChallenge = await generateCodeChallenge(codeVerifier);
+      const state = generateState();
+
+      // PKCE 값들을 저장
+      localStorage.setItem('pkce_verifier', codeVerifier);
+      sessionStorage.setItem('oauth_state', state);
+
       // Google OAuth 2.0 Authorization URL 생성
       const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
       authUrl.searchParams.set('response_type', responseType);
@@ -27,7 +65,9 @@ const LoginPage = () => {
       authUrl.searchParams.set('scope', scope);
       authUrl.searchParams.set('prompt', 'consent');
       authUrl.searchParams.set('access_type', 'offline');
-      authUrl.searchParams.set('state', 'login'); // CSRF 방지
+      authUrl.searchParams.set('state', state);
+      authUrl.searchParams.set('code_challenge', codeChallenge);
+      authUrl.searchParams.set('code_challenge_method', 'S256');
       
       console.log('Google OAuth URL로 이동:', authUrl.toString());
       

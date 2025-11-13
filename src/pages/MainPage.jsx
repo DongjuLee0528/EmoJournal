@@ -156,7 +156,7 @@ const DayNumber = styled.div`
 const EventsContainer = styled.div`
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  grid-auto-rows: 26px;
+  grid-auto-rows: 28px;
   gap: 1px;
   position: absolute;
   top: 0;
@@ -164,21 +164,21 @@ const EventsContainer = styled.div`
   right: 0;
   bottom: 0;
   pointer-events: none;
-  padding: 45px 21px 21px 21px;
+  padding: 50px 21px 21px 21px;
 
   @media (max-width: 768px) {
-    grid-auto-rows: 21px;
-    padding: 38px 16px 16px 16px;
+    grid-auto-rows: 23px;
+    padding: 40px 16px 16px 16px;
   }
 
   @media (max-width: 480px) {
-    grid-auto-rows: 17px;
-    padding: 33px 13px 13px 13px;
+    grid-auto-rows: 19px;
+    padding: 35px 13px 13px 13px;
   }
 
   @media (max-width: 320px) {
-    grid-auto-rows: 15px;
-    padding: 31px 11px 11px 11px;
+    grid-auto-rows: 17px;
+    padding: 33px 11px 11px 11px;
   }
 `;
 
@@ -564,19 +564,19 @@ const MainPage = () => {
   }, []);
 
   const formatEventDate = useCallback((event) => {
-    if (!event) return { startDate: '', endDate: '', isAllDay: false };
+    if (!event || !event.start) return { startDate: '', endDate: '', isAllDay: false };
 
-    const isAllDay = !!event.start.date;
-    
+    const isAllDay = !!(event.start.date);
+
     if (isAllDay) {
       const startDate = new Date(event.start.date);
       const endDate = event.end?.date ? new Date(event.end.date) : startDate;
       endDate.setDate(endDate.getDate() - 1);
-      
+
       const formatDate = (date) => {
         return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
       };
-      
+
       return {
         startDate: formatDate(startDate),
         endDate: formatDate(endDate),
@@ -585,7 +585,7 @@ const MainPage = () => {
     } else {
       const startDateTime = new Date(event.start.dateTime);
       const endDateTime = event.end?.dateTime ? new Date(event.end.dateTime) : startDateTime;
-      
+
       const formatDateTime = (date) => {
         const year = date.getFullYear();
         const month = date.getMonth() + 1;
@@ -594,7 +594,7 @@ const MainPage = () => {
         const minutes = String(date.getMinutes()).padStart(2, '0');
         return `${year}년 ${month}월 ${day}일 ${hours}:${minutes}`;
       };
-      
+
       return {
         startDate: formatDateTime(startDateTime),
         endDate: formatDateTime(endDateTime),
@@ -621,19 +621,64 @@ const MainPage = () => {
 
     setIsLoading(true);
     try {
-      const timeMin = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString();
-      const timeMax = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString();
+      const currentYear = currentDate.getFullYear();
+      const currentMonth = currentDate.getMonth();
+      const timeMin = new Date(currentYear, currentMonth, 1).toISOString();
+      const timeMax = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59, 999).toISOString();
 
       const response = await api.get(`/api/calendar?timeMin=${timeMin}&timeMax=${timeMax}`);
 
-      const calendarEvents = response.data || [];
-      const formatted = calendarEvents.map((e, i) => ({
-        id: e.id,
-        summary: e.summary,
-        start: e.start,
-        end: e.end,
-        color: getRandomColor(i),
-      }));
+      console.log('API 응답 전체:', response.data);
+      const calendarEvents = response.data.items || response.data || [];
+      console.log('이벤트 배열:', calendarEvents);
+      if (calendarEvents.length > 0) {
+        console.log('첫번째 이벤트 구조:', calendarEvents[0]);
+      }
+
+      const formatted = calendarEvents.map((e, i) => {
+        // 백엔드 응답 구조에 따라 적절히 매핑
+        const event = {
+          id: e.id || e.eventId,
+          summary: e.summary || e.title || e.name,
+          color: getRandomColor(i),
+        };
+
+        // start/end 구조 처리 - Google Calendar API 형태와 평면 구조 모두 지원
+        if (e.start && (e.start.date || e.start.dateTime)) {
+          // Google Calendar API 형태
+          event.start = e.start;
+          event.end = e.end;
+        } else {
+          // 평면 구조 처리
+          event.start = {};
+          event.end = {};
+
+          if (e.startDate) {
+            event.start.date = e.startDate;
+          }
+          if (e.startDateTime) {
+            event.start.dateTime = e.startDateTime;
+          }
+          if (e.endDate) {
+            event.end.date = e.endDate;
+          }
+          if (e.endDateTime) {
+            event.end.dateTime = e.endDateTime;
+          }
+
+          // 기본값 설정 (start만 있는 경우)
+          if (!event.end.date && !event.end.dateTime) {
+            if (event.start.date) {
+              event.end.date = event.start.date;
+            } else if (event.start.dateTime) {
+              event.end.dateTime = event.start.dateTime;
+            }
+          }
+        }
+
+        console.log('매핑된 이벤트:', event);
+        return event;
+      });
       setEvents(formatted);
       console.log('캘린더 이벤트 로드 완료:', formatted.length, '개');
     } catch (error) {
@@ -756,12 +801,16 @@ const MainPage = () => {
     const eventSegments = [];
     
     events.forEach(event => {
-      const startDate = event.start.date || event.start.dateTime?.split('T')[0];
-      const endDate = event.end?.date || event.end?.dateTime?.split('T')[0] || startDate;
-      
+      if (!event.start) return; // start가 없으면 스킵
+
+      const startDate = event.start.date || (event.start.dateTime ? event.start.dateTime.split('T')[0] : null);
+      const endDate = event.end?.date || (event.end?.dateTime ? event.end.dateTime.split('T')[0] : null) || startDate;
+
+      if (!startDate) return; // 시작 날짜가 없으면 스킵
+
       const start = new Date(startDate);
       const end = new Date(endDate);
-      
+
       // 종일 이벤트의 경우 end는 다음날을 가리키므로 1일 빼기
       if (event.start.date && event.end?.date) {
         end.setDate(end.getDate() - 1);

@@ -523,4 +523,3 @@ const DiaryListPage = () => {
 };
 
 export default DiaryListPage;
-

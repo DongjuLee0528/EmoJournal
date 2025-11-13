@@ -284,7 +284,7 @@ const MyInformationPage = () => {
     try {
       setIsLoading(true);
       if(localStorage.getItem("accessToken")) {
-        const res = await api.get("/api/member");
+        const res = await api.get("/member");
         console.log("회원 정보: ", res.data);
 
         const cleanedData = { ...res.data };
@@ -323,7 +323,7 @@ const MyInformationPage = () => {
 
     try {
       setIsLoading(true);
-      const res = await api.put("/api/member", {
+      const res = await api.patch("/member", {
         nickname: nickname.trim(),
         gender,
         mbti
