@@ -14,15 +14,40 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 감정 분석 REST API 컨트롤러
+ *
+ * 일기 텍스트에 대한 감정 분석, 감정 카테고리 정보 조회, 감정 테스트 등의
+ * 기능을 제공하는 REST API 엔드포인트를 담당합니다.
+ *
+ * 주요 기능:
+ * - AI 기반 감정 분석
+ * - 지원 가능한 감정 카테고리 조회
+ * - 감정별 이미지 및 설명 정보 제공
+ * - 키워드 기반 간단 감정 테스트
+ *
+ * @author EmoJournal Team
+ * @version 1.0
+ */
 @Slf4j
 @RestController
 @RequestMapping("/api/emotion")
 @RequiredArgsConstructor
 public class EmotionAnalysisController {
 
+    /** AI 기반 감정 분석을 처리하는 서비스 */
     private final EmotionAnalysisService emotionAnalysisService;
+    /** 감정별 이미지 제공 서비스 */
     private final EmotionImageService emotionImageService;
 
+    /**
+     * HTTP 요청에서 인증된 사용자 ID를 추출합니다.
+     * JWT 인터셉터에 의해 설정된 memberId 속성을 기반으로 userId를 생성합니다.
+     *
+     * @param request HTTP 요청 객체
+     * @return 생성된 사용자 ID ("member_" + memberId)
+     * @throws RuntimeException 인증되지 않은 사용자인 경우
+     */
     private String getUserIdFromRequest(HttpServletRequest request) {
         Object memberId = request.getAttribute("memberId");
         if (memberId != null) {
@@ -31,6 +56,14 @@ public class EmotionAnalysisController {
         throw new RuntimeException("인증되지 않은 사용자입니다.");
     }
 
+    /**
+     * 일기 텍스트에 대한 AI 기반 감정 분석을 수행합니다.
+     * Google Gemini API를 사용하여 텍스트를 분석하고 감정 키워드, 이모지, 해석을 추출합니다.
+     *
+     * @param request 감정 분석 요청 (일기 텍스트 포함)
+     * @param httpRequest HTTP 요청 객체
+     * @return 감정 분석 결과 (성공/실패 상태 포함)
+     */
     @PostMapping("/analyze")
     public ResponseEntity<EmotionAnalysisResponse> analyzeEmotion(
             @Valid @RequestBody EmotionAnalysisRequest request,
@@ -84,6 +117,12 @@ public class EmotionAnalysisController {
         }
     }
 
+    /**
+     * 지원 가능한 모든 감정 카테고리 정보를 조회합니다.
+     * 각 감정별로 이미지 URL과 설명을 포함하여 제공합니다.
+     *
+     * @return 감정 리스트와 상세 정보
+     */
     @GetMapping("/categories")
     public ResponseEntity<Map<String, Object>> getEmotionCategories() {
         try {
@@ -117,6 +156,13 @@ public class EmotionAnalysisController {
         }
     }
 
+    /**
+     * 특정 감정에 대한 상세 정보를 조회합니다.
+     * 감정의 이미지 URL과 설명을 제공합니다.
+     *
+     * @param emotion 조회할 감정명
+     * @return 감정 상세 정보 (이미지 URL, 설명)
+     */
     @GetMapping("/categories/{emotion}")
     public ResponseEntity<Map<String, String>> getEmotionDetail(@PathVariable String emotion) {
         try {
@@ -145,6 +191,12 @@ public class EmotionAnalysisController {
         }
     }
 
+    /**
+     * 감정 분석 API 서버의 상태를 확인합니다.
+     * 지원 가능한 감정 목록과 서버 정보를 포함합니다.
+     *
+     * @return 서버 상태 정보 및 지원 감정 목록
+     */
     @GetMapping("/health")
     public ResponseEntity<Map<String, Object>> healthCheck() {
         Map<String, Object> response = Map.of(
@@ -157,6 +209,14 @@ public class EmotionAnalysisController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * 키워드 기반 간단 감정 테스트를 수행합니다.
+     * AI 모델 대신 미리 정의된 키워드 매칭을 사용하여 감정을 예측합니다.
+     *
+     * @param request 테스트할 텍스트를 포함한 요청 데이터
+     * @param httpRequest HTTP 요청 객체
+     * @return 예측된 감정과 관련 정보
+     */
     @PostMapping("/test")
     public ResponseEntity<Map<String, Object>> testEmotion(
             @RequestBody Map<String, String> request,
@@ -199,6 +259,13 @@ public class EmotionAnalysisController {
         }
     }
 
+    /**
+     * 키워드 기반으로 간단한 감정 예측을 수행합니다.
+     * 텍스트에 포함된 특정 키워드를 기반으로 가장 적합한 감정을 반환합니다.
+     *
+     * @param text 분석할 텍스트
+     * @return 예측된 감정 카테고리
+     */
     private String predictEmotionByKeywords(String text) {
         String lowerText = text.toLowerCase();
 
