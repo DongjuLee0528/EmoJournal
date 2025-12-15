@@ -13,16 +13,48 @@ import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.List;
 
+/**
+ * 개인화된 Gemini 감정 분석 서비스
+ *
+ * 이 서비스는 사용자의 개인 정보(MBTI, 성별, 가입일 등)를 활용하여
+ * 개인화된 감정 분석 및 해석을 제공합니다.
+ *
+ * 주요 기능:
+ * - MBTI 성향 기반 감정 분석 맞춤화
+ * - 사용자 가입 기간별 컨텍스트 적용
+ * - 개인화된 감정 해석 및 조언 생성
+ * - 사용자별 맞춤형 프롬프트 생성
+ *
+ * MBTI 기반 개인화 로직:
+ * - 16개 MBTI 유형별 성향 특성 반영
+ * - 각 MBTI별 감정 표현 패턴 고려
+ * - 맞춤형 조언 및 격려 메시지 톤 조정
+ *
+ * @author EmoJournal Team
+ * @version 1.0
+ * @see GeminiApiClient
+ * @see Member
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class PersonalizedGeminiService {
 
+    /** Gemini API 클라이언트 - 기본 감정 분석 */
     private final GeminiApiClient geminiApiClient;
+    /** 회원 정보 저장소 - 개인화 정보 조회용 */
     private final MemberRepository memberRepository;
 
     /**
      * 사용자 정보를 반영한 개인화된 감정 분석
+     *
+     * 사용자의 MBTI, 성별, 가입 기간 등의 개인 정보를 활용하여
+     * 개인화된 감정 분석을 수행합니다.
+     *
+     * @param memberId 분석 대상 회원 ID
+     * @param diaryText 분석할 일기 텍스트
+     * @return 개인화된 감정 분석 결과
+     * @throws IllegalArgumentException 존재하지 않는 사용자인 경우
      */
     public GeminiApiClient.EmotionAnalysisResult analyzeEmotionWithPersonalization(Long memberId, String diaryText) {
         try {
@@ -45,6 +77,15 @@ public class PersonalizedGeminiService {
 
     /**
      * 사용자 정보를 반영한 개인화된 감정 해석 생성
+     *
+     * 감정 분석 결과와 사용자의 개인 정보를 결합하여
+     * 맞춤형 감정 해석 및 조언을 제공합니다.
+     *
+     * @param memberId 대상 회원 ID
+     * @param emotion 분석된 대표 감정
+     * @param keywords 감정 관련 키워드 리스트
+     * @param diaryText 원본 일기 텍스트
+     * @return 개인화된 감정 해석 문자열 (100자 이내)
      */
     public String generatePersonalizedInterpretation(Long memberId, String emotion, List<String> keywords, String diaryText) {
         try {
@@ -65,6 +106,19 @@ public class PersonalizedGeminiService {
 
     /**
      * 개인화된 감정 분석 프롬프트 생성
+     *
+     * 사용자의 개인 정보(MBTI, 성별, 가입 기간)를 활용하여
+     * Gemini API에 전달할 맞춤형 프롬프트를 생성합니다.
+     *
+     * 프롬프트 구성 요소:
+     * 1. 기본 감정 분석 지침
+     * 2. 사용자 개인 정보 컨텍스트
+     * 3. MBTI 기반 성향 정보
+     * 4. 가입 기간별 사용자 단계 정보
+     *
+     * @param member 분석 대상 회원 정보
+     * @param diaryText 분석할 일기 텍스트
+     * @return 개인화된 프롬프트 문자열
      */
     private String createPersonalizedEmotionPrompt(Member member, String diaryText) {
         StringBuilder prompt = new StringBuilder();
@@ -75,21 +129,34 @@ public class PersonalizedGeminiService {
         prompt.append("2. 감정 키워드 (1개, 선택한 감정과 관련된 구체적인 단어)\n");
         prompt.append("3. 일기 키워드 (1~2개, 일기 내용의 핵심 단어나 상황)\n\n");
 
-        // 사용자 개인화 정보 추가
+        /*
+         * 사용자 개인화 정보 섹션
+         * 감정 분석의 정확도와 개인화를 위해 사용자 정보를 포함합니다.
+         */
         prompt.append("=== 사용자 정보 (분석 시 참고용) ===\n");
         prompt.append("닉네임: ").append(member.getNickname()).append("\n");
 
-        // 가입일로부터 대략적인 사용자 정보 추정
+        /*
+         * 가입 기간 기반 사용자 단계 정보
+         * 일기 작성 경험과 감정 표현 패턴을 고려하기 위함
+         */
         if (member.getCreateDate() != null) {
             int daysSinceJoin = Period.between(member.getCreateDate().toLocalDate(), LocalDateTime.now().toLocalDate()).getDays();
             prompt.append("가입 경과일: ").append(daysSinceJoin).append("일\n");
             prompt.append(getJoinPeriodContext(daysSinceJoin)).append("\n");
         }
 
+        /*
+         * 성별 정보 (감정 표현 패턴 고려용)
+         */
         if (member.getGender() != null) {
             prompt.append("성별: ").append(member.getGender().name()).append("\n");
         }
 
+        /*
+         * MBTI 성향 정보
+         * 16개 성격 유형별 감정 처리 및 표현 특성을 반영
+         */
         if (member.getMbti() != null) {
             prompt.append("MBTI: ").append(member.getMbti().name()).append("\n");
             prompt.append(getMbtiContext(member.getMbti())).append("\n");
@@ -159,44 +226,88 @@ public class PersonalizedGeminiService {
     }
 
     /**
-     * MBTI별 성향 컨텍스트
+     * MBTI별 성향 컨텍스트 정보 제공
+     *
+     * 16개 MBTI 유형을 4개 그룹으로 분류하여 각각의 특성을 정의합니다:
+     * - SJ 그룹: 안정성과 책임감 중심 (ISTJ, ISFJ, ESTJ, ESFJ)
+     * - NF 그룹: 이상주의와 감정 중심 (INFJ, INTJ, ENFJ, ENTJ)
+     * - SP 그룹: 실용성과 유연성 중심 (ISTP, ISFP, ESTP, ESFP)
+     * - NT 그룹: 논리성과 분석 중심 (INFP, INTP, ENFP, ENTP)
+     *
+     * @param mbti 사용자의 MBTI 유형
+     * @return 해당 MBTI의 성향 설명 문자열
      */
     private String getMbtiContext(Mbti mbti) {
         return switch (mbti) {
+            // SJ 기질: 안정성과 책임감을 추구하는 보호자 유형
             case ISTJ, ISFJ -> "안정성과 질서를 중시하며 책임감이 강한 성향";
+            case ESTJ, ESFJ -> "리더십이 강하고 목표지향적이며 조직적인 성향";
+
+            // NF 기질: 이상주의와 성장을 추구하는 이상가 유형
             case INFJ, INTJ -> "내향적이고 이상주의적이며 깊은 사고를 하는 성향";
-            case ISTP, ISFP -> "독립적이고 실용적이며 유연한 성향";
-            case INFP, INTP -> "논리적이고 분석적인 사고를 선호하는 성향";
-            case ESTP, ESFP -> "활발하고 즉흥적이며 현재 순간을 즐기는 성향";
-            case ENFP, ENTP -> "창의적이고 호기심이 많으며 새로운 가능성을 추구하는 성향";
-            case ESTJ, ESFJ -> "리더십이 강하고 목표지향적인 성향";
             case ENFJ, ENTJ -> "감정적이고 사교적이며 타인에 대한 관심이 높은 성향";
+
+            // SP 기질: 실용성과 자유를 추구하는 예술가 유형
+            case ISTP, ISFP -> "독립적이고 실용적이며 유연한 성향";
+            case ESTP, ESFP -> "활발하고 즉흥적이며 현재 순간을 즐기는 성향";
+
+            // NT 기질: 논리성과 능력을 추구하는 사상가 유형
+            case INFP, INTP -> "논리적이고 분석적인 사고를 선호하는 성향";
+            case ENFP, ENTP -> "창의적이고 호기심이 많으며 새로운 가능성을 추구하는 성향";
         };
     }
 
     /**
-     * MBTI별 톤 가이드
+     * MBTI별 감정 해석 톤 가이드
+     *
+     * 각 MBTI 유형에 맞는 감정 해석 스타일과 조언 방식을 정의합니다.
+     * 사용자의 성향에 맞는 톤으로 개인화된 메시지를 전달하기 위함입니다.
+     *
+     * @param mbti 사용자의 MBTI 유형
+     * @return 해당 MBTI에 적합한 톤 가이드 문자열
      */
     private String getMbtiToneGuide(Mbti mbti) {
         return switch (mbti) {
+            // SJ: 구체적이고 실용적인 조언 선호
             case ISTJ, ISFJ -> "안정적이고 실용적인 조언 위주로 작성";
-            case INFJ, INTJ -> "깊이 있고 이해심 많은 공감적 메시지";
-            case ISTP, ISFP -> "실용적이면서 개인의 자율성을 존중하는 톤";
-            case INFP, INTP -> "논리적이고 객관적인 관점에서 분석적으로 접근";
-            case ESTP, ESFP -> "긍정적이고 활기찬 톤으로 격려";
-            case ENFP, ENTP -> "창의적이고 열린 사고를 격려하는 톤";
             case ESTJ, ESFJ -> "명확하고 목표지향적인 조언 제공";
+
+            // NF: 깊이 있고 감정적인 공감 선호
+            case INFJ, INTJ -> "깊이 있고 이해심 많은 공감적 메시지";
             case ENFJ, ENTJ -> "따뜻하고 격려하는 톤으로 감정적 공감 강조";
+
+            // SP: 자율성과 긍정적 격려 선호
+            case ISTP, ISFP -> "실용적이면서 개인의 자율성을 존중하는 톤";
+            case ESTP, ESFP -> "긍정적이고 활기찬 톤으로 격려";
+
+            // NT: 논리적이고 창의적인 접근 선호
+            case INFP, INTP -> "논리적이고 객관적인 관점에서 분석적으로 접근";
+            case ENFP, ENTP -> "창의적이고 열린 사고를 격려하는 톤";
         };
     }
 
     /**
-     * 개인화된 프롬프트로 Gemini API 호출 (기존 로직 활용)
+     * 개인화된 프롬프트로 Gemini API 호출
+     *
+     * 생성된 개인화 프롬프트를 사용하여 Gemini API를 호출합니다.
+     * 현재는 기존 GeminiApiClient의 메서드를 활용하며,
+     * 추후 커스텀 프롬프트 지원 메서드 추가 시 개선 예정입니다.
+     *
+     * @param prompt 개인화된 분석 프롬프트
+     * @return Gemini API 감정 분석 결과
+     *
+     * @implNote
+     * 현재 구현에서는 개인화된 프롬프트를 diaryText 파라미터로 전달하여
+     * 기본 analyzeEmotion 메서드를 사용합니다. 향후 GeminiApiClient에
+     * 커스텀 프롬프트를 지원하는 메서드가 추가되면 해당 메서드로 변경 필요합니다.
+     *
+     * @todo GeminiApiClient에 커스텀 프롬프트 메서드 추가 후 리팩토링
      */
     private GeminiApiClient.EmotionAnalysisResult analyzeWithPersonalizedPrompt(String prompt) {
-        // 현재 GeminiApiClient에는 커스텀 프롬프트 메서드가 없으므로
-        // 기본 분석 메서드를 사용
-        // TODO: 추후 GeminiApiClient에 커스텀 프롬프트 메서드 추가 필요
+        /*
+         * 현재 GeminiApiClient에는 커스텀 프롬프트 메서드가 없으므로
+         * 기본 분석 메서드를 사용하여 개인화된 프롬프트를 처리합니다.
+         */
         return geminiApiClient.analyzeEmotion(prompt);
     }
 }
